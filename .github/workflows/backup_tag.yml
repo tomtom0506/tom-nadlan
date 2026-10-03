@@ -1,0 +1,28 @@
+name: גיבוי שבועי (תגית)
+
+# כל יום שישי ב-06:00 שעון ישראל (03:00 UTC), וגם הרצה ידנית.
+on:
+  schedule:
+    - cron: "0 3 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create backup tag
+        run: |
+          TAG="backup-$(date -u +%Y-%m-%d)"
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag already exists: $TAG"; exit 0
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "created: $TAG"
