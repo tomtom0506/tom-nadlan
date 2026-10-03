@@ -3,11 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-u08GDBdvNqV7LJorkgHtz4cWrbyTMluLIqU2ClRi+Ig='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-A9FhDU2nvAcr/mFL0AwbtQXW5VBenD7gh7pw/pewJdc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'; manifest-src 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230D1B26'/%3E%3Cpath d='M7 23 10 9l13 3 2 11z' fill='none' stroke='%23F2C14E' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-title" content="הנדלן">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
@@ -52,7 +57,7 @@ button{font:inherit;color:inherit}
 }
 .bar .wrap{display:flex;align-items:center;gap:12px;height:56px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;letter-spacing:-.01em;margin-inline-end:auto}
-.brand svg{flex:none}
+.brand img{flex:none}
 .chip-btn{
   border:1px solid var(--line);background:var(--surface);border-radius:999px;
   padding:4px 12px;font-size:.85rem;color:var(--muted);cursor:pointer;
@@ -176,7 +181,7 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <header class="bar">
   <div class="wrap">
     <div class="brand">
-      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 23 10 9l13 3 2 11z" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/><circle cx="10" cy="9" r="1.8" fill="var(--accent)"/><circle cx="25" cy="23" r="1.8" fill="var(--accent)"/></svg>
+      <img src="icon.svg" width="32" height="32" alt="" style="border-radius:8px;display:block">
       <span>הנדלן של תומר</span>
     </div>
     <button class="chip-btn" id="verBtn" type="button" aria-haspopup="dialog">v0.0.0</button>
@@ -270,10 +275,15 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='0.1.0';
+var APP_VERSION='0.1.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'0.1.1',date:'2026-10-03',items:[
+    'אייקון חדש לאפליקציה: קו רקיע בזהב על כחול לילה, עם שם שמוסתר בתוך הבניינים.',
+    'אפשר להוסיף את האפליקציה למסך הבית באייפון, עם האייקון החדש.',
+    '🧪 בדיקת ההיתכנות שומרת גם דוגמה מקוצרת של כל תשובה.'
+  ]},
   {v:'0.1.0',date:'2026-10-03',items:[
     'הקמת האפליקציה: מצב יום ולילה, תצוגה מימין לשמאל, התאמה לנייד וחלון היסטוריית גרסאות.',
     'שלוש לשוניות: בדוק נכס, איפה ₪1.5 מיליון קונה הכי הרבה, ומעקב אזורים.',
