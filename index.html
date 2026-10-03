@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-u08GDBdvNqV7LJorkgHtz4cWrbyTMluLIqU2ClRi+Ig='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0D1B26">
+<title>הנדלן של תומר</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230D1B26'/%3E%3Cpath d='M7 23 10 9l13 3 2 11z' fill='none' stroke='%23F2C14E' stroke-width='2.2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Hebrew:wght@400;500;600;700&display=swap">
+<script>
+(function(){try{var t=localStorage.getItem('tn-theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+<style>
+:root{
+  --font:"IBM Plex Sans Hebrew",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --r-sm:6px; --r-md:10px; --r-lg:16px;
+}
+[data-theme="dark"]{
+  --bg:#0D1B26; --grid:rgba(143,166,184,.07); --surface:#13283A; --surface-2:#183247;
+  --line:#24425C; --text:#E6EEF4; --muted:#8FA6B8; --accent:#F2C14E; --accent-ink:#0D1B26;
+  --good:#3CC48D; --bad:#F0735A; --warn:#F2C14E; --focus:#F2C14E;
+}
+[data-theme="light"]{
+  --bg:#ECF0F2; --grid:rgba(20,34,46,.06); --surface:#FFFFFF; --surface-2:#F5F8FA;
+  --line:#CBD5DC; --text:#14222E; --muted:#56687A; --accent:#C99317; --accent-ink:#14222E;
+  --good:#1E8A5C; --bad:#C2452D; --warn:#9A6B00; --focus:#1F5F99;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100vh;font-family:var(--font);font-size:16px;line-height:1.6;color:var(--text);
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  font-variant-numeric:tabular-nums;
+}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+
+/* top bar */
+.bar{
+  position:sticky;top:0;z-index:10;padding-top:env(safe-area-inset-top,0px);
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.bar .wrap{display:flex;align-items:center;gap:12px;height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem;letter-spacing:-.01em;margin-inline-end:auto}
+.brand svg{flex:none}
+.chip-btn{
+  border:1px solid var(--line);background:var(--surface);border-radius:999px;
+  padding:4px 12px;font-size:.85rem;color:var(--muted);cursor:pointer;
+}
+.icon-btn{
+  width:40px;height:40px;display:grid;place-items:center;border-radius:999px;
+  border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.1rem;
+}
+
+/* hero */
+.hero{padding:36px 0 8px}
+.hero h1{font-size:clamp(1.9rem,7vw,2.6rem);line-height:1.15;margin:0 0 10px;font-weight:700;letter-spacing:-.02em}
+.hero p{margin:0;color:var(--muted);max-width:52ch}
+.dim{position:relative;margin:30px 0 4px;color:var(--accent)}
+.dim-val{position:absolute;top:30px;left:50%;transform:translate(-50%,-55%);padding:0 12px;background:var(--bg);color:var(--accent);font-size:1.45rem;font-weight:700;line-height:1;white-space:nowrap}
+.dim-note{margin:2px 0 0;text-align:center;color:var(--muted);font-size:.85rem}
+.dim svg{display:block;width:100%;height:46px;overflow:visible}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;font-size:.82rem;padding:3px 10px;border-radius:999px;
+  border:1px solid var(--line);color:var(--muted);background:var(--surface);
+}
+
+/* tabs */
+.tabs{
+  position:sticky;top:calc(56px + env(safe-area-inset-top,0px));z-index:9;
+  display:flex;gap:4px;padding:6px;margin:24px 0 18px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);
+}
+.tab{
+  flex:1;border:0;background:transparent;padding:10px 6px;border-radius:var(--r-md);cursor:pointer;
+  font-size:.9rem;font-weight:500;color:var(--muted);line-height:1.25;
+}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.panel{display:grid;gap:14px;padding-bottom:28px}
+.panel[hidden]{display:none}
+
+/* sections */
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+.sec h2{font-size:1.15rem;margin:0 0 4px;font-weight:700}
+.sec .lead{margin:0 0 14px;color:var(--muted);font-size:.93rem}
+.soon{display:inline-block;font-size:.75rem;font-weight:600;padding:2px 8px;border-radius:var(--r-sm);
+  background:var(--surface-2);border:1px dashed var(--line);color:var(--muted);vertical-align:middle;margin-inline-start:6px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;counter-increment:s}
+.steps li::before{
+  content:counter(s);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  border:1.5px solid var(--accent);color:var(--accent);font-weight:700;font-size:.85rem;
+}
+.steps b{display:block;font-weight:600}
+.steps span{color:var(--muted);font-size:.9rem}
+
+/* sample verdict, styled like a survey stake */
+.sample{
+  margin-top:16px;border-radius:var(--r-md);padding:14px;background:var(--surface-2);
+  border-inline-start:4px solid var(--good);display:grid;gap:8px;
+}
+.sample .row{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+.sample .row span:first-child{color:var(--muted)}
+.sample .big{font-size:1.15rem;font-weight:700;color:var(--good)}
+.bar-track{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,var(--bad),var(--warn) 50%,var(--good))}
+[dir="rtl"] .bar-track{background:linear-gradient(270deg,var(--good),var(--warn) 50%,var(--bad))}
+.bar-pin{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:var(--text)}
+.sample small{color:var(--muted)}
+
+/* data status */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px}
+.stat b{display:block;font-size:1.25rem;line-height:1.2}
+.stat b[dir="ltr"]{text-align:right}
+.stat span{font-size:.78rem;color:var(--muted)}
+.checks{width:100%;border-collapse:collapse;font-size:.88rem}
+.checks td{padding:8px 4px;border-top:1px solid var(--line)}
+.checks td.n{text-align:left;unicode-bidi:isolate;color:var(--muted);white-space:nowrap}
+.ok{color:var(--good);font-weight:700}
+.no{color:var(--bad);font-weight:700}
+.fields{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.fields code{font-size:.78rem;padding:2px 7px;border-radius:var(--r-sm);background:var(--surface-2);border:1px solid var(--line);direction:ltr}
+.note{font-size:.88rem;color:var(--muted);margin:12px 0 0}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:var(--r-md);color:var(--muted);font-size:.92rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-md);padding:9px 14px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface-2);text-decoration:none;font-size:.9rem;font-weight:500;
+}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.btn[disabled]{opacity:.6;cursor:wait}
+.result{margin-top:12px;padding:12px;border-radius:var(--r-md);font-size:.92rem;background:var(--surface-2)}
+.result[hidden]{display:none}
+.result.good{border-inline-start:4px solid var(--good)}
+.result.bad{border-inline-start:4px solid var(--bad)}
+h3{font-size:.95rem;margin:16px 0 4px}
+
+footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
+
+/* changelog */
+dialog{
+  width:min(560px,calc(100% - 24px));max-height:80vh;padding:0;border-radius:var(--r-lg);
+  border:1px solid var(--line);background:var(--surface);color:var(--text);
+}
+dialog::backdrop{background:rgba(5,12,18,.55)}
+.dlg-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.dlg-head h2{margin:0;font-size:1.05rem}
+.dlg-body{padding:6px 16px 16px}
+.ver{padding:12px 0;border-bottom:1px solid var(--line)}
+.ver:last-child{border-bottom:0}
+.ver h3{margin:0 0 4px;font-size:.98rem}
+.ver time{color:var(--muted);font-weight:400;font-size:.82rem;margin-inline-start:6px}
+.ver ul{margin:4px 0 0;padding-inline-start:18px;font-size:.9rem}
+
+@media (max-width:420px){
+  .tab{font-size:.8rem;padding:9px 4px}
+  .stat b{font-size:1.05rem}
+}
+@media (prefers-reduced-motion:no-preference){
+  .dim path.draw{stroke-dasharray:640;stroke-dashoffset:640;animation:draw 1.1s ease-out .15s forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 23 10 9l13 3 2 11z" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/><circle cx="10" cy="9" r="1.8" fill="var(--accent)"/><circle cx="25" cy="23" r="1.8" fill="var(--accent)"/></svg>
+      <span>הנדלן של תומר</span>
+    </div>
+    <button class="chip-btn" id="verBtn" type="button" aria-haspopup="dialog">v0.0.0</button>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="החלפת מצב יום ולילה">🌙</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" aria-labelledby="heroTitle">
+    <h1 id="heroTitle">איפה התקציב שלך שווה יותר</h1>
+    <p>השוואת מחיר מבוקש לעסקאות שנסגרו בפועל, מתוך מאגר מיסוי מקרקעין.</p>
+    <div class="dim" role="img" aria-label="תקציב עד 1,500,000 שקל">
+      <svg viewBox="0 0 640 46" preserveAspectRatio="none" aria-hidden="true">
+        <path class="draw" d="M2 30H638" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M2 20v20M638 20v20" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M2 30l12-5v10zM638 30l-12-5v10z" fill="currentColor"/>
+      </svg>
+      <strong class="dim-val" aria-hidden="true">עד ₪1,500,000</strong>
+    </div>
+    <p class="dim-note">דירות. המרכז מועדף, וכל הארץ פתוחה להזדמנות טובה.</p>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="אזורי האפליקציה">
+    <button class="tab" role="tab" id="t-check" aria-controls="p-check" data-tab="check" type="button">🔍 בדוק נכס</button>
+    <button class="tab" role="tab" id="t-budget" aria-controls="p-budget" data-tab="budget" type="button">🗺️ איפה ₪1.5M קונה הכי הרבה</button>
+    <button class="tab" role="tab" id="t-track" aria-controls="p-track" data-tab="track" type="button">📈 מעקב אזורים</button>
+  </nav>
+
+  <!-- בדוק נכס -->
+  <section class="panel" id="p-check" role="tabpanel" aria-labelledby="t-check">
+    <article class="sec">
+      <h2>בדוק נכס <span class="soon">בגרסה 1.0</span></h2>
+      <p class="lead">מדביקים מודעה, ומקבלים תשובה אחת: הזדמנות, מחיר הוגן או יקר.</p>
+      <ol class="steps">
+        <li><div><b>מדביקים מודעה מיד2 או ממדלן</b><span>או ממלאים ידנית עיר, רחוב, מספר, חדרים, מ"ר, קומה ומחיר.</span></div></li>
+        <li><div><b>משווים לעסקאות אמיתיות</b><span>דירות דומות שנמכרו בשנתיים האחרונות באותו רחוב ובסביבה.</span></div></li>
+        <li><div><b>מקבלים מסקנה</b><span>מחיר למ"ר מול החציון, חמש עסקאות דומות ואזהרה כשיש מעט נתונים.</span></div></li>
+      </ol>
+      <div class="sample" aria-label="דוגמה להמחשה בלבד">
+        <div class="row"><span>🧪 דוגמה להמחשה</span><span>4 חד׳, 92 מ"ר</span></div>
+        <div class="big">💎 הזדמנות: 12% מתחת לחציון</div>
+        <div class="bar-track" aria-hidden="true"><div class="bar-pin" style="inset-inline-start:22%"></div></div>
+        <div class="row"><small>זול</small><small>הוגן</small><small>יקר</small></div>
+        <small>הנתונים בדוגמה מומצאים. ההשוואה האמיתית תיבנה אחרי בדיקת ההיתכנות.</small>
+      </div>
+    </article>
+
+    <article class="sec" aria-labelledby="dataTitle">
+      <h2 id="dataTitle">מצב חיבור לנתונים</h2>
+      <p class="lead">תוצאות הבדיקה האחרונה מול הממשק של "גרסאות לעם".</p>
+      <div id="probeOut"><div class="empty">טוען…</div></div>
+      <div class="actions">
+        <button class="btn primary" id="browserTestBtn" type="button">בדוק גישה מהדפדפן</button>
+        <a class="btn" id="runLink" target="_blank" rel="noopener noreferrer">הרץ בדיקה ב-GitHub</a>
+      </div>
+      <div class="result" id="browserResult" role="status" hidden></div>
+    </article>
+  </section>
+
+  <!-- איפה 1.5M -->
+  <section class="panel" id="p-budget" role="tabpanel" aria-labelledby="t-budget" hidden>
+    <article class="sec">
+      <h2>איפה ₪1.5 מיליון קונה הכי הרבה <span class="soon">בקרוב</span></h2>
+      <p class="lead">מפה ארצית של ערים ושכונות: כמה עסקאות נסגרו עד ₪1.5 מיליון בשנה האחרונה, מה החציון למ"ר וכמה מטרים מקבלים בממוצע. המרכז יסומן בנפרד.</p>
+      <p class="note">הניתוח הארצי ייעשה בשאילתות מצרפיות, בלי סריקה של הממשק עיר אחרי עיר.</p>
+    </article>
+  </section>
+
+  <!-- מעקב -->
+  <section class="panel" id="p-track" role="tabpanel" aria-labelledby="t-track" hidden>
+    <article class="sec">
+      <h2>מעקב אזורים <span class="soon">שלב שני</span></h2>
+      <p class="lead">בוחרים אזורים, ופעם בשבוע האפליקציה בודקת את מגמת המחיר למ"ר, את מספר העסקאות ועסקאות שנסגרו הרבה מתחת לחציון המקומי. כשיש שינוי משמעותי, מגיעה הודעה לבוט בטלגרם.</p>
+    </article>
+  </section>
+</main>
+
+<footer class="wrap">
+  כלי עזר אישי. לא ייעוץ השקעות ולא שמאות.<br>
+  <span id="footVer"></span>
+</footer>
+
+<dialog id="logDlg" aria-labelledby="logTitle">
+  <div class="dlg-head">
+    <h2 id="logTitle">מה חדש</h2>
+    <button class="icon-btn" id="logClose" type="button" aria-label="סגירה">✕</button>
+  </div>
+  <div class="dlg-body" id="logBody"></div>
+</dialog>
+
+<script>
+(function(){
+'use strict';
+var APP_VERSION='0.1.0';
+var OVER='https://www.over.org.il';
+var REPO='https://github.com/tomtom0506/tom-nadlan';
+var CHANGELOG=[
+  {v:'0.1.0',date:'2026-10-03',items:[
+    'הקמת האפליקציה: מצב יום ולילה, תצוגה מימין לשמאל, התאמה לנייד וחלון היסטוריית גרסאות.',
+    'שלוש לשוניות: בדוק נכס, איפה ₪1.5 מיליון קונה הכי הרבה, ומעקב אזורים.',
+    'כרטיס "מצב חיבור לנתונים" וכפתור לבדיקת גישה ישירה מהדפדפן.',
+    '🧪 בדיקת היתכנות לממשק של "גרסאות לעם", עם סיכום בטלגרם.',
+    'גיבוי שבועי בתגית backup-YYYY-MM-DD.',
+    'אבטחה: CSP מחמיר, טקסט חיצוני מוצג כטקסט בלבד, ולינקים מסוג http(s) בלבד.'
+  ]}
+];
+
+/* ---------- עזרים בטוחים ---------- */
+function safeUrl(v){
+  try{var u=new URL(String(v),location.href);return (u.protocol==='https:'||u.protocol==='http:')?u.href:null;}catch(e){return null;}
+}
+function el(tag,props){
+  var n=document.createElement(tag);props=props||{};
+  Object.keys(props).forEach(function(k){
+    var v=props[k];if(v==null)return;
+    if(k==='class')n.className=v;
+    else if(k==='text')n.textContent=String(v);
+    else if(k==='href'){var u=safeUrl(v);if(u)n.href=u;}
+    else n.setAttribute(k,String(v));
+  });
+  for(var i=2;i<arguments.length;i++){
+    var c=arguments[i];if(c==null||c===false)continue;
+    n.appendChild(typeof c==='object'?c:document.createTextNode(String(c)));
+  }
+  return n;
+}
+function num(v){return typeof v==='number'&&isFinite(v)?v:null;}
+function fmtDate(iso){
+  var d=new Date(iso);if(isNaN(d))return 'לא ידוע';
+  return d.toLocaleString('he-IL',{timeZone:'Asia/Jerusalem',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+/* ---------- ערכת צבעים ---------- */
+var root=document.documentElement,themeBtn=document.getElementById('themeBtn');
+function paintTheme(){
+  var t=root.getAttribute('data-theme');
+  themeBtn.textContent=t==='dark'?'☀️':'🌙';
+  themeBtn.setAttribute('aria-label',t==='dark'?'מעבר למצב יום':'מעבר למצב לילה');
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='dark'?'#0D1B26':'#ECF0F2');
+}
+themeBtn.addEventListener('click',function(){
+  var t=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',t);try{localStorage.setItem('tn-theme',t);}catch(e){}
+  paintTheme();
+});
+paintTheme();
+
+/* ---------- לשוניות ---------- */
+var tabs=[].slice.call(document.querySelectorAll('.tab'));
+function showTab(name,focus){
+  var found=tabs.some(function(t){return t.dataset.tab===name;});if(!found)name='check';
+  tabs.forEach(function(t){
+    var on=t.dataset.tab===name;
+    t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
+    if(on&&focus)t.focus();
+  });
+  if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
+}
+tabs.forEach(function(t,i){
+  t.addEventListener('click',function(){showTab(t.dataset.tab);});
+  t.addEventListener('keydown',function(e){
+    var d=e.key==='ArrowLeft'?1:e.key==='ArrowRight'?-1:0;if(!d)return;
+    e.preventDefault();showTab(tabs[(i+d+tabs.length)%tabs.length].dataset.tab,true);
+  });
+});
+showTab((location.hash||'#check').slice(1));
+
+/* ---------- גרסה ויומן ---------- */
+var verBtn=document.getElementById('verBtn'),dlg=document.getElementById('logDlg'),logBody=document.getElementById('logBody');
+verBtn.textContent='v'+APP_VERSION;
+document.getElementById('footVer').textContent='גרסה '+APP_VERSION;
+CHANGELOG.forEach(function(r){
+  var ul=el('ul');r.items.forEach(function(x){ul.appendChild(el('li',{text:x}));});
+  logBody.appendChild(el('div',{class:'ver'},el('h3',null,'v'+r.v,el('time',{datetime:r.date,text:r.date.split('-').reverse().join('.')})),ul));
+});
+verBtn.addEventListener('click',function(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');});
+document.getElementById('logClose').addEventListener('click',function(){dlg.close?dlg.close():dlg.removeAttribute('open');});
+dlg.addEventListener('click',function(e){if(e.target===dlg&&dlg.close)dlg.close();});
+
+/* ---------- מצב חיבור לנתונים ---------- */
+var probeOut=document.getElementById('probeOut');
+var runUrl=REPO+'/actions/workflows/api_probe.yml';
+document.getElementById('runLink').href=safeUrl(runUrl);
+
+var CORS_TXT={
+  open:['ok','✅ פתוח: בדוק נכס יעבוד ישירות מהטלפון'],
+  closed:['no','❌ סגור: בדוק נכס ירוץ דרך GitHub Actions'],
+  other_origin:['no','⚠️ פתוח לאתר אחר בלבד']
+};
+
+function renderProbe(d){
+  probeOut.textContent='';
+  if(!d||typeof d!=='object'||!Array.isArray(d.checks)){
+    probeOut.appendChild(el('div',{class:'empty'},'קובץ התוצאות פגום. הרץ את הבדיקה שוב ב-GitHub.'));return;
+  }
+  var s=d.summary||{},ok=num(s.ok),total=num(s.total),ms=num(s.median_ms);
+  probeOut.appendChild(el('div',{class:'stats'},
+    el('div',{class:'stat'},el('b',{dir:'ltr',text:(ok!=null&&total!=null)?ok+'/'+total:'–'}),el('span',{text:'נקודות קצה ענו'})),
+    el('div',{class:'stat'},el('b',{dir:'ltr',text:ms!=null?ms+' ms':'–'}),el('span',{text:'זמן תגובה חציוני'})),
+    el('div',{class:'stat'},el('b',{class:s.deals_ok?'ok':'no',text:s.deals_ok?'עובדת':'לא עבדה'}),el('span',{text:'שליפת עסקאות'}))
+  ));
+  var tb=el('tbody');
+  d.checks.forEach(function(c){
+    if(!c||typeof c!=='object')return;
+    var right=c.ok?((num(c.ms)!=null?c.ms+' ms':'')+(num(c.kb)!=null?' / '+c.kb+' KB':'')):(c.status?'HTTP '+c.status:(c.error||'שגיאה'));
+    tb.appendChild(el('tr',null,
+      el('td',null,el('span',{class:c.ok?'ok':'no',text:c.ok?'✓ ':'✗ '}),String(c.label||c.id||'')),
+      el('td',{class:'n',dir:'ltr',text:right})
+    ));
+  });
+  probeOut.appendChild(el('table',{class:'checks'},tb));
+
+  var cv=CORS_TXT[(d.cors||{}).browser]||['no','❓ לא ידוע'];
+  probeOut.appendChild(el('h3',{text:'גישה מהדפדפן (לפי השרת)'}));
+  probeOut.appendChild(el('div',{class:cv[0],text:cv[1]}));
+
+  if(Array.isArray(d.deal_fields)&&d.deal_fields.length){
+    probeOut.appendChild(el('h3',{text:'שדות שמגיעים בכל עסקה'}));
+    var f=el('div',{class:'fields'});
+    d.deal_fields.slice(0,40).forEach(function(x){f.appendChild(el('code',{text:x}));});
+    probeOut.appendChild(f);
+  }
+  var lh=d.limit_headers&&typeof d.limit_headers==='object'?Object.keys(d.limit_headers):[];
+  if(lh.length){
+    probeOut.appendChild(el('h3',{text:'כותרות מגבלת נפח'}));
+    var f2=el('div',{class:'fields'});
+    lh.slice(0,10).forEach(function(k){f2.appendChild(el('code',{text:k+': '+String(d.limit_headers[k]).slice(0,60)}));});
+    probeOut.appendChild(f2);
+  }
+  probeOut.appendChild(el('p',{class:'note',text:'בדיקה אחרונה: '+fmtDate(d.run_at)+' (גרסת בדיקה '+String(d.probe_version||'?')+')'}));
+}
+
+function renderEmpty(){
+  probeOut.textContent='';
+  probeOut.appendChild(el('div',{class:'empty'},
+    'עוד לא הורצה בדיקה. לוחצים על "הרץ בדיקה ב-GitHub", בוחרים Run workflow, ואחרי כדקה מרעננים את העמוד.'));
+}
+
+fetch('data/api_probe.json',{cache:'no-store'}).then(function(r){
+  if(r.status===404){renderEmpty();return null;}
+  if(!r.ok)throw new Error('http');
+  return r.json();
+}).then(function(d){if(d!==null&&d!==undefined)renderProbe(d);})
+.catch(function(){probeOut.textContent='';probeOut.appendChild(el('div',{class:'empty'},'לא הצלחתי לטעון את תוצאות הבדיקה. נסה לרענן את העמוד.'));});
+
+/* ---------- בדיקה ישירה מהדפדפן ---------- */
+var tBtn=document.getElementById('browserTestBtn'),tRes=document.getElementById('browserResult');
+function showResult(good,msg){tRes.hidden=false;tRes.className='result '+(good?'good':'bad');tRes.textContent=msg;}
+tBtn.addEventListener('click',function(){
+  tBtn.disabled=true;tBtn.textContent='בודק…';
+  var ctl=('AbortController' in window)?new AbortController():null;
+  var timer=setTimeout(function(){if(ctl)ctl.abort();},15000);
+  var t0=performance.now();
+  fetch(OVER+'/api/nadlan/stats',{mode:'cors',cache:'no-store',credentials:'omit',signal:ctl?ctl.signal:undefined})
+  .then(function(r){
+    var ms=performance.now()-t0;
+    if(r.ok)showResult(true,'✅ הדפדפן מקבל נתונים ישירות, תוך '+(ms/1000).toFixed(2)+' שניות. בדוק נכס יוכל לעבוד מיידית מהטלפון.');
+    else showResult(false,'⚠️ השרת ענה בשגיאה HTTP '+r.status+'. כדאי לנסות שוב מאוחר יותר.');
+  })
+  .catch(function(e){
+    if(e&&e.name==='AbortError')showResult(false,'⏱️ אין תשובה תוך 15 שניות. ייתכן שהשרת עמוס, כדאי לנסות שוב.');
+    else showResult(false,'❌ הדפדפן נחסם (CORS או רשת). בדוק נכס ירוץ דרך GitHub Actions, עם המתנה של כדקה.');
+  })
+  .then(function(){clearTimeout(timer);tBtn.disabled=false;tBtn.textContent='בדוק גישה מהדפדפן';});
+});
+})();
+</script>
+</body>
+</html>
