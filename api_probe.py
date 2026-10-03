@@ -17,11 +17,14 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-PROBE_VERSION = "0.1.0"
+PROBE_VERSION = "0.1.1"
 BASE = "https://www.over.org.il"
 ORIGIN = "https://tomtom0506.github.io"
 APP_URL = "https://tomtom0506.github.io/tom-nadlan/"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "api_probe.json")
+SAMPLES_OUT = os.path.join(os.path.dirname(OUT), "api_samples.json")
+SAMPLE_LIST_MAX = 3
+SAMPLE_STR_MAX = 300
 TIMEOUT = 25
 PAUSE = 1.5
 MAX_BODY = 2_000_000
@@ -137,6 +140,22 @@ def find_parcel(obj, depth=0):
     return None
 
 
+def trim(obj, depth=0):
+    """דוגמה מקוצרת: עד 3 פריטים בכל רשימה ועד 300 תווים בכל מחרוזת. נתונים ציבוריים בלבד."""
+    if depth > 12:
+        return "…"
+    if isinstance(obj, dict):
+        return {k: trim(v, depth + 1) for k, v in list(obj.items())[:60]}
+    if isinstance(obj, list):
+        out = [trim(v, depth + 1) for v in obj[:SAMPLE_LIST_MAX]]
+        if len(obj) > SAMPLE_LIST_MAX:
+            out.append(f"… ועוד {len(obj) - SAMPLE_LIST_MAX}")
+        return out
+    if isinstance(obj, str) and len(obj) > SAMPLE_STR_MAX:
+        return obj[:SAMPLE_STR_MAX] + "…"
+    return obj
+
+
 def limit_headers(headers):
     return {k: v for k, v in headers.items() if any(h in k for h in LIMIT_HINTS)}
 
@@ -173,7 +192,7 @@ def cors_verdict(headers):
 
 
 def probe():
-    checks, limits = [], {}
+    checks, limits, samples = [], {}, {}
     cors = None
 
     def add(cid, label, path, params=None):
@@ -183,6 +202,8 @@ def probe():
         limits.update(limit_headers(hdrs))
         if cors is None and c["ok"]:  # רק מתשובה תקינה: שגיאות לא מעידות על CORS
             cors = cors_verdict(hdrs)
+        if c["ok"]:
+            samples[cid] = trim(data)
         return c, data
 
     add("stats", "סטטיסטיקה כללית", "/api/nadlan/stats")
@@ -195,7 +216,7 @@ def probe():
     parcel = find_parcel(addr) if addr is not None else None
     g, h = parcel or FALLBACK_PARCEL
     add("parcel", "פרטי חלקה", f"/api/nadlan/parcel/{g}/{h}")
-    pd, _ = add("parcel_deals", "עסקאות בחלקה", f"/api/nadlan/parcel/{g}/{h}/deals", {"limit": "5"})
+    pd, _pd_data = add("parcel_deals", "עסקאות בחלקה", f"/api/nadlan/parcel/{g}/{h}/deals", {"limit": "5"})
     ex, _ = add("deals_example", "עסקאות בתת-חלקה", "/api/nadlan/parcel/7104/289/deals",
                 {"sub_parcel": "118", "limit": "5"})
 
@@ -207,7 +228,7 @@ def probe():
 
     ok_ms = [c["ms"] for c in checks if c["ok"]]
     deals_ok = any(c["ok"] and (c["shape"] or {}).get("count", 0) > 0 for c in (pd, ex))
-    return {
+    report = {
         "probe_version": PROBE_VERSION,
         "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "base": BASE,
@@ -224,6 +245,7 @@ def probe():
             "deals_ok": deals_ok,
         },
     }
+    return report, samples
 
 
 def telegram_text(r):
@@ -273,10 +295,13 @@ def send_telegram(text):
 
 
 def main():
-    report = probe()
+    report, samples = probe()
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    with open(SAMPLES_OUT, "w", encoding="utf-8") as f:
+        json.dump({"probe_version": PROBE_VERSION, "run_at": report["run_at"], "samples": samples},
+                  f, ensure_ascii=False, indent=2)
     s = report["summary"]
     print(f"probe done: {s['ok']}/{s['total']} ok, cors={report['cors']['browser']}")
     send_telegram(telegram_text(report))
