@@ -1,0 +1,281 @@
+{
+  "probe_version": "0.1.0",
+  "run_at": "2026-10-03T17:34:19+00:00",
+  "base": "https://www.over.org.il",
+  "origin_tested": "https://tomtom0506.github.io",
+  "checks": [
+    {
+      "id": "stats",
+      "label": "סטטיסטיקה כללית",
+      "path": "/api/nadlan/stats",
+      "ok": true,
+      "status": 200,
+      "ms": 1844,
+      "kb": 0.8,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "addresses",
+          "addresses_linked_govmap_parcel",
+          "addresses_linked_pip",
+          "addresses_with_address_zip",
+          "addresses_with_locality_zip",
+          "addresses_with_parcel",
+          "addresses_with_point",
+          "addresses_with_zip",
+          "coverage",
+          "localities_with_addresses",
+          "parcels",
+          "parcels_ambiguous",
+          "parcels_with_gazetteer",
+          "parcels_with_settlement",
+          "streets",
+          "streets_in_gazetteer",
+          "streets_located",
+          "streets_register_only",
+          "zip5_codes"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "streets",
+      "label": "חיפוש רחוב",
+      "path": "/api/nadlan/streets",
+      "ok": true,
+      "status": 200,
+      "ms": 497,
+      "kb": 0.1,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "data"
+        ],
+        "list_key": "data",
+        "count": 1,
+        "item_keys": [
+          "located",
+          "name",
+          "settlement_code",
+          "settlement_name",
+          "street_key"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "address",
+      "label": "כתובת לחלקה",
+      "path": "/api/nadlan/address",
+      "ok": true,
+      "status": 200,
+      "ms": 467,
+      "kb": 6.6,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "addresses",
+          "caveats",
+          "count",
+          "data",
+          "processed",
+          "query"
+        ],
+        "list_key": "data",
+        "count": 1,
+        "item_keys": [
+          "deals",
+          "geometry",
+          "identity",
+          "match",
+          "parcel_key",
+          "sources",
+          "stat_area"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "lookup",
+      "label": "נקודה על המפה",
+      "path": "/api/nadlan/lookup",
+      "ok": true,
+      "status": 200,
+      "ms": 505,
+      "kb": 2.0,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "caveats",
+          "count",
+          "data",
+          "processed",
+          "query"
+        ],
+        "list_key": "data",
+        "count": 1,
+        "item_keys": [
+          "deals",
+          "identity",
+          "parcel_key",
+          "stat_area"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "parcel",
+      "label": "פרטי חלקה",
+      "path": "/api/nadlan/parcel/6319/225",
+      "ok": true,
+      "status": 200,
+      "ms": 590,
+      "kb": 6.2,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "caveats",
+          "count",
+          "data",
+          "processed",
+          "query"
+        ],
+        "list_key": "data",
+        "count": 1,
+        "item_keys": [
+          "deals",
+          "geometry",
+          "identity",
+          "match",
+          "parcel_key",
+          "sources",
+          "stat_area"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "parcel_deals",
+      "label": "עסקאות בחלקה",
+      "path": "/api/nadlan/parcel/6319/225/deals",
+      "ok": true,
+      "status": 200,
+      "ms": 527,
+      "kb": 2.0,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "caveats",
+          "count",
+          "data",
+          "limit",
+          "offset",
+          "processed",
+          "query",
+          "total"
+        ],
+        "list_key": "data",
+        "count": 2,
+        "item_keys": [
+          "amount",
+          "area_sqm",
+          "date",
+          "date_src",
+          "declared_amount",
+          "nature",
+          "portion",
+          "portion_fraction",
+          "price_per_sqm",
+          "price_per_sqm_normalized",
+          "rooms",
+          "settlement",
+          "settlement_code",
+          "sub_parcel",
+          "year_built"
+        ]
+      },
+      "error": null
+    },
+    {
+      "id": "deals_example",
+      "label": "עסקאות בתת-חלקה",
+      "path": "/api/nadlan/parcel/7104/289/deals",
+      "ok": true,
+      "status": 200,
+      "ms": 563,
+      "kb": 3.1,
+      "truncated": false,
+      "shape": {
+        "type": "object",
+        "keys": [
+          "caveats",
+          "count",
+          "data",
+          "limit",
+          "offset",
+          "processed",
+          "query",
+          "total"
+        ],
+        "list_key": "data",
+        "count": 5,
+        "item_keys": [
+          "amount",
+          "area_sqm",
+          "date",
+          "date_src",
+          "declared_amount",
+          "nature",
+          "portion",
+          "portion_fraction",
+          "price_per_sqm",
+          "price_per_sqm_normalized",
+          "rooms",
+          "settlement",
+          "settlement_code",
+          "sub_parcel",
+          "year_built"
+        ]
+      },
+      "error": null
+    }
+  ],
+  "cors": {
+    "allow_origin": "*",
+    "browser": "open"
+  },
+  "limit_headers": {},
+  "parcel_from_address": {
+    "gush": 6319,
+    "helka": 225
+  },
+  "deal_fields": [
+    "amount",
+    "area_sqm",
+    "date",
+    "date_src",
+    "declared_amount",
+    "nature",
+    "portion",
+    "portion_fraction",
+    "price_per_sqm",
+    "price_per_sqm_normalized",
+    "rooms",
+    "settlement",
+    "settlement_code",
+    "sub_parcel",
+    "year_built"
+  ],
+  "summary": {
+    "ok": 7,
+    "total": 7,
+    "median_ms": 527,
+    "deals_ok": true
+  }
+}
