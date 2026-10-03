@@ -1,0 +1,637 @@
+{
+  "probe_version": "0.1.1",
+  "run_at": "2026-10-03T18:13:48+00:00",
+  "samples": {
+    "stats": {
+      "parcels": 1097775,
+      "parcels_ambiguous": 2923,
+      "parcels_with_settlement": 1032249,
+      "addresses": 723550,
+      "addresses_with_point": 549187,
+      "addresses_with_zip": 608586,
+      "addresses_with_address_zip": 514662,
+      "addresses_with_locality_zip": 93924,
+      "addresses_with_parcel": 527095,
+      "addresses_linked_pip": 438680,
+      "addresses_linked_govmap_parcel": 88415,
+      "streets": 65795,
+      "streets_located": 37832,
+      "streets_register_only": 27963,
+      "streets_in_gazetteer": 33065,
+      "parcels_with_gazetteer": 758864,
+      "zip5_codes": 14627,
+      "localities_with_addresses": 462,
+      "coverage": {
+        "addresses_with_point_pct": 75.9,
+        "addresses_with_zip_pct": 84.1,
+        "addresses_with_address_zip_pct": 71.1,
+        "addresses_with_locality_zip_pct": 13.0,
+        "addresses_linked_pct": 72.8,
+        "parcels_with_gazetteer_pct": 69.1,
+        "streets_in_gazetteer_pct": 87.4,
+        "streets_register_only_pct": 42.5
+      }
+    },
+    "streets": {
+      "data": [
+        {
+          "street_key": "7900-אבימלך",
+          "name": "אבימלך",
+          "settlement_code": 7900,
+          "settlement_name": "פתח תקווה",
+          "located": true
+        }
+      ]
+    },
+    "address": {
+      "query": {
+        "mode": "address",
+        "city": "פתח תקווה",
+        "street": "אבימלך",
+        "number": "8"
+      },
+      "data": [
+        {
+          "parcel_key": "6319-0-225",
+          "identity": {
+            "gush": 6319,
+            "gush_suffix": 0,
+            "helka": 225,
+            "gp_key": "6319-225",
+            "settlement": {
+              "code": 7900,
+              "name": "פתח תקווה"
+            },
+            "region": {
+              "reg_mun": "",
+              "county": "פתח-תקוה",
+              "region": "המרכז"
+            },
+            "point": {
+              "lat": 32.07895459942675,
+              "lon": 34.917271354698784
+            },
+            "distance_m": null,
+            "zip7": [
+              "4932208"
+            ],
+            "zip5": [
+              "49322"
+            ],
+            "streets": [
+              "אבימלך"
+            ],
+            "addresses": [
+              {
+                "street": "אבימלך",
+                "house": 8,
+                "suffix": null,
+                "entrance": null,
+                "zip7": "4932208",
+                "neighbourhood": null,
+                "lat": 32.078961311627204,
+                "lon": 34.91716868562076,
+                "match": "pip"
+              }
+            ]
+          },
+          "sources": {
+            "parcels": {
+              "table": "public.append_shape_ff3176b1",
+              "fields": {
+                "legal_area": 1097.0,
+                "status": "מוסדר",
+                "locality": "פתח תקווה"
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_shape_ff3176b1\" WHERE public.over_parcel_key(\"GUSH_NUM\",\"GUSH_SUFFI\",\"PARCEL\") = '6319-0-225' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3NoYXBlX2ZmMzE3NmIxIiBXSEVSRSBwdWJsaWMub3Zlcl9wYXJjZWxfa2V5KCJHVVNIX05VTSIsIkdVU0hfU1VGRkkiLCJQQVJDRUwiKSA9ICc2MzE5LTAtMjI1JyBMSU1JVCAyMDA%3D"
+            },
+            "gazetteer": {
+              "table": "odata.gaztir_41720377",
+              "fields": {
+                "n_assets": 1,
+                "n_dwellings": 0,
+                "n_subparcels": 1,
+                "floors_max": null,
+                "building_year_min": null,
+                "building_year_max": null,
+                "apartments_est": null,
+                "street_name_src": "אבימלך",
+                "street_code": "79000492"
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"gaztir_41720377\" WHERE \"GushNum\" ~ '^[0-9]+(\\.0*)?$' AND \"ParcelNum\" ~ '^[0-9]+(\\.0*)?$' AND split_part(\"GushNum\",'.',1)::int = 6319 AND split_part(\"ParcelNum\",'.',1)::int = 225 LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiJnYXp0aXJfNDE3MjAzNzciIFdIRVJFICJHdXNoTnVtIiB%2BICdeWzAtOV0rKFwuMCopPyQnIEFORCAiUGFyY2VsTnVtIiB%2BICdeWzAtOV0rKFwuMCopPyQnIEFORCBzcGxpdF9wYXJ0KCJHdXNoTnVtIiwnLicsMSk6OmludCA9IDYzMTkgQU5EIHNwbGl0X3BhcnQoIlBhcmNlbE51bSIsJy4nLDEpOjppbnQgPSAyM…"
+            },
+            "postal": {
+              "table": "odata.00a9749e_c112_4190_9c37_97918b5792cf_2a021675",
+              "fields": {
+                "zip7": [
+                  "4932208"
+                ],
+                "zip5": [
+                  "49322"
+                ]
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"00a9749e_c112_4190_9c37_97918b5792cf_2a021675\" WHERE \"ZIP 7\" = ANY(ARRAY['4932208']) LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiIwMGE5NzQ5ZV9jMTEyXzQxOTBfOWMzN185NzkxOGI1NzkyY2ZfMmEwMjE2NzUiIFdIRVJFICJaSVAgNyIgPSBBTlkoQVJSQVlbJzQ5MzIyMDgnXSkgTElNSVQgMjAw"
+            },
+            "address_list": {
+              "table": "odata.ac1ae1fa_6d43_4685_8434_9953e950ca9b_19c5be7f",
+              "fields": {
+                "n_addresses": 1
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"ac1ae1fa_6d43_4685_8434_9953e950ca9b_19c5be7f\" WHERE (city = 'פתח תקווה' AND street = 'אבימלך') LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiJhYzFhZTFmYV82ZDQzXzQ2ODVfODQzNF85OTUzZTk1MGNhOWJfMTljNWJlN2YiIFdIRVJFIChjaXR5ID0gJ9ek16rXlyDXqten15XXldeUJyBBTkQgc3RyZWV0ID0gJ9eQ15HXmdee15zXmicpIExJTUlUIDIwMA%3D%3D"
+            },
+            "deals": {
+              "table": "public.append_taxes_nadlan_full_f41fb496_fd06f5ae",
+              "fields": {
+                "deals": 2,
+                "first_deal": "2019-12-26",
+                "last_deal": "2019-12-26",
+                "sub_parcels": 1
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\" WHERE gush = '6319' AND chelka = '225' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIiBXSEVSRSBndXNoID0gJzYzMTknIEFORCBjaGVsa2EgPSAnMjI1JyBMSU1JVCAyMDA%3D"
+            },
+            "stat_area": {
+              "table": "public.append_cbs_pub_file_42a1e1f0_693e114c",
+              "fields": {
+                "code": 517,
+                "yishuv_stat": 79000517,
+                "rova": 5,
+                "tat_rova": 51,
+                "population": 1574,
+                "main_function": "מגורים"
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_cbs_pub_file_42a1e1f0_693e114c\" WHERE \"YISHUV_STAT_2022\" = '79000517' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX2Nic19wdWJfZmlsZV80MmExZTFmMF82OTNlMTE0YyIgV0hFUkUgIllJU0hVVl9TVEFUXzIwMjIiID0gJzc5MDAwNTE3JyBMSU1JVCAyMDA%3D"
+            }
+          },
+          "stat_area": {
+            "code": 517,
+            "yishuv_stat": 79000517,
+            "settlement_name": "פתח תקווה",
+            "rova": 5,
+            "tat_rova": 51,
+            "division": "2022",
+            "population": 1574,
+            "population_year": 2024,
+            "main_function": "מגורים",
+            "socio": {
+              "eshkol": 7,
+              "index_year": 2021,
+              "division": "2011",
+              "yishuv_stat": 79000516
+            }
+          },
+          "deals": {
+            "deals": 2,
+            "first_deal": "2019-12-26",
+            "last_deal": "2019-12-26",
+            "sub_parcels": 1,
+            "latest": {
+              "date": "2019-12-26",
+              "date_src": "26/12/2019",
+              "amount": 757500,
+              "declared_amount": 757500,
+              "nature": "קוטג' דו משפחתי",
+              "area_sqm": 0,
+              "rooms": 0,
+              "year_built": 0,
+              "portion": "0.167",
+              "portion_fraction": 0.167,
+              "price_per_sqm": null,
+              "price_per_sqm_normalized": null,
+              "sub_parcel": "000"
+            }
+          },
+          "match": {
+            "method": "gp_key",
+            "confidence": "exact",
+            "notes": []
+          },
+          "geometry": null
+        }
+      ],
+      "count": 1,
+      "processed": true,
+      "caveats": [
+        "מיקוד ברמת הכתובת קיים ל-91 יישובים בלבד; בשאר היישובים המיקוד הוא מיקוד כלל-יישובי אחד (מסומן zip_level=locality).",
+        "גזטיר הנכסים מקשר גוש-חלקה לרחוב בלבד — לא למספר בית.",
+        "נקודות כתובת שמקורן בשכבות כתובות עירוניות מסומנות point_source='municipal_<מזהה שכבה>'. כשהשכבה העירונית מפרסמת קו במקום נקודה, הנקודה השמורה היא מרכז אותו קו — מיקום של הכתובת, לא של פתח הבניין.",
+        "… ועוד 3"
+      ],
+      "addresses": [
+        {
+          "address_key": "7900|7900-אבימלך|8|",
+          "settlement_code": 7900,
+          "settlement_name": "פתח תקווה",
+          "street_key": "7900-אבימלך",
+          "street_name": "אבימלך",
+          "house_num": 8,
+          "house_suffix": null,
+          "entrance": null,
+          "house_raw": "00008",
+          "zip5": "49322",
+          "zip7": "4932208",
+          "neighbourhood": null,
+          "district": null,
+          "lat": 32.078961311627204,
+          "lon": 34.91716868562076,
+          "point": "0101000020E610000007D492C865754140478B7D671B0A4040",
+          "parcel_key": "6319-0-225",
+          "parcel_match": "pip",
+          "in_postal": true,
+          "in_address_list": true,
+          "refreshed_at": "2026-09-20T11:44:21.948393+00:00",
+          "zip_level": "address",
+          "point_source": "address_register",
+          "itm_x": 192333.9791797519,
+          "itm_y": 665110.4402653861
+        }
+      ]
+    },
+    "lookup": {
+      "query": {
+        "mode": "point",
+        "lat": 32.0853,
+        "lon": 34.7818,
+        "fields": [
+          "deals",
+          "identity",
+          "stat_area",
+          "… ועוד 1"
+        ]
+      },
+      "data": [
+        {
+          "parcel_key": "6213-0-1475",
+          "identity": {
+            "gush": 6213,
+            "gush_suffix": 0,
+            "helka": 1475,
+            "gp_key": "6213-1475",
+            "settlement": {
+              "code": 5000,
+              "name": "תל אביב -יפו"
+            },
+            "region": {
+              "reg_mun": "",
+              "county": "תל-אביב",
+              "region": "תל-אביב"
+            },
+            "distance_m": 0.0,
+            "zip7": [],
+            "zip5": []
+          },
+          "stat_area": {
+            "code": 1417,
+            "yishuv_stat": 50001417,
+            "settlement_name": "תל אביב -יפו",
+            "rova": 14,
+            "tat_rova": 141,
+            "division": "2022",
+            "population": 425,
+            "population_year": 2024,
+            "main_function": "מגורים",
+            "socio": {
+              "eshkol": 9,
+              "index_year": 2021,
+              "division": "2011",
+              "yishuv_stat": 50000427
+            }
+          },
+          "deals": null
+        }
+      ],
+      "count": 1,
+      "processed": true,
+      "caveats": [
+        "מיקוד ברמת הכתובת קיים ל-91 יישובים בלבד; בשאר היישובים המיקוד הוא מיקוד כלל-יישובי אחד (מסומן zip_level=locality).",
+        "גזטיר הנכסים מקשר גוש-חלקה לרחוב בלבד — לא למספר בית.",
+        "נקודות כתובת שמקורן בשכבות כתובות עירוניות מסומנות point_source='municipal_<מזהה שכבה>'. כשהשכבה העירונית מפרסמת קו במקום נקודה, הנקודה השמורה היא מרכז אותו קו — מיקום של הכתובת, לא של פתח הבניין.",
+        "… ועוד 3"
+      ]
+    },
+    "parcel": {
+      "query": {
+        "mode": "gush_helka",
+        "gush": 6319,
+        "helka": 225,
+        "suffix": null
+      },
+      "data": [
+        {
+          "parcel_key": "6319-0-225",
+          "identity": {
+            "gush": 6319,
+            "gush_suffix": 0,
+            "helka": 225,
+            "gp_key": "6319-225",
+            "settlement": {
+              "code": 7900,
+              "name": "פתח תקווה"
+            },
+            "region": {
+              "reg_mun": "",
+              "county": "פתח-תקוה",
+              "region": "המרכז"
+            },
+            "point": {
+              "lat": 32.07895459942675,
+              "lon": 34.917271354698784
+            },
+            "distance_m": null,
+            "zip7": [
+              "4932208",
+              "4932214"
+            ],
+            "zip5": [
+              "49322"
+            ],
+            "streets": [
+              "אבימלך"
+            ],
+            "addresses": [
+              {
+                "street": "אבימלך",
+                "house": 8,
+                "suffix": null,
+                "entrance": null,
+                "zip7": "4932208",
+                "neighbourhood": null,
+                "lat": 32.078961311627204,
+                "lon": 34.91716868562076,
+                "match": "pip"
+              },
+              {
+                "street": "אבימלך",
+                "house": 14,
+                "suffix": null,
+                "entrance": null,
+                "zip7": "4932214",
+                "neighbourhood": null,
+                "lat": 32.0789448,
+                "lon": 34.9172635,
+                "match": "pip"
+              }
+            ]
+          },
+          "sources": {
+            "parcels": {
+              "table": "public.append_shape_ff3176b1",
+              "fields": {
+                "legal_area": 1097.0,
+                "status": "מוסדר",
+                "locality": "פתח תקווה"
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_shape_ff3176b1\" WHERE public.over_parcel_key(\"GUSH_NUM\",\"GUSH_SUFFI\",\"PARCEL\") = '6319-0-225' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3NoYXBlX2ZmMzE3NmIxIiBXSEVSRSBwdWJsaWMub3Zlcl9wYXJjZWxfa2V5KCJHVVNIX05VTSIsIkdVU0hfU1VGRkkiLCJQQVJDRUwiKSA9ICc2MzE5LTAtMjI1JyBMSU1JVCAyMDA%3D"
+            },
+            "gazetteer": {
+              "table": "odata.gaztir_41720377",
+              "fields": {
+                "n_assets": 1,
+                "n_dwellings": 0,
+                "n_subparcels": 1,
+                "floors_max": null,
+                "building_year_min": null,
+                "building_year_max": null,
+                "apartments_est": null,
+                "street_name_src": "אבימלך",
+                "street_code": "79000492"
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"gaztir_41720377\" WHERE \"GushNum\" ~ '^[0-9]+(\\.0*)?$' AND \"ParcelNum\" ~ '^[0-9]+(\\.0*)?$' AND split_part(\"GushNum\",'.',1)::int = 6319 AND split_part(\"ParcelNum\",'.',1)::int = 225 LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiJnYXp0aXJfNDE3MjAzNzciIFdIRVJFICJHdXNoTnVtIiB%2BICdeWzAtOV0rKFwuMCopPyQnIEFORCAiUGFyY2VsTnVtIiB%2BICdeWzAtOV0rKFwuMCopPyQnIEFORCBzcGxpdF9wYXJ0KCJHdXNoTnVtIiwnLicsMSk6OmludCA9IDYzMTkgQU5EIHNwbGl0X3BhcnQoIlBhcmNlbE51bSIsJy4nLDEpOjppbnQgPSAyM…"
+            },
+            "postal": {
+              "table": "odata.00a9749e_c112_4190_9c37_97918b5792cf_2a021675",
+              "fields": {
+                "zip7": [
+                  "4932208",
+                  "4932214"
+                ],
+                "zip5": [
+                  "49322"
+                ]
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"00a9749e_c112_4190_9c37_97918b5792cf_2a021675\" WHERE \"ZIP 7\" = ANY(ARRAY['4932208','4932214']) LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiIwMGE5NzQ5ZV9jMTEyXzQxOTBfOWMzN185NzkxOGI1NzkyY2ZfMmEwMjE2NzUiIFdIRVJFICJaSVAgNyIgPSBBTlkoQVJSQVlbJzQ5MzIyMDgnLCc0OTMyMjE0J10pIExJTUlUIDIwMA%3D%3D"
+            },
+            "address_list": {
+              "table": "odata.ac1ae1fa_6d43_4685_8434_9953e950ca9b_19c5be7f",
+              "fields": {
+                "n_addresses": 2
+              },
+              "console_sql": "SELECT * FROM \"odata\".\"ac1ae1fa_6d43_4685_8434_9953e950ca9b_19c5be7f\" WHERE (city = 'פתח תקווה' AND street = 'אבימלך') OR (city = 'פתח תקווה' AND street = 'אבימלך') LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAib2RhdGEiLiJhYzFhZTFmYV82ZDQzXzQ2ODVfODQzNF85OTUzZTk1MGNhOWJfMTljNWJlN2YiIFdIRVJFIChjaXR5ID0gJ9ek16rXlyDXqten15XXldeUJyBBTkQgc3RyZWV0ID0gJ9eQ15HXmdee15zXmicpIE9SIChjaXR5ID0gJ9ek16rXlyDXqten15XXldeUJyBBTkQgc3RyZWV0ID0gJ9eQ15HXmdee15zXmicpIExJTUlUIDIwM…"
+            },
+            "deals": {
+              "table": "public.append_taxes_nadlan_full_f41fb496_fd06f5ae",
+              "fields": {
+                "deals": 2,
+                "first_deal": "2019-12-26",
+                "last_deal": "2019-12-26",
+                "sub_parcels": 1
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\" WHERE gush = '6319' AND chelka = '225' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIiBXSEVSRSBndXNoID0gJzYzMTknIEFORCBjaGVsa2EgPSAnMjI1JyBMSU1JVCAyMDA%3D"
+            },
+            "stat_area": {
+              "table": "public.append_cbs_pub_file_42a1e1f0_693e114c",
+              "fields": {
+                "code": 517,
+                "yishuv_stat": 79000517,
+                "rova": 5,
+                "tat_rova": 51,
+                "population": 1574,
+                "main_function": "מגורים"
+              },
+              "console_sql": "SELECT * FROM \"public\".\"append_cbs_pub_file_42a1e1f0_693e114c\" WHERE \"YISHUV_STAT_2022\" = '79000517' LIMIT 200",
+              "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX2Nic19wdWJfZmlsZV80MmExZTFmMF82OTNlMTE0YyIgV0hFUkUgIllJU0hVVl9TVEFUXzIwMjIiID0gJzc5MDAwNTE3JyBMSU1JVCAyMDA%3D"
+            }
+          },
+          "stat_area": {
+            "code": 517,
+            "yishuv_stat": 79000517,
+            "settlement_name": "פתח תקווה",
+            "rova": 5,
+            "tat_rova": 51,
+            "division": "2022",
+            "population": 1574,
+            "population_year": 2024,
+            "main_function": "מגורים",
+            "socio": {
+              "eshkol": 7,
+              "index_year": 2021,
+              "division": "2011",
+              "yishuv_stat": 79000516
+            }
+          },
+          "deals": {
+            "deals": 2,
+            "first_deal": "2019-12-26",
+            "last_deal": "2019-12-26",
+            "sub_parcels": 1,
+            "latest": {
+              "date": "2019-12-26",
+              "date_src": "26/12/2019",
+              "amount": 757500,
+              "declared_amount": 757500,
+              "nature": "קוטג' דו משפחתי",
+              "area_sqm": 0,
+              "rooms": 0,
+              "year_built": 0,
+              "portion": "0.167",
+              "portion_fraction": 0.167,
+              "price_per_sqm": null,
+              "price_per_sqm_normalized": null,
+              "sub_parcel": "000"
+            }
+          },
+          "match": {
+            "method": "gp_key",
+            "confidence": "exact",
+            "notes": []
+          },
+          "geometry": null
+        }
+      ],
+      "count": 1,
+      "processed": true,
+      "caveats": [
+        "מיקוד ברמת הכתובת קיים ל-91 יישובים בלבד; בשאר היישובים המיקוד הוא מיקוד כלל-יישובי אחד (מסומן zip_level=locality).",
+        "גזטיר הנכסים מקשר גוש-חלקה לרחוב בלבד — לא למספר בית.",
+        "נקודות כתובת שמקורן בשכבות כתובות עירוניות מסומנות point_source='municipal_<מזהה שכבה>'. כשהשכבה העירונית מפרסמת קו במקום נקודה, הנקודה השמורה היא מרכז אותו קו — מיקום של הכתובת, לא של פתח הבניין.",
+        "… ועוד 3"
+      ]
+    },
+    "parcel_deals": {
+      "query": {
+        "gush": 6319,
+        "helka": 225,
+        "sub_parcel": null
+      },
+      "data": [
+        {
+          "date": "2019-12-26",
+          "date_src": "26/12/2019",
+          "amount": 757500,
+          "declared_amount": 757500,
+          "nature": "קוטג' דו משפחתי",
+          "area_sqm": 0,
+          "rooms": 0,
+          "year_built": 0,
+          "portion": "0.167",
+          "portion_fraction": 0.167,
+          "price_per_sqm": null,
+          "price_per_sqm_normalized": null,
+          "sub_parcel": "000",
+          "settlement": "פתח תקווה",
+          "settlement_code": 7900
+        },
+        {
+          "date": "2019-12-26",
+          "date_src": "26/12/2019",
+          "amount": 367500,
+          "declared_amount": 367500,
+          "nature": "מגורים",
+          "area_sqm": 0,
+          "rooms": 0,
+          "year_built": 0,
+          "portion": "0.082",
+          "portion_fraction": 0.082,
+          "price_per_sqm": null,
+          "price_per_sqm_normalized": null,
+          "sub_parcel": "000",
+          "settlement": "פתח תקווה",
+          "settlement_code": 7900
+        }
+      ],
+      "count": 2,
+      "total": 2,
+      "limit": 5,
+      "offset": 0,
+      "processed": true,
+      "caveats": [
+        "מיקוד ברמת הכתובת קיים ל-91 יישובים בלבד; בשאר היישובים המיקוד הוא מיקוד כלל-יישובי אחד (מסומן zip_level=locality).",
+        "גזטיר הנכסים מקשר גוש-חלקה לרחוב בלבד — לא למספר בית.",
+        "נקודות כתובת שמקורן בשכבות כתובות עירוניות מסומנות point_source='municipal_<מזהה שכבה>'. כשהשכבה העירונית מפרסמת קו במקום נקודה, הנקודה השמורה היא מרכז אותו קו — מיקום של הכתובת, לא של פתח הבניין.",
+        "… ועוד 3"
+      ]
+    },
+    "deals_example": {
+      "query": {
+        "gush": 7104,
+        "helka": 289,
+        "sub_parcel": "118"
+      },
+      "data": [
+        {
+          "date": "2023-11-14",
+          "date_src": "14/11/2023",
+          "amount": 52700,
+          "declared_amount": 52700,
+          "nature": "דירה בבית קומות",
+          "area_sqm": 10,
+          "rooms": 1,
+          "year_built": 2024,
+          "portion": "1.000",
+          "portion_fraction": 1.0,
+          "price_per_sqm": 5270,
+          "price_per_sqm_normalized": 5270,
+          "sub_parcel": "118",
+          "settlement": "תל אביב -יפו",
+          "settlement_code": 5000
+        },
+        {
+          "date": "2021-03-31",
+          "date_src": "31/03/2021",
+          "amount": 4073334,
+          "declared_amount": 4073334,
+          "nature": "דירה בבית קומות",
+          "area_sqm": 95,
+          "rooms": 4,
+          "year_built": 2025,
+          "portion": "1.000",
+          "portion_fraction": 1.0,
+          "price_per_sqm": 42877,
+          "price_per_sqm_normalized": 42877,
+          "sub_parcel": "118",
+          "settlement": "תל אביב -יפו",
+          "settlement_code": 5000
+        },
+        {
+          "date": "2020-01-30",
+          "date_src": "30/01/2020",
+          "amount": 150000,
+          "declared_amount": 150000,
+          "nature": "מסחרי + מגורים",
+          "area_sqm": 0,
+          "rooms": 0,
+          "year_built": 0,
+          "portion": "1.000",
+          "portion_fraction": 1.0,
+          "price_per_sqm": null,
+          "price_per_sqm_normalized": null,
+          "sub_parcel": "118",
+          "settlement": "תל אביב -יפו",
+          "settlement_code": 5000
+        },
+        "… ועוד 2"
+      ],
+      "count": 5,
+      "total": 6,
+      "limit": 5,
+      "offset": 0,
+      "processed": true,
+      "caveats": [
+        "מיקוד ברמת הכתובת קיים ל-91 יישובים בלבד; בשאר היישובים המיקוד הוא מיקוד כלל-יישובי אחד (מסומן zip_level=locality).",
+        "גזטיר הנכסים מקשר גוש-חלקה לרחוב בלבד — לא למספר בית.",
+        "נקודות כתובת שמקורן בשכבות כתובות עירוניות מסומנות point_source='municipal_<מזהה שכבה>'. כשהשכבה העירונית מפרסמת קו במקום נקודה, הנקודה השמורה היא מרכז אותו קו — מיקום של הכתובת, לא של פתח הבניין.",
+        "… ועוד 3"
+      ]
+    }
+  }
+}

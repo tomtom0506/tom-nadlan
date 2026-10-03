@@ -1,6 +1,6 @@
 {
-  "probe_version": "0.1.0",
-  "run_at": "2026-10-03T17:34:19+00:00",
+  "probe_version": "0.1.1",
+  "run_at": "2026-10-03T18:13:48+00:00",
   "base": "https://www.over.org.il",
   "origin_tested": "https://tomtom0506.github.io",
   "checks": [
@@ -10,7 +10,7 @@
       "path": "/api/nadlan/stats",
       "ok": true,
       "status": 200,
-      "ms": 1844,
+      "ms": 3393,
       "kb": 0.8,
       "truncated": false,
       "shape": {
@@ -45,7 +45,7 @@
       "path": "/api/nadlan/streets",
       "ok": true,
       "status": 200,
-      "ms": 497,
+      "ms": 393,
       "kb": 0.1,
       "truncated": false,
       "shape": {
@@ -71,7 +71,7 @@
       "path": "/api/nadlan/address",
       "ok": true,
       "status": 200,
-      "ms": 467,
+      "ms": 415,
       "kb": 6.6,
       "truncated": false,
       "shape": {
@@ -104,7 +104,7 @@
       "path": "/api/nadlan/lookup",
       "ok": true,
       "status": 200,
-      "ms": 505,
+      "ms": 381,
       "kb": 2.0,
       "truncated": false,
       "shape": {
@@ -133,7 +133,7 @@
       "path": "/api/nadlan/parcel/6319/225",
       "ok": true,
       "status": 200,
-      "ms": 590,
+      "ms": 596,
       "kb": 6.2,
       "truncated": false,
       "shape": {
@@ -165,7 +165,7 @@
       "path": "/api/nadlan/parcel/6319/225/deals",
       "ok": true,
       "status": 200,
-      "ms": 527,
+      "ms": 409,
       "kb": 2.0,
       "truncated": false,
       "shape": {
@@ -208,7 +208,7 @@
       "path": "/api/nadlan/parcel/7104/289/deals",
       "ok": true,
       "status": 200,
-      "ms": 563,
+      "ms": 313,
       "kb": 3.1,
       "truncated": false,
       "shape": {
@@ -275,7 +275,7 @@
   "summary": {
     "ok": 7,
     "total": 7,
-    "median_ms": 527,
+    "median_ms": 409,
     "deals_ok": true
   }
 }
