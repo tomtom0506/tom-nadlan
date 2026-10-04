@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-A9FhDU2nvAcr/mFL0AwbtQXW5VBenD7gh7pw/pewJdc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UODoVgxEbcxov5SQ+m/q7kiJSyOv303+GVFx2i9PhKc=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -114,7 +114,7 @@ button{font:inherit;color:inherit}
   border-inline-start:4px solid var(--good);display:grid;gap:8px;
 }
 .sample .row{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
-.sample .row span:first-child{color:var(--muted)}
+
 .sample .big{font-size:1.15rem;font-weight:700;color:var(--good)}
 .bar-track{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,var(--bad),var(--warn) 50%,var(--good))}
 [dir="rtl"] .bar-track{background:linear-gradient(270deg,var(--good),var(--warn) 50%,var(--bad))}
@@ -148,6 +148,41 @@ button{font:inherit;color:inherit}
 .result.good{border-inline-start:4px solid var(--good)}
 .result.bad{border-inline-start:4px solid var(--bad)}
 h3{font-size:.95rem;margin:16px 0 4px}
+
+/* check form */
+.lbl{display:block;font-size:.85rem;color:var(--muted);margin-bottom:4px}
+textarea,input[type=text]{
+  width:100%;font:inherit;font-size:16px;color:var(--text);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;
+}
+textarea{resize:vertical;min-height:96px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.f{display:grid;gap:4px}.f label{font-size:.82rem;color:var(--muted)}
+.f.wide{grid-column:1/-1}
+input.filled{border-color:var(--good)}
+input.miss{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
+.btn.big{width:100%;justify-content:center;padding:13px;font-size:1rem}
+.btn.small{padding:5px 12px;font-size:.82rem}
+.note.warn,.warn{color:var(--warn)}
+.note.bad{color:var(--bad)}
+p.warn{font-size:.9rem;margin:12px 0 0}
+/* result */
+.r-addr{font-weight:700;font-size:1.1rem}
+.r-sub{color:var(--muted);font-size:.9rem}
+.flag{display:inline-block;margin-top:8px;font-size:.8rem;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--warn);color:var(--warn)}
+.verdict{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:1.4rem;font-weight:700;margin:14px 0}
+.verdict.good{color:var(--good)}.verdict.bad{color:var(--bad)}.verdict.mid{color:var(--warn)}
+.v-diff{font-size:1.05rem;font-weight:600;unicode-bidi:isolate}
+.pbar{margin:4px 0 0}.pbar .row{display:flex;justify-content:space-between;margin-top:4px;color:var(--muted)}
+.checks.deals td{vertical-align:top}
+.checks.deals small{color:var(--muted);font-size:.78rem}
+#checkCard,#resultCard,#historyCard{scroll-margin-top:calc(150px + env(safe-area-inset-top,0px))}
+/* history */
+.h-top{display:flex;justify-content:space-between;align-items:center}
+.hist-list{display:grid;gap:8px}
+.hist{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:start;cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;font-size:.9rem}
+.h-v{white-space:nowrap;font-weight:600}.h-v.good{color:var(--good)}.h-v.bad{color:var(--bad)}.h-v.mid{color:var(--warn)}
 
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
@@ -211,21 +246,31 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 
   <!-- בדוק נכס -->
   <section class="panel" id="p-check" role="tabpanel" aria-labelledby="t-check">
-    <article class="sec">
-      <h2>בדוק נכס <span class="soon">בגרסה 1.0</span></h2>
-      <p class="lead">מדביקים מודעה, ומקבלים תשובה אחת: הזדמנות, מחיר הוגן או יקר.</p>
-      <ol class="steps">
-        <li><div><b>מדביקים מודעה מיד2 או ממדלן</b><span>או ממלאים ידנית עיר, רחוב, מספר, חדרים, מ"ר, קומה ומחיר.</span></div></li>
-        <li><div><b>משווים לעסקאות אמיתיות</b><span>דירות דומות שנמכרו בשנתיים האחרונות באותו רחוב ובסביבה.</span></div></li>
-        <li><div><b>מקבלים מסקנה</b><span>מחיר למ"ר מול החציון, חמש עסקאות דומות ואזהרה כשיש מעט נתונים.</span></div></li>
-      </ol>
-      <div class="sample" aria-label="דוגמה להמחשה בלבד">
-        <div class="row"><span>🧪 דוגמה להמחשה</span><span>4 חד׳, 92 מ"ר</span></div>
-        <div class="big">💎 הזדמנות: 12% מתחת לחציון</div>
-        <div class="bar-track" aria-hidden="true"><div class="bar-pin" style="inset-inline-start:22%"></div></div>
-        <div class="row"><small>זול</small><small>הוגן</small><small>יקר</small></div>
-        <small>הנתונים בדוגמה מומצאים. ההשוואה האמיתית תיבנה אחרי בדיקת ההיתכנות.</small>
+    <article class="sec" id="checkCard">
+      <h2>בדוק נכס</h2>
+      <p class="lead">מדביקים מודעה מיד2 או ממדלן, או ממלאים ידנית. ההשוואה היא מול דירות שנמכרו בפועל, בבניין ובסביבה.</p>
+      <label class="lbl" for="adText">טקסט המודעה</label>
+      <textarea id="adText" rows="4" maxlength="4000" placeholder="הדבק כאן את כל הטקסט של המודעה"></textarea>
+      <div class="actions"><button class="btn" id="parseBtn" type="button">חלץ פרטים מהמודעה</button></div>
+      <div class="grid">
+        <div class="f"><label for="fCity">עיר</label><input id="fCity" type="text" maxlength="40" autocomplete="off"></div>
+        <div class="f"><label for="fStreet">רחוב</label><input id="fStreet" type="text" maxlength="40" autocomplete="off"></div>
+        <div class="f"><label for="fNumber">מספר בית</label><input id="fNumber" type="text" inputmode="numeric" maxlength="4"></div>
+        <div class="f"><label for="fRooms">חדרים</label><input id="fRooms" type="text" inputmode="decimal" maxlength="4"></div>
+        <div class="f"><label for="fSqm">מ"ר</label><input id="fSqm" type="text" inputmode="numeric" maxlength="4"></div>
+        <div class="f"><label for="fFloor">קומה</label><input id="fFloor" type="text" inputmode="numeric" maxlength="3"></div>
+        <div class="f wide"><label for="fPrice">מחיר מבוקש (₪)</label><input id="fPrice" type="text" inputmode="numeric" maxlength="12"></div>
       </div>
+      <div class="actions"><button class="btn primary big" id="checkBtn" type="button">בדוק נכס</button></div>
+      <p class="note" id="checkStatus" role="status" aria-live="polite"></p>
+    </article>
+
+    <article class="sec" id="resultCard" aria-live="polite" hidden></article>
+
+    <article class="sec" id="historyCard" hidden>
+      <div class="h-top"><h2>בדיקות אחרונות</h2><button class="btn small" id="histClear" type="button">נקה</button></div>
+      <p class="lead">נשמרות רק בטלפון הזה. לחיצה ממלאת את הטופס מחדש.</p>
+      <div id="historyList" class="hist-list"></div>
     </article>
 
     <article class="sec" aria-labelledby="dataTitle">
@@ -274,10 +319,17 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='0.1.1';
+var APP_VERSION='1.0.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.0.0',date:'2026-10-03',items:[
+    'בדוק נכס: מדביקים מודעה, האפליקציה מחלצת את הפרטים ומשווה לדירות שנמכרו בפועל בבניין ובסביבה של כ-650 מטר.',
+    'מסקנה ברורה: הזדמנות (10% ומטה מתחת לחציון), מחיר הוגן או יקר, יחד עם המחיר למ"ר מול החציון, מיקום בסולם וחמש עסקאות דומות.',
+    'כשיש פחות מ-5 עסקאות דומות מוצגת אזהרה, וההשוואה היא אינדיקציה בלבד.',
+    'בדיקות אחרונות נשמרות בטלפון בלבד, ולחיצה עליהן ממלאת את הטופס מחדש.',
+    'הבדיקה רצה ישירות מהטלפון, בלי GitHub ובלי טוקן.'
+  ]},
   {v:'0.1.1',date:'2026-10-03',items:[
     'אייקון חדש לאפליקציה: קו רקיע בזהב על כחול לילה, עם שם שמוסתר בתוך הבניינים.',
     'אפשר להוסיף את האפליקציה למסך הבית באייפון, עם האייקון החדש.',
@@ -452,6 +504,321 @@ tBtn.addEventListener('click',function(){
   })
   .then(function(){clearTimeout(timer);tBtn.disabled=false;tBtn.textContent='בדוק גישה מהדפדפן';});
 });
+})();
+</script>
+<script>
+(function(){
+'use strict';
+var OVER='https://www.over.org.il';
+var BUDGET=1500000;
+var MONTHS=24, AREA_TOL=0.20, ROOMS_TOL=1, MIN_COMPS=5, OPP=-0.10, EXP=0.10;
+var RING=[{d:300,n:6},{d:650,n:6}];
+var MAX_PARCELS=18, CONC=4, TIMEOUT=15000;
+var HKEY='tn-history', HMAX=10;
+
+/* ---------- עזרים ---------- */
+function $(id){return document.getElementById(id);}
+function el(tag,props){
+  var n=document.createElement(tag);props=props||{};
+  Object.keys(props).forEach(function(k){
+    var v=props[k];if(v==null)return;
+    if(k==='class')n.className=v;else if(k==='text')n.textContent=String(v);else n.setAttribute(k,String(v));
+  });
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null||c===false)continue;n.appendChild(typeof c==='object'?c:document.createTextNode(String(c)));}
+  return n;
+}
+function nis(v){return '₪'+Math.round(v).toLocaleString('en-US');}
+function pct(v){return (v>0?'+':'')+Math.round(v*100)+'%';}
+function median(a){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y;}),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function clampNum(v,lo,hi){var n=Number(String(v==null?'':v).replace(/[,\s₪]/g,''));return isFinite(n)&&n>=lo&&n<=hi?n:null;}
+function cleanText(v,max){v=String(v==null?'':v).replace(/[\u0000-\u001f<>{}\[\]\\]/g,' ').replace(/\s+/g,' ').trim();return v.slice(0,max);}
+
+/* ---------- פענוח מודעה ---------- */
+var CITIES=['תל אביב יפו','תל אביב','רמת השרון','רמת גן','גבעתיים','פתח תקווה','פתח תקוה','ראשון לציון','חולון','בת ים','בני ברק','הרצליה','רעננה','כפר סבא','הוד השרון','ראש העין','נתניה','רחובות','נס ציונה','לוד','רמלה','יהוד מונוסון','יהוד','אור יהודה','קרית אונו','קריית אונו','גני תקווה','שוהם','מודיעין מכבים רעות','מודיעין','אשדוד','אשקלון','ירושלים','חיפה','באר שבע','חדרה','כפר יונה','יבנה','גדרה','קרית גת','קריית גת','אלעד','באר יעקב','טירת כרמל','קרית ביאליק','קרית מוצקין','נהריה','עפולה','בית שמש','אריאל','זכרון יעקב','פרדס חנה כרכור','אור עקיבא','צור יצחק','כוכב יאיר','גבעת שמואל','אזור','קרית מלאכי','נתיבות','שדרות','אופקים','דימונה','טבריה','צפת','כרמיאל','נוף הגליל','מעלות תרשיחא','עכו','קרית ים','קרית אתא','יקנעם עילית','בית שאן','מעלה אדומים','ביתר עילית','מודיעין עילית','קדימה צורן','אבן יהודה','תל מונד','גן יבנה','מזכרת בתיה','קרית עקרון','באר יעקב'];
+var NOT_STREET=/^(קומה|קומת|חדרים|חדר|מ"ר|מטר|מחיר|דירה|דירת|פנטהאוז|דופלקס|קוטג'|בית|כניסה|מעלית|חניה|חניות|מרפסת|מרפסות|ממ"ד|מחסן|תאריך|שנת|בנוי|גודל|מיליון|שכונה|למכירה|מכירה|נכס|חד')/;
+
+var LEAD=/^(?:מתוך|עד|כ|מעל|רק|כולל|בקומה|דירה|דירת|למכירה|מכירה|נמכרת|ברחוב|רחוב|רח'|רח|ב|ממוקמת|נמצאת|בשכונת|שכונת)$/;
+function cleanStreet(x){
+  var w=String(x).trim().split(/\s+/);
+  while(w.length&&(LEAD.test(w[0])||NOT_STREET.test(w[0])))w.shift();
+  if(w.length&&/^ב[א-ת]{2,}$/.test(w[0])&&w.length>1&&/^(?:רחוב|רח')/.test(w[0].slice(1)))w.shift();
+  var st=w.join(' ');
+  return st.length>=2&&!NOT_STREET.test(st)?st:'';
+}
+function parseAd(raw){
+  var t=String(raw||'').slice(0,4000).replace(/[״]/g,'"').replace(/[׳]/g,"'").replace(/\u00a0/g,' ');
+  var out={},m;
+  // מחיר
+  if((m=t.match(/(\d{1,2}(?:[.,]\d{1,3})?)\s*מיליון/))){out.price=Math.round(parseFloat(m[1].replace(',','.'))*1e6);}
+  else if((m=t.match(/₪\s*(\d[\d,.]{4,})/))||(m=t.match(/(\d[\d,]{5,})\s*₪/))||(m=t.match(/(?:מחיר|מבוקש)[^\d\n]{0,12}(\d[\d,]{5,})/))||(m=t.match(/(?:^|\s)(\d{1,2},\d{3},\d{3})(?:\s|$)/m))){
+    out.price=Number(m[1].replace(/[,.]/g,''));
+  }
+  if(out.price!=null&&!(out.price>=100000&&out.price<=50000000))delete out.price;
+  // חדרים
+  if((m=t.match(/(\d{1,2}(?:\.5)?)\s*(?:חדרים|חדר|חד'|חד\b)/))||(m=t.match(/חדרים[^\d\n]{0,6}(\d{1,2}(?:\.5)?)/))){var r=parseFloat(m[1]);if(r>=1&&r<=15)out.rooms=r;}
+  // מ"ר
+  if((m=t.match(/(\d{2,4})\s*(?:מ"ר|מ'ר|מטר|מר\b)/))||(m=t.match(/(?:מ"ר|גודל)[^\d\n]{0,12}(\d{2,4})/))){var a=Number(m[1]);if(a>=15&&a<=1000)out.sqm=a;}
+  // קומה
+  if(/קומת\s*קרקע|קומה\s*:?\s*קרקע/.test(t))out.floor=0;
+  else if((m=t.match(/קומה[^\d\n]{0,6}(\d{1,2})/))){out.floor=Number(m[1]);}
+  // כתובת: "רחוב 12, ..., עיר"
+  var lines=t.split(/\n|\|/);
+  outer:for(var i=0;i<lines.length;i++){
+    var segs=lines[i].split(',').map(function(s){return s.trim();}).filter(Boolean);
+    for(var j=0;j<segs.length;j++){
+      var sm=segs[j].match(/([א-ת][א-ת"'\-]*(?:\s+[א-ת"'\-]+){0,4})\s+(\d{1,4})[א-ת]?$/);
+      var st=(sm&&!/\d/.test(segs[j].slice(0,sm.index)))?cleanStreet(sm[1]):'';
+      if(st){
+        out.street=st;out.number=Number(sm[2]);
+        for(var k=segs.length-1;k>j;k--){
+          if(/^[א-ת][א-ת"'\-\s]{1,30}$/.test(segs[k])&&!/^שכונת|^שכונה/.test(segs[k])){out.city=segs[k];break;}
+        }
+        break outer;
+      }
+    }
+  }
+  if(!out.city){
+    var found=null;CITIES.slice().sort(function(x,y){return y.length-x.length;}).some(function(c){if(t.indexOf(c)>=0){found=c;return true;}return false;});
+    if(found)out.city=found;
+  }
+  return out;
+}
+
+/* ---------- רשת ---------- */
+function fetchJSON(path,params){
+  var u=new URL(OVER+path);
+  if(params)Object.keys(params).forEach(function(k){u.searchParams.set(k,params[k]);});
+  var ctl=('AbortController' in window)?new AbortController():null;
+  var timer=setTimeout(function(){if(ctl)ctl.abort();},TIMEOUT);
+  return fetch(u.href,{mode:'cors',credentials:'omit',cache:'no-store',signal:ctl?ctl.signal:undefined})
+    .then(function(r){if(!r.ok){var e=new Error('http');e.status=r.status;throw e;}return r.json();})
+    .finally(function(){clearTimeout(timer);});
+}
+function pool(items,n,fn){
+  var i=0,res=new Array(items.length);
+  function next(){if(i>=items.length)return Promise.resolve();var k=i++;return fn(items[k]).then(function(v){res[k]=v;},function(){res[k]=null;}).then(next);}
+  var w=[];for(var j=0;j<Math.min(n,items.length);j++)w.push(next());
+  return Promise.all(w).then(function(){return res;});
+}
+function cityVariants(c){
+  var v=[c],n=c.replace(/-/g,' ').replace(/\s+/g,' ').trim();
+  if(/^תל אביב/.test(n))v.push('תל אביב -יפו','תל אביב יפו');
+  if(n==='פתח תקוה')v.push('פתח תקווה');if(n==='פתח תקווה')v.push('פתח תקוה');
+  if(/^קרית /.test(n))v.push(n.replace(/^קרית /,'קריית '));if(/^קריית /.test(n))v.push(n.replace(/^קריית /,'קרית '));
+  if(n!==c)v.push(n);
+  return v.filter(function(x,i,a){return a.indexOf(x)===i;});
+}
+function findAddress(city,street,number){
+  var vars=cityVariants(city),i=0;
+  function tryNext(){
+    if(i>=vars.length)return Promise.resolve(null);
+    var c=vars[i++];
+    return fetchJSON('/api/nadlan/address',{city:c,street:street,number:String(number)}).then(function(d){
+      return d&&Array.isArray(d.data)&&d.data.length?d.data:tryNext();
+    },function(e){if(e&&(e.status===404||e.status===400))return tryNext();throw e;});
+  }
+  return tryNext();
+}
+function ringPoints(lat,lon){
+  var pts=[];RING.forEach(function(r){for(var k=0;k<r.n;k++){var a=2*Math.PI*k/r.n+(r.d>400?Math.PI/r.n:0);
+    pts.push({lat:lat+(r.d*Math.cos(a))/111320,lon:lon+(r.d*Math.sin(a))/(111320*Math.cos(lat*Math.PI/180))});}});
+  return pts;
+}
+function parcelDeals(p){
+  var path='/api/nadlan/parcel/'+encodeURIComponent(p.g)+'/'+encodeURIComponent(p.h)+'/deals';
+  return fetchJSON(path,{limit:'100'}).catch(function(){return fetchJSON(path);}).then(function(d){
+    return (d&&Array.isArray(d.data)?d.data:[]).map(function(x){return {deal:x,src:p.src,key:p.key};});
+  });
+}
+
+/* ---------- ניתוח ---------- */
+function isApartment(n){n=String(n||'');return /דיר|פנטהאוז|דופלקס|גג/.test(n)&&!/מסחר|משרד|חנות|מחסן|חני/.test(n);}
+function cleanDeals(rows,now){
+  var cutoff=new Date(now);cutoff.setMonth(cutoff.getMonth()-MONTHS);
+  var seen={},out=[];
+  rows.forEach(function(r){
+    var x=r&&r.deal;if(!x||typeof x!=='object')return;
+    var d=new Date(x.date);if(isNaN(d)||d<cutoff||d>now)return;
+    var ppm=Number(x.price_per_sqm_normalized),area=Number(x.area_sqm),amt=Number(x.amount),pf=Number(x.portion_fraction);
+    if(!isApartment(x.nature)||!(area>=25&&area<=600)||!(ppm>=3000&&ppm<=150000)||!(amt>=200000)||!(pf>=0.99))return;
+    var k=[r.key,x.sub_parcel,x.date,amt].join('|');if(seen[k])return;seen[k]=1;
+    out.push({date:x.date,amount:amt,area:area,rooms:Number(x.rooms)||0,ppm:ppm,nature:String(x.nature),year:Number(x.year_built)||0,src:r.src});
+  });
+  return out;
+}
+function analyze(target,rows,now){
+  now=now||new Date();
+  var all=cleanDeals(rows,now);
+  var sim=all.filter(function(d){
+    if(Math.abs(d.area-target.sqm)>target.sqm*AREA_TOL)return false;
+    if(target.rooms&&d.rooms>0&&Math.abs(d.rooms-target.rooms)>ROOMS_TOL)return false;
+    return true;
+  });
+  var asked=target.price/target.sqm;
+  var pool_=sim.length>=MIN_COMPS?sim:all;
+  var med=median(pool_.map(function(d){return d.ppm;}));
+  var res={asked:asked,all:all.length,similar:sim.length,basis:sim.length>=MIN_COMPS?'similar':'all',median:med,diff:null,pctile:null,verdict:'none',top:[]};
+  if(med){
+    res.diff=(asked-med)/med;
+    var below=pool_.filter(function(d){return d.ppm<=asked;}).length;res.pctile=pool_.length?below/pool_.length:null;
+    if(sim.length<MIN_COMPS)res.verdict='few';
+    else res.verdict=res.diff<=OPP?'opportunity':res.diff>EXP?'expensive':'fair';
+  }
+  res.top=(sim.length?sim:all).slice().sort(function(a,b){
+    var sa=Math.abs(a.area-target.sqm)/target.sqm+(a.src==='building'?-0.05:0)-(new Date(a.date)-0)/1e12;
+    var sb=Math.abs(b.area-target.sqm)/target.sqm+(b.src==='building'?-0.05:0)-(new Date(b.date)-0)/1e12;
+    return sa-sb;
+  }).slice(0,5);
+  res.fromBuilding=sim.filter(function(d){return d.src==='building';}).length;
+  return res;
+}
+
+/* ---------- טופס ---------- */
+var F={city:'fCity',street:'fStreet',number:'fNumber',rooms:'fRooms',sqm:'fSqm',floor:'fFloor',price:'fPrice'};
+function readForm(){
+  return {
+    city:cleanText($(F.city).value,40),street:cleanText($(F.street).value,40),number:clampNum($(F.number).value,1,9999),
+    rooms:clampNum($(F.rooms).value,1,15),sqm:clampNum($(F.sqm).value,15,1000),floor:clampNum($(F.floor).value,-2,99),price:clampNum($(F.price).value,100000,50000000)
+  };
+}
+function fillForm(o,mark){
+  Object.keys(F).forEach(function(k){
+    var inp=$(F[k]);if(o[k]!=null&&o[k]!==''){inp.value=String(o[k]);if(mark)inp.classList.add('filled');}
+  });
+}
+function markMissing(v){
+  var req=['city','street','number','sqm','price'],miss=[];
+  Object.keys(F).forEach(function(k){$(F[k]).classList.remove('miss');});
+  req.forEach(function(k){if(v[k]==null||v[k]===''){miss.push(k);$(F[k]).classList.add('miss');}});
+  return miss;
+}
+var LABEL={city:'עיר',street:'רחוב',number:'מספר בית',sqm:'מ"ר',price:'מחיר'};
+
+/* ---------- תוצאה ---------- */
+var VERDICT={
+  opportunity:['good','💎 הזדמנות'],fair:['mid','⚖️ מחיר הוגן'],expensive:['bad','💸 יקר'],few:['mid','⚠️ מעט נתונים'],none:['bad','❌ אין עסקאות להשוואה']
+};
+function fmtDate(s){var p=String(s).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0].slice(2):String(s);}
+function renderResult(t,r,meta){
+  var box=$('resultCard');box.textContent='';box.hidden=false;
+  var v=VERDICT[r.verdict]||VERDICT.none;
+  box.appendChild(el('div',{class:'r-head'},
+    el('div',{class:'r-addr',text:t.street+' '+t.number+', '+t.city}),
+    el('div',{class:'r-sub',text:[t.rooms?t.rooms+' חד׳':null,t.sqm+' מ"ר',t.floor!=null?'קומה '+t.floor:null,nis(t.price)].filter(Boolean).join(', ')})
+  ));
+  if(t.price>BUDGET)box.appendChild(el('div',{class:'flag',text:'מעל התקציב של '+nis(BUDGET)}));
+  var vt=el('div',{class:'verdict '+v[0]},v[1]);
+  if(r.diff!=null&&r.verdict!=='none'){vt.appendChild(el('span',{class:'v-diff',dir:'ltr',text:pct(r.diff)}));}
+  box.appendChild(vt);
+  if(r.median){
+    box.appendChild(el('div',{class:'stats'},
+      el('div',{class:'stat'},el('b',{dir:'ltr',text:nis(r.asked)}),el('span',{text:'מבוקש למ"ר'})),
+      el('div',{class:'stat'},el('b',{dir:'ltr',text:nis(r.median)}),el('span',{text:'חציון למ"ר'})),
+      el('div',{class:'stat'},el('b',{dir:'ltr',text:String(r.basis==='similar'?r.similar:r.all)}),el('span',{text:r.basis==='similar'?'עסקאות דומות':'עסקאות באזור'}))
+    ));
+    if(r.pctile!=null){
+      var track=el('div',{class:'bar-track','aria-hidden':'true'});
+      var pin=el('div',{class:'bar-pin'});pin.style.insetInlineStart=Math.round(Math.min(98,Math.max(0,r.pctile*100)))+'%';track.appendChild(pin);
+      box.appendChild(el('div',{class:'pbar'},track,el('div',{class:'row'},el('small',{text:'זול'}),el('small',{text:'הוגן'}),el('small',{text:'יקר'}))));
+      var grp=r.basis==='similar'?'הדומות':'באזור';
+      box.appendChild(el('p',{class:'note',text:(r.pctile>=0.5?'יקר יותר מ-'+Math.round(r.pctile*100):'זול יותר מ-'+Math.round((1-r.pctile)*100))+'% מהעסקאות '+grp+', לפי מחיר למ"ר.'}));
+    }
+  }
+  if(r.verdict==='few')box.appendChild(el('p',{class:'warn',text:'נמצאו רק '+r.similar+' עסקאות דומות (צריך לפחות '+MIN_COMPS+'). ההשוואה היא מול כל הדירות שנמכרו באזור, ולכן היא אינדיקציה בלבד.'}));
+  if(r.verdict==='none')box.appendChild(el('p',{class:'warn',text:'לא נמצאו מכירות דירות בשנתיים האחרונות בבניין ובסביבה הקרובה. ייתכן שהאזור חדש או שהנתונים עוד לא עודכנו.'}));
+  if(r.top.length){
+    box.appendChild(el('h3',{text:r.similar?'עסקאות דומות':'עסקאות באזור'}));
+    var tb=el('tbody');
+    r.top.forEach(function(d){tb.appendChild(el('tr',null,
+      el('td',null,el('div',{text:fmtDate(d.date)}),el('small',{text:d.src==='building'?'אותו בניין':'בסביבה'})),
+      el('td',{text:(d.rooms?d.rooms+' חד׳, ':'')+d.area+' מ"ר'}),
+      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(d.amount)}),el('small',{text:nis(d.ppm)+' למ"ר'}))
+    ));});
+    box.appendChild(el('table',{class:'checks deals'},tb));
+  }
+  box.appendChild(el('p',{class:'note',text:'נבדקו '+meta.parcels+' חלקות: הבניין עצמו וסביבה של כ-650 מטר. דירות בלבד, ‎'+MONTHS+' חודשים אחרונים, ‎±'+Math.round(AREA_TOL*100)+'% מ"ר, ‎±'+ROOMS_TOL+' חדר. הקומה לא נכללת בהשוואה, כי היא לא מופיעה בנתוני העסקאות. הנתונים מתעדכנים בפיגור של כשבוע-שבועיים.'}));
+  box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- היסטוריה ---------- */
+function loadHist(){try{var h=JSON.parse(localStorage.getItem(HKEY)||'[]');return Array.isArray(h)?h.slice(0,HMAX):[];}catch(e){return [];}}
+function saveHist(h){try{localStorage.setItem(HKEY,JSON.stringify(h.slice(0,HMAX)));}catch(e){}}
+function renderHist(){
+  var h=loadHist(),box=$('historyCard'),list=$('historyList');list.textContent='';box.hidden=!h.length;
+  h.forEach(function(x){
+    if(!x||typeof x!=='object')return;
+    var v=VERDICT[x.verdict]||VERDICT.none;
+    var b=el('button',{class:'hist',type:'button'},
+      el('span',{class:'h-main',text:cleanText(x.street,40)+' '+(clampNum(x.number,1,9999)||'')+', '+cleanText(x.city,40)}),
+      el('span',{class:'h-v '+v[0],text:v[1]+(typeof x.diff==='number'&&isFinite(x.diff)?' '+pct(x.diff):'')})
+    );
+    b.addEventListener('click',function(){fillForm({city:cleanText(x.city,40),street:cleanText(x.street,40),number:clampNum(x.number,1,9999),rooms:clampNum(x.rooms,1,15),sqm:clampNum(x.sqm,15,1000),floor:clampNum(x.floor,-2,99),price:clampNum(x.price,100000,50000000)});$('checkCard').scrollIntoView({behavior:'smooth'});});
+    list.appendChild(b);
+  });
+}
+
+/* ---------- זרימה ---------- */
+var busy=false;
+function status(msg,kind){var s=$('checkStatus');s.textContent=msg||'';s.className='note'+(kind?' '+kind:'');}
+function runCheck(){
+  if(busy)return;
+  var t=readForm(),miss=markMissing(t);
+  if(miss.length){status('חסר: '+miss.map(function(k){return LABEL[k];}).join(', ')+'.','warn');return;}
+  busy=true;var btn=$('checkBtn');btn.disabled=true;btn.textContent='בודק…';$('resultCard').hidden=true;
+  var parcels={},meta={parcels:0};
+  status('מאתר את הכתובת…');
+  findAddress(t.city,t.street,t.number).then(function(data){
+    if(!data){var e=new Error('notfound');e.notfound=true;throw e;}
+    var lat=null,lon=null;
+    data.slice(0,3).forEach(function(p){
+      var id=p&&p.identity;if(!id||!id.gush||!id.helka)return;
+      var key=id.gush+'-'+id.helka;parcels[key]={g:id.gush,h:id.helka,src:'building',key:key};
+      if(lat==null&&id.point&&isFinite(id.point.lat)){lat=Number(id.point.lat);lon=Number(id.point.lon);}
+      if(lat==null&&Array.isArray(id.addresses)&&id.addresses[0]&&isFinite(id.addresses[0].lat)){lat=Number(id.addresses[0].lat);lon=Number(id.addresses[0].lon);}
+    });
+    if(!Object.keys(parcels).length){var e2=new Error('noparcel');e2.notfound=true;throw e2;}
+    if(lat==null)return null;
+    status('סורק את הסביבה…');
+    return pool(ringPoints(lat,lon),CONC,function(pt){
+      return fetchJSON('/api/nadlan/lookup',{lat:pt.lat.toFixed(6),lon:pt.lon.toFixed(6),fields:'identity,deals'});
+    });
+  }).then(function(looks){
+    (looks||[]).forEach(function(d){
+      var p=d&&Array.isArray(d.data)&&d.data[0];var id=p&&p.identity;if(!id||!id.gush||!id.helka)return;
+      var cnt=p.deals&&typeof p.deals==='object'?Number(p.deals.deals):NaN;if(cnt===0)return;
+      var key=id.gush+'-'+id.helka;if(!parcels[key])parcels[key]={g:id.gush,h:id.helka,src:'area',key:key};
+    });
+    var list=Object.keys(parcels).map(function(k){return parcels[k];}).slice(0,MAX_PARCELS);
+    meta.parcels=list.length;var done=0;
+    status('אוסף עסקאות (0/'+list.length+')…');
+    return pool(list,CONC,function(p){return parcelDeals(p).then(function(r){done++;status('אוסף עסקאות ('+done+'/'+list.length+')…');return r;});});
+  }).then(function(groups){
+    var rows=[];(groups||[]).forEach(function(g){if(Array.isArray(g))rows=rows.concat(g);});
+    var r=analyze(t,rows,new Date());
+    status('');renderResult(t,r,meta);
+    var h=loadHist();h.unshift({ts:Date.now(),city:t.city,street:t.street,number:t.number,rooms:t.rooms,sqm:t.sqm,floor:t.floor,price:t.price,verdict:r.verdict,diff:r.diff});
+    saveHist(h);renderHist();
+  }).catch(function(e){
+    if(e&&e.notfound)status('הכתובת לא נמצאה במאגר. כדאי לבדוק את כתיב העיר והרחוב, למשל "פתח תקווה" ולא "פ"ת".','bad');
+    else if(e&&e.name==='AbortError')status('השרת לא ענה בזמן. נסה שוב בעוד רגע.','bad');
+    else if(e&&e.status===429)status('הגענו למגבלת השימוש היומית של המאגר. נסה שוב מחר.','bad');
+    else status('הבדיקה נכשלה (רשת או שרת). נסה שוב בעוד רגע.','bad');
+  }).then(function(){busy=false;btn.disabled=false;btn.textContent='בדוק נכס';});
+}
+
+$('parseBtn').addEventListener('click',function(){
+  var o=parseAd($('adText').value),keys=Object.keys(o);
+  Object.keys(F).forEach(function(k){$(F[k]).classList.remove('filled','miss');});
+  fillForm(o,true);
+  var miss=['city','street','number','sqm','price'].filter(function(k){return o[k]==null;});
+  status(keys.length?('חולצו '+keys.length+' פרטים'+(miss.length?'. חסר: '+miss.map(function(k){return LABEL[k];}).join(', ')+'. השלם ידנית.':'. בדוק שהם נכונים ולחץ "בדוק נכס".')):'לא הצלחתי לחלץ פרטים. מלא את השדות ידנית.',miss.length?'warn':'');
+  markMissingOnly(miss);
+});
+function markMissingOnly(miss){miss.forEach(function(k){$(F[k]).classList.add('miss');});}
+$('checkBtn').addEventListener('click',runCheck);
+$('histClear').addEventListener('click',function(){saveHist([]);renderHist();});
+renderHist();
+window.__tn={parseAd:parseAd,analyze:analyze,cleanDeals:cleanDeals,ringPoints:ringPoints,cityVariants:cityVariants};
 })();
 </script>
 </body>
