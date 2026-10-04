@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UODoVgxEbcxov5SQ+m/q7kiJSyOv303+GVFx2i9PhKc=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-22puU1KM1ZMBDsWyAxpY385nWH6Nu0iCaLuZZRKakes=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -184,6 +184,16 @@ p.warn{font-size:.9rem;margin:12px 0 0}
   background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;font-size:.9rem}
 .h-v{white-space:nowrap;font-weight:600}.h-v.good{color:var(--good)}.h-v.bad{color:var(--bad)}.h-v.mid{color:var(--warn)}
 
+/* update */
+.upd-bar{background:var(--accent);color:var(--accent-ink);font-size:.9rem;font-weight:600}
+.upd-bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px}
+.upd-bar .btn{background:var(--accent-ink);color:var(--accent);border-color:transparent}
+.toast{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center}
+#updBtn.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (max-width:360px){.brand span{font-size:.92rem}}
+
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
 /* changelog */
@@ -219,9 +229,12 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
       <span>הנדלן של תומר</span>
     </div>
     <button class="chip-btn" id="verBtn" type="button" aria-haspopup="dialog">v0.0.0</button>
+    <button class="icon-btn" id="updBtn" type="button" aria-label="בדיקת עדכון גרסה">🔄</button>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="החלפת מצב יום ולילה">🌙</button>
   </div>
 </header>
+<div class="upd-bar" id="updBar" role="status" hidden><div class="wrap"><span id="updText"></span><button class="btn small primary" id="updGo" type="button">עדכן עכשיו</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <main class="wrap">
   <section class="hero" aria-labelledby="heroTitle">
@@ -319,10 +332,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.0.0';
+var APP_VERSION='1.0.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.0.1',date:'2026-10-03',items:[
+    'כפתור 🔄 בכותרת: בודק אם יש גרסה חדשה, ואם יש, טוען אותה מיד בלי מטמון. עובד גם מאייקון מסך הבית.',
+    'בדיקה אוטומטית בכל פתיחה: כשיש גרסה חדשה, מופיע פס עליון עם כפתור "עדכן עכשיו".'
+  ]},
   {v:'1.0.0',date:'2026-10-03',items:[
     'בדוק נכס: מדביקים מודעה, האפליקציה מחלצת את הפרטים ומשווה לדירות שנמכרו בפועל בבניין ובסביבה של כ-650 מטר.',
     'מסקנה ברורה: הזדמנות (10% ומטה מתחת לחציון), מחיר הוגן או יקר, יחד עם המחיר למ"ר מול החציון, מיקום בסולם וחמש עסקאות דומות.',
@@ -410,6 +427,33 @@ showTab((location.hash||'#check').slice(1));
 var verBtn=document.getElementById('verBtn'),dlg=document.getElementById('logDlg'),logBody=document.getElementById('logBody');
 verBtn.textContent='v'+APP_VERSION;
 document.getElementById('footVer').textContent='גרסה '+APP_VERSION;
+
+/* ---------- בדיקת עדכון גרסה ---------- */
+var updBtn=document.getElementById('updBtn'),updBar=document.getElementById('updBar'),toastEl=document.getElementById('toast'),toastT=null,newVer=null,lastAuto=0;
+function toast(msg){toastEl.textContent=msg;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){toastEl.hidden=true;},2600);}
+function vParts(v){return String(v).split('.').map(function(x){return parseInt(x,10)||0;});}
+function isNewer(a,b){var x=vParts(a),y=vParts(b);for(var i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;}
+function reloadFresh(v){location.replace(location.pathname+'?v='+encodeURIComponent(v||'')+'-'+Date.now()+location.hash);}
+function checkUpdate(manual){
+  if(manual){updBtn.disabled=true;updBtn.classList.add('spin');}
+  return fetch('index.html?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){
+    if(!r.ok)throw new Error('http');return r.text();
+  }).then(function(txt){
+    var m=String(txt).match(/APP_VERSION='(\d{1,3}\.\d{1,3}\.\d{1,3})'/);
+    if(!m)throw new Error('nover');
+    if(isNewer(m[1],APP_VERSION)){
+      newVer=m[1];
+      if(manual){toast('מעדכן לגרסה '+newVer+'…');setTimeout(function(){reloadFresh(newVer);},500);}
+      else{document.getElementById('updText').textContent='גרסה חדשה זמינה: v'+newVer;updBar.hidden=false;}
+    }else if(manual){toast('הגרסה עדכנית (v'+APP_VERSION+')');}
+  }).catch(function(){if(manual)toast('לא ניתן לבדוק כרגע. נסה שוב בעוד רגע.');})
+  .then(function(){if(manual){updBtn.disabled=false;updBtn.classList.remove('spin');}});
+}
+updBtn.addEventListener('click',function(){checkUpdate(true);});
+document.getElementById('updGo').addEventListener('click',function(){reloadFresh(newVer);});
+function autoCheck(){var n=Date.now();if(n-lastAuto<600000)return;lastAuto=n;checkUpdate(false);}
+autoCheck();
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')autoCheck();});
 CHANGELOG.forEach(function(r){
   var ul=el('ul');r.items.forEach(function(x){ul.appendChild(el('li',{text:x}));});
   logBody.appendChild(el('div',{class:'ver'},el('h3',null,'v'+r.v,el('time',{datetime:r.date,text:r.date.split('-').reverse().join('.')})),ul));
