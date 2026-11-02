@@ -1,0 +1,49 @@
+name: מעקב אזורים - התראה שבועית
+
+# כל יום ראשון ב-08:00 שעון ישראל בחורף (06:00 UTC), וגם הרצה ידנית.
+# ההתראה נשלחת רק כשיש נתונים חדשים. בהרצה ידנית אפשר לסמן "שלח גם בלי נתונים חדשים".
+on:
+  schedule:
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "שלח גם בלי נתונים חדשים"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send weekly watch
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          FORCE_SEND: ${{ inputs.force && '1' || '0' }}
+        run: python3 weekly_watch.py
+
+      - name: Save state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ ! -f data/watch_state.json ]; then echo "no state"; exit 0; fi
+          git add data/watch_state.json
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "watch: update state"
+          for i in 1 2 3 4 5; do
+            git pull --rebase --quiet && git push --quiet && exit 0
+            sleep 5
+          done
+          echo "push failed"; exit 1
