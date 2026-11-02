@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-RfyRC4kKV3X1Xl3q4pMvA+5hKkNVS1dnORweV+QpKIs=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-IY43uf+44qJLOwxzYV3zbtrJuTfP/f28ajMTHBYeC4c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UIEDObHEWXG0CNv94b2iG8AZqaCtB0pZo/ShQ3BElag=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-WdgTFTM0ZedCg7dLOBlYVmpNdq7jzVSRUl/Y6pwUTKs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -216,6 +216,20 @@ tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
 #mkSumCard{scroll-margin-top:calc(150px + env(safe-area-inset-top,0px))}
 #mkBody{padding-bottom:0}
 
+/* budget */
+.bg-list{display:grid;gap:8px;margin-top:10px}
+.bg-row{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px}
+.bg-row.thin{opacity:.75}
+.bg-head{display:flex;align-items:center;gap:8px}
+.bg-rank{min-width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:700;border:1.5px solid var(--accent);color:var(--accent)}
+.tag-c{font-size:.7rem;padding:1px 7px;border-radius:999px;border:1px solid var(--good);color:var(--good)}
+.bg-body{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:6px}
+.bg-big b{display:block;font-size:1.35rem;line-height:1.1;color:var(--accent);white-space:nowrap}
+.bg-big span{font-size:.75rem;color:var(--muted)}
+.bg-meta{text-align:left;font-size:.88rem;line-height:1.5}
+.bg-meta .k{color:var(--muted);font-size:.78rem}
+.bg-foot{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
 /* changelog */
@@ -361,9 +375,19 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
   <!-- איפה 1.5M -->
   <section class="panel" id="p-budget" role="tabpanel" aria-labelledby="t-budget" hidden>
     <article class="sec">
-      <h2>איפה ₪1.5 מיליון קונה הכי הרבה <span class="soon">בקרוב</span></h2>
-      <p class="lead">מפה ארצית של ערים ושכונות: כמה עסקאות נסגרו עד ₪1.5 מיליון בשנה האחרונה, מה החציון למ"ר וכמה מטרים מקבלים בממוצע. המרכז יסומן בנפרד.</p>
-      <p class="note">הניתוח הארצי ייעשה בשאילתות מצרפיות, בלי סריקה של הממשק עיר אחרי עיר.</p>
+      <h2>איפה ₪1.5 מיליון קונה הכי הרבה</h2>
+      <p class="lead">לכל עיר: כמה דירות נמכרו בפועל עד ₪1.5 מיליון, ומה קיבלו בכסף הזה. הגודל והמחיר למ"ר מחושבים רק מהדירות שבתוך התקציב.</p>
+      <p class="note fresh" id="bgPeriod"></p>
+      <div class="empty" id="bgState">טוען…</div>
+    </article>
+    <article class="sec" id="bgBody" hidden>
+      <div class="tools">
+        <input id="bgSearch" type="text" maxlength="40" placeholder="חיפוש עיר" autocomplete="off" aria-label="חיפוש עיר">
+        <select id="bgSort" aria-label="מיון"><option value="sqm">הכי הרבה מ"ר</option><option value="ppm">מחיר למ"ר הכי נמוך</option><option value="n">הכי הרבה עסקאות</option><option value="share">אחוז הכי גבוה בתקציב</option></select>
+      </div>
+      <div class="h-top"><div class="chips"><button type="button" id="bgCenter" aria-pressed="false">רק מרכז</button></div><span class="note" id="bgCount" style="margin:0"></span></div>
+      <div id="bgList" class="bg-list"></div>
+      <p class="note">"מרכז" כולל את הערים במחוזות תל אביב והמרכז. כל עסקה נספרת לפי מחירה הכולל, בלי קשר למספר החדרים.</p>
     </article>
   </section>
 
@@ -392,10 +416,15 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.1.0';
+var APP_VERSION='1.2.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.2.0',date:'2026-11-02',items:[
+    'לשונית ₪1.5M: לכל עיר מוצגות הדירות שנמכרו עד ₪1.5 מיליון ב-12 החודשים האחרונים, עם גודל ממוצע, מחיר למ"ר, מחיר ממוצע ואחוז מכלל העסקאות.',
+    'מיון לפי הכי הרבה מ"ר (ברירת מחדל), מחיר למ"ר, מספר עסקאות או אחוז. מתג "רק מרכז" וחיפוש עיר.',
+    'תיקון בגיליון הראשי: חודש נחשב מלא רק אם יש בו לפחות 70% מחודש רגיל, כדי שה-30 ימים לא יוצגו חסרים.'
+  ]},
   {v:'1.1.0',date:'2026-11-02',items:[
     'גיליון ראשי חדש, 📊 שוק: דירות שנמכרו בפועל לפי עיר, עם מספר עסקאות, מחיר ממוצע, הכי זול והכי יקר.',
     'סינון לפי תקופה (7, 30 או 90 ימים) ולפי מספר חדרים. חיפוש עיר ומיון.',
@@ -1064,12 +1093,59 @@ $('mkSearch').addEventListener('input',function(){S.q=String(this.value).slice(0
 $('mkSort').addEventListener('change',function(){var v=this.value;S.sort=(v==='avg'||v==='mn')?v:'n';renderTable();});
 $('mkClear').addEventListener('click',function(){S.city=null;S.day=null;renderAll();});
 
+
+/* ---------- ₪1.5M: איפה התקציב קונה הכי הרבה ---------- */
+var CENTER_LIST=['תל אביב יפו','רמת גן','גבעתיים','בני ברק','בת ים','חולון','הרצליה','רמת השרון','אור יהודה','קרית אונו','יהוד מונוסון','אזור','גבעת שמואל','כפר שמריהו','סביון',
+  'פתח תקווה','ראש העין','אלעד','ראשון לציון','רחובות','נס ציונה','יבנה','גדרה','גן יבנה','מזכרת בתיה','קרית עקרון','באר יעקב','לוד','רמלה','מודיעין מכבים רעות','שוהם','גני תקווה',
+  'כפר סבא','רעננה','הוד השרון','נתניה','כפר יונה','קדימה צורן','אבן יהודה','תל מונד','טייבה','טירה','קלנסווה','כפר קאסם','גלגוליה','כפר ברא','אליכין','צור יצחק','כוכב יאיר צור יגאל'];
+function norm(x){return String(x).replace(/["'׳״\-–]/g,' ').replace(/קריית/g,'קרית').replace(/פתח תקוה/g,'פתח תקווה').replace(/\s+/g,' ').trim();}
+var CENTER={};CENTER_LIST.forEach(function(c){CENTER[norm(c)]=1;});
+function isCenter(name){return !!CENTER[norm(name)];}
+var B={rows:null,center:false,sort:'sqm',q:'',minN:10};
+function validateBudget(b){
+  if(!b||typeof b!=='object'||!Array.isArray(b.rows))return null;
+  var rows=b.rows.filter(function(r){return Array.isArray(r)&&r.length===7&&typeof r[0]==='string'&&r.slice(1).every(function(x){return typeof x==='number'&&isFinite(x)&&x>=0;})&&r[1]>0&&r[2]<=r[1];})
+    .map(function(r){var name=r[0].slice(0,40);return {name:name,center:isCenter(name),nAll:r[1],n:r[2],avg:r[2]?r[3]/r[2]:0,sqm:r[5]&&r[4]?r[5]/r[4]:0,ppm:r[5]?r[6]/r[5]:0,share:r[2]/r[1]};});
+  return {rows:rows,from:String(b.from||''),to:String(b.to||''),limit:Number(b.limit)||1500000};
+}
+function ym(s){var p=String(s).split('-');return p.length===2?p[1]+'/'+p[0].slice(2):'';}
+function renderBudgetList(){
+  var box=$('bgList');box.textContent='';
+  var q=B.q.trim();
+  var list=B.data.rows.filter(function(x){return x.n>0&&(!B.center||x.center)&&(q?x.name.indexOf(q)>=0:x.n>=B.minN);});
+  var key={sqm:function(a,b){return b.sqm-a.sqm;},ppm:function(a,b){return a.ppm-b.ppm;},n:function(a,b){return b.n-a.n;},share:function(a,b){return b.share-a.share;}}[B.sort];
+  list.sort(key);
+  $('bgCount').textContent=list.length+' ערים';
+  if(!list.length){box.appendChild(el('div',{class:'empty',text:q?'לא נמצאה עיר בשם הזה.':'אין ערים בסינון הזה.'}));return;}
+  list.slice(0,120).forEach(function(x,i){
+    var head=el('div',{class:'bg-head'},el('span',{class:'bg-rank',text:String(i+1)}),el('span',{class:'c-name',text:x.name}),x.center?el('span',{class:'tag-c',text:'מרכז'}):null);
+    var big=el('div',{class:'bg-big'},el('b',{text:x.sqm?Math.round(x.sqm)+' מ"ר':'–'}),el('span',{text:'גודל ממוצע'}));
+    var meta=el('div',{class:'bg-meta'},
+      el('div',null,el('span',{class:'k',text:'למ"ר '}),el('bdi',{text:x.ppm?nis(x.ppm):'–'})),
+      el('div',null,el('span',{class:'k',text:'ממוצע '}),el('bdi',{text:nis(x.avg)})));
+    var foot=el('div',{class:'bg-foot',text:x.n+' דירות עד ₪1.5M, '+Math.round(x.share*100)+'% מהעסקאות בעיר'});
+    box.appendChild(el('div',{class:'bg-row'+(x.n<B.minN?' thin':'')},head,el('div',{class:'bg-body'},big,meta),foot));
+  });
+  if(list.length>120)box.appendChild(el('p',{class:'note',text:'מוצגות 120 הערים הראשונות. אפשר לחפש עיר בשדה החיפוש.'}));
+}
+function renderBudget(raw){
+  var v=validateBudget(raw);
+  if(!v||!v.rows.length){$('bgState').hidden=false;$('bgBody').hidden=true;$('bgState').textContent='הנתונים ללשונית הזו ייווצרו בעדכון היומי הבא של הגיליון.';return;}
+  B.data=v;$('bgState').hidden=true;$('bgBody').hidden=false;
+  $('bgPeriod').textContent='עסקאות דירות מ-'+ym(v.from)+' עד '+ym(v.to)+' (12 חודשים). מוצגות ערים עם לפחות '+B.minN+' דירות עד ₪1.5M. חיפוש מציג גם ערים עם פחות.';
+  renderBudgetList();
+}
+$('bgCenter').addEventListener('click',function(){B.center=!B.center;this.setAttribute('aria-pressed',String(B.center));if(B.data)renderBudgetList();});
+$('bgSort').addEventListener('change',function(){var v=this.value;B.sort=(['sqm','ppm','n','share'].indexOf(v)>=0)?v:'sqm';if(B.data)renderBudgetList();});
+$('bgSearch').addEventListener('input',function(){B.q=String(this.value).slice(0,40);if(B.data)renderBudgetList();});
+
 fetch('data/dashboard.json',{cache:'no-store'}).then(function(r){
   if(r.status===404)return null;if(!r.ok)throw new Error('http');return r.json();
-}).then(function(d){init(d);}).catch(function(){
+}).then(function(d){init(d);renderBudget(d&&d.budget);}).catch(function(){
+  $('bgState').hidden=false;$('bgState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';
   $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
 });
-window.__mk={S:S,validate:validate,bucket:bucket,filtered:filtered,agg:agg,init:init};
+window.__mk={B:B,isCenter:isCenter,validateBudget:validateBudget,S:S,validate:validate,bucket:bucket,filtered:filtered,agg:agg,init:init};
 })();
 </script>
 </body>

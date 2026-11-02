@@ -16,18 +16,18 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.1.0"
+BUILD_VERSION = "1.2.0"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "dashboard.json")
-UA = "tom-nadlan-dashboard/1.1 (personal, read-only, daily)"
+UA = "tom-nadlan-dashboard/1.2 (personal, read-only, daily)"
 TIMEOUT = 60
 PAUSE = 1.5
 PAGE = 500
 MAX_PAGES = 80
 MONTHS_BACK = 3          # חודש העוגן ועוד שניים לפניו (כ-90 יום)
-FULL_MONTH_RATIO = 0.35  # חודש "מלא" = לפחות 35% מהחציון של 6 החודשים שלפניו
+FULL_MONTH_RATIO = 0.70  # חודש "מלא" = לפחות 70% מהחציון של 6 החודשים שלפניו
 
 APT_NATURES = ("דירה בבית קומות", "דירת גן", "דירת גג")
 NATURE_SQL = "deal_nature IN (" + ",".join("'" + n.replace("'", "''") + "'" for n in APT_NATURES) + ")"
@@ -121,6 +121,34 @@ def fetch_detail(months):
     raise SqlError("too many pages")
 
 
+BUDGET = 1500000
+AREA = "CAST(NULLIF(asset_area, '') AS REAL)"
+
+
+def fetch_budget(anchor_month):
+    """12 חודשים עד חודש העוגן: לכל עיר, כמה דירות נמכרו עד התקציב, ובאיזה גודל ומחיר."""
+    months = months_window(anchor_month, back=12)
+    like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
+    inb = f"{AMT} <= {BUDGET}"
+    ok_area = f"{AREA} BETWEEN 25 AND 400"
+    sql = (f"SELECT settlement, COUNT(*) AS n_all, "
+           f"SUM(CASE WHEN {inb} THEN 1 ELSE 0 END) AS n_b, "
+           f"SUM(CASE WHEN {inb} THEN {AMT} ELSE 0 END) AS s_b, "
+           f"SUM(CASE WHEN {inb} AND {ok_area} THEN 1 ELSE 0 END) AS na_b, "
+           f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AREA} ELSE 0 END) AS a_b, "
+           f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AMT} ELSE 0 END) AS sa_b "
+           f"FROM {TABLE} WHERE ({like}) AND {BASE_WHERE} GROUP BY settlement LIMIT 3000")
+    rows = []
+    for r in post_sql(sql):
+        name = str(r.get("settlement") or "").strip()[:40]
+        vals = [num(r.get(k)) for k in ("n_all", "n_b", "s_b", "na_b", "a_b", "sa_b")]
+        if not name or any(v is None for v in vals) or vals[0] <= 0:
+            continue
+        rows.append([name] + [round(v) for v in vals])
+    rows.sort(key=lambda x: x[0])
+    return {"from": months[0], "to": months[-1], "limit": BUDGET, "rows": rows}
+
+
 def freshness():
     try:
         r = post_sql(f"SELECT MAX(scraped_at) AS scraped, MAX(first_seen) AS seen FROM {TABLE}")
@@ -177,6 +205,11 @@ def build(today=None):
     months = months_window(anchor_month, extra_after=later)
     detail = fetch_detail(months)
     data = pack(detail, anchor_month)
+    try:
+        budget = fetch_budget(anchor_month)
+    except SqlError as e:
+        print(f"budget: failed ({e})")
+        budget = None
     fr = freshness()
     return {
         "build_version": BUILD_VERSION,
@@ -191,6 +224,7 @@ def build(today=None):
         "days": data["days"],
         "cities": data["cities"],
         "rows": data["rows"],
+        "budget": budget,
     }
 
 
