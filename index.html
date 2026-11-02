@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-PDBsbPmqprQLRYOJ8glVjPbV3eUqfpQmmXRoiGoomkA=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-kb3QpcT1D+ExVpC9gtYXicPLC9eU4aUYynn6thWG/tY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-oCnhx6XWbW9H1TjuRXJTiVkiZu9gdht5OgiS7FgRw+k=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-1BZT4qG/5V7tu5o3WkbzgHN57v9Z4Ld9/mLFyx9Kosk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -200,6 +200,7 @@ p.warn{font-size:.9rem;margin:12px 0 0}
 .chips button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;color:var(--text)}
 .chips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
 .stats.four{grid-template-columns:repeat(2,1fr);margin-bottom:0}
+.stats .span-all{grid-column:1/-1;margin:2px 0 0}
 .dbars{display:flex;align-items:flex-end;gap:2px;height:120px;direction:ltr;margin-top:6px}
 .dbar{flex:1;height:100%;display:flex;align-items:flex-end;border:0;background:transparent;padding:0;cursor:pointer;min-width:2px}
 .dbar .fill{display:block;width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:.85}
@@ -429,10 +430,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.4.0';
+var APP_VERSION='1.4.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.4.1',date:'2026-11-02',items:[
+    'תיקון: הריבוע עם האחוז, ו"שנה" ו"3 שנים", מוצגים מיד, גם לפני העדכון היומי הבא של הנתונים. עד העדכון יוצג מקף במקום "הכי זול" ו"הכי יקר" לתקופות האלה.',
+    'הריבוע עם האחוז מתעדכן לפי החודש שלוחצים עליו: החודש שנבחר מול הממוצע החודשי של השנה שלפניו. העמודות של השנה הזו מסומנות באפור.'
+  ]},
   {v:'1.4.0',date:'2026-11-02',items:[
     'בגיליון הראשי נוספו לכפתורי התקופה "שנה" ו"3 שנים". בתקופות האלה הגרף מחולק לפי חודשים, ולחיצה על עמודה מציגה רק את החודש הזה.',
     'כל הגיליון מתעדכן לפי התקופה: מספר העסקאות, המחיר הממוצע, הכי זול, הכי יקר וטבלת הערים.',
@@ -1058,10 +1063,16 @@ function validateMonthly(m){
   var months=m.months.map(String).filter(function(x){return /^\d{4}-\d{2}$/.test(x);});
   if(months.length!==m.months.length||!months.length)return null;
   var cities=m.cities.map(function(c){return String(c).slice(0,40);});
-  var rows=m.rows.filter(function(r){return Array.isArray(r)&&r.length===7&&r.every(function(x){return typeof x==='number'&&isFinite(x);})&&
-    months[r[0]]&&cities[r[1]]!=null&&[0,2,3,4,5].indexOf(r[2])>=0&&r[3]>0&&r[6]>=r[5];});
+  var hasMM=true;
+  var rows=m.rows.filter(function(r){
+    if(!Array.isArray(r)||(r.length!==5&&r.length!==7))return false;
+    if(!r.every(function(x){return typeof x==='number'&&isFinite(x);}))return false;
+    if(!months[r[0]]||cities[r[1]]==null||[0,2,3,4,5].indexOf(r[2])<0||!(r[3]>0))return false;
+    if(r.length===7&&r[6]<r[5])return false;
+    return true;
+  }).map(function(r){if(r.length===5){hasMM=false;return [r[0],r[1],r[2],r[3],r[4],null,null];}return r;});
   if(!rows.length)return null;
-  return {months:months,cities:cities,rows:rows};
+  return {months:months,cities:cities,rows:rows,hasMM:hasMM};
 }
 
 /* רשומות אחידות לתקופה הנוכחית: {k: יום או חודש, c: שם עיר, n, s, mn, mx} */
@@ -1095,9 +1106,11 @@ function agg(recs,keyFn){
   var m={};
   recs.forEach(function(r){var k=keyFn(r),a=m[k];
     if(!a)m[k]=a={n:0,s:0,mn:Infinity,mx:-Infinity};
-    a.n+=r.n;a.s+=r.s;if(r.mn<a.mn)a.mn=r.mn;if(r.mx>a.mx)a.mx=r.mx;});
+    a.n+=r.n;a.s+=r.s;if(r.mn!=null&&r.mn<a.mn)a.mn=r.mn;if(r.mx!=null&&r.mx>a.mx)a.mx=r.mx;});
   return m;
 }
+function money(v){return isFinite(v)?nis(v):'–';}
+function moneyK(v){return isFinite(v)?nisK(v):'–';}
 function selLabel(){if(!S.sel)return '';return S.sel.length===7?monthName(S.sel):fmtD(S.sel);}
 
 function renderSummary(){
@@ -1105,28 +1118,40 @@ function renderSummary(){
   var box=$('mkSum');box.textContent='';
   $('mkScope').textContent=(S.city!=null?S.city:'כל הארץ')+(S.sel?', '+selLabel():'');
   if(!all){box.appendChild(el('div',{class:'empty',text:'אין עסקאות בסינון הזה.'}));return;}
-  [['עסקאות',all.n.toLocaleString('en-US')],['מחיר ממוצע',nis(all.s/all.n)],['הכי זול',nis(all.mn)],['הכי יקר',nis(all.mx)]].forEach(function(x){
+  [['עסקאות',all.n.toLocaleString('en-US')],['מחיר ממוצע',nis(all.s/all.n)],['הכי זול',money(all.mn)],['הכי יקר',money(all.mx)]].forEach(function(x){
     box.appendChild(el('div',{class:'stat'},el('b',{dir:'ltr',text:x[1]}),el('span',{text:x[0]})));
   });
+  if(isMonthly()&&MO&&!MO.hasMM)box.appendChild(el('p',{class:'note span-all',text:'"הכי זול" ו"הכי יקר" לשנה ול-3 שנים יופיעו אחרי העדכון היומי הבא של הנתונים.'}));
 }
 
-/* ריבוע: החודש המלא האחרון מול הממוצע החודשי של השנה הקודמת. לפי עיר וחדרים, לא לפי תקופה. */
+/* ריבוע: חודש מול הממוצע החודשי של השנה הקלנדרית שלפניו.
+   החודש: החודש שנבחר בגרף, או החודש של היום שנבחר, או החודש המלא האחרון. לפי עיר וחדרים, לא לפי תקופה. */
+function cmpMonth(){
+  if(!MO)return null;
+  if(S.sel){var ym=S.sel.slice(0,7);if(MO.months.indexOf(ym)>=0)return ym;}
+  return MO.months[MO.months.length-1];
+}
+function cmpData(ym){
+  var want=S.rooms==='all'?null:+S.rooms,n={};
+  MO.months.forEach(function(m){n[m]=0;});
+  MO.rows.forEach(function(r){if(want!=null&&r[2]!==want)return;if(S.city!=null&&MO.cities[r[1]]!==S.city)return;n[MO.months[r[0]]]+=r[3];});
+  var prevY=String(+ym.slice(0,4)-1),pv=[];
+  MO.months.forEach(function(m){if(m.slice(0,4)===prevY)pv.push(n[m]);});
+  return {cur:n[ym],prevY:prevY,pv:pv};
+}
 function renderCmp(){
   var cmp=$('mkCmp');cmp.textContent='';
-  if(!MO){cmp.hidden=true;return;}cmp.hidden=false;
-  var want=S.rooms==='all'?null:+S.rooms,n=MO.months.map(function(){return 0;});
-  MO.rows.forEach(function(r){if(want!=null&&r[2]!==want)return;if(S.city!=null&&MO.cities[r[1]]!==S.city)return;n[r[0]]+=r[3];});
-  var last=MO.months.length-1,lastM=MO.months[last],prevY=String(+lastM.slice(0,4)-1),pv=[];
-  MO.months.forEach(function(m,i){if(m.slice(0,4)===prevY)pv.push(n[i]);});
-  if(pv.length<6){cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('span',{text:'אין מספיק נתונים מ-'+prevY+' להשוואה.'})));return;}
-  var avg=pv.reduce(function(a,b){return a+b;},0)/pv.length;
-  if(!(avg>0)){cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('span',{text:'אין עסקאות ב-'+prevY+' בסינון הזה, ולכן אין למה להשוות.'})));return;}
-  var d=n[last]/avg-1;
+  var ym=cmpMonth();if(!ym){cmp.hidden=true;return;}cmp.hidden=false;
+  var c=cmpData(ym);
+  if(c.pv.length<6){cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('b',{text:monthName(ym)}),el('span',{text:'אין מספיק נתונים מ-'+c.prevY+' להשוואה.'})));return;}
+  var avg=c.pv.reduce(function(a,b){return a+b;},0)/c.pv.length;
+  if(!(avg>0)){cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('b',{text:monthName(ym)}),el('span',{text:'אין עסקאות ב-'+c.prevY+' בסינון הזה, ולכן אין למה להשוות.'})));return;}
+  var d=c.cur/avg-1;
   cmp.className='cmp '+(d>=0.005?'up':d<=-0.005?'down':'flat');
   cmp.appendChild(el('div',{class:'cmp-pct',dir:'ltr',text:(d>0?'+':'')+Math.round(d*100)+'%'}));
   cmp.appendChild(el('div',{class:'cmp-txt'},
-    el('b',{text:monthName(lastM)+': '+n[last].toLocaleString('en-US')+' עסקאות'}),
-    el('span',{text:'מול ממוצע חודשי של '+Math.round(avg).toLocaleString('en-US')+' ב-'+prevY+(pv.length<12?' ('+pv.length+' חודשים)':'')})));
+    el('b',{text:monthName(ym)+': '+c.cur.toLocaleString('en-US')+' עסקאות'}),
+    el('span',{text:'מול ממוצע חודשי של '+Math.round(avg).toLocaleString('en-US')+' ב-'+c.prevY+(c.pv.length<12?' ('+c.pv.length+' חודשים)':'')})));
 }
 
 function renderChart(){
@@ -1137,7 +1162,7 @@ function renderChart(){
   if(monthly){MO.months.slice(-MONTHS_OF[S.period]).forEach(function(m){list.push({k:m,n:by[m]?by[m].n:0});});}
   else{var end=S.data.anchor;for(var k=S.period-1;k>=0;k--){var d=addDays(end,-k);list.push({k:d,n:by[d]?by[d].n:0});}}
   var max=Math.max.apply(null,list.map(function(x){return x.n;}).concat([1]));
-  var prevY=monthly?String(+MO.months[MO.months.length-1].slice(0,4)-1):null;
+  var cm=cmpMonth(),prevY=(monthly&&cm)?String(+cm.slice(0,4)-1):null;
   var wrap=el('div',{class:'dbars'+(monthly?' mbars':''),role:'list','aria-label':monthly?'עסקאות לפי חודש':'עסקאות לפי יום'});
   list.forEach(function(x,i){
     var cls='dbar'+(S.sel===x.k?' on':'')+(x.n===0?' zero':'')+(monthly&&x.k.slice(0,4)===prevY?' ref':'')+(monthly&&i===list.length-1?' last':'');
@@ -1156,7 +1181,7 @@ function renderChart(){
   }
   var info;
   if(S.sel){var a=by[S.sel];info=(monthly?monthName(S.sel):DOW[new Date(S.sel+'T12:00:00Z').getUTCDay()]+' '+fmtD(S.sel))+': '+(a?a.n.toLocaleString('en-US'):0)+' עסקאות'+(a?', ממוצע '+nis(a.s/a.n):'')+'. לחיצה נוספת מבטלת.';}
-  else info=monthly?'העמודות האפורות הן '+prevY+', השנה שאליה משווים. לחיצה על עמודה מציגה רק את החודש הזה.':'לחיצה על עמודה מציגה רק את היום הזה.';
+  else info=monthly?'העמודות האפורות הן '+prevY+', השנה שאליה משווה הריבוע. לחיצה על חודש מציגה רק אותו, והריבוע משווה אותו לשנה שלפניו.':'לחיצה על עמודה מציגה רק את היום הזה.';
   box.appendChild(el('p',{class:'note',text:info}));
 }
 
@@ -1174,7 +1199,7 @@ function renderTable(){
   list.slice(0,150).forEach(function(x){
     var tr=el('tr',{class:'city'+(S.city===x.name?' on':''),tabindex:'0'},
       el('td',null,el('div',{class:'c-name',text:x.name}),el('small',{text:x.n.toLocaleString('en-US')+' עסקאות'})),
-      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(x.avg)}),el('small',{text:nisK(x.mn)+' – '+nisK(x.mx)}))
+      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(x.avg)}),el('small',{text:isFinite(x.mn)?nisK(x.mn)+' – '+nisK(x.mx):'זול ויקר: אחרי העדכון הבא'}))
     );
     function pick(){S.city=(S.city===x.name?null:x.name);renderAll();if(S.city!=null)$('mkSumCard').scrollIntoView({behavior:'smooth',block:'start'});}
     tr.addEventListener('click',pick);tr.addEventListener('keydown',function(e){if(e.key==='Enter')pick();});
@@ -1188,7 +1213,7 @@ function renderTable(){
 function renderChips(){
   [].forEach.call(document.querySelectorAll('[data-period]'),function(b){
     var p=+b.dataset.period;b.setAttribute('aria-pressed',String(p===S.period));
-    if(MONTHS_OF[p])b.hidden=!MO;
+    if(MONTHS_OF[p])b.hidden=!(MO&&MO.months.length>=MONTHS_OF[p]);
   });
   [].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.setAttribute('aria-pressed',String(b.dataset.rooms===S.rooms));});
   $('mkClear').hidden=(S.city==null&&!S.sel);
@@ -1205,8 +1230,7 @@ function init(d){
   if(!v||!v.rows.length){$('mkBody').hidden=true;$('mkState').hidden=false;
     $('mkState').textContent='עוד אין נתונים לגיליון. מריצים את "גיליון ראשי - עדכון יומי" ב-GitHub, ואחרי כמה דקות מרעננים.';return;}
   S.data=v;MO=validateMonthly(d.monthly);
-  if(MO&&MO.months.length<36)MO=null;
-  if(!MO&&MONTHS_OF[S.period])S.period=30;
+  if(MONTHS_OF[S.period]&&!(MO&&MO.months.length>=MONTHS_OF[S.period]))S.period=30;
   $('mkState').hidden=true;$('mkBody').hidden=false;
   renderFresh();renderAll();
 }
@@ -1269,7 +1293,7 @@ fetch('data/dashboard.json?t='+Date.now(),{cache:'no-store'}).then(function(r){
   $('bgState').hidden=false;$('bgState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';
   $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
 });
-window.__mk={S:S,B:B,isCenter:isCenter,validate:validate,validateMonthly:validateMonthly,validateBudget:validateBudget,records:records,agg:agg,init:init};
+window.__mk={cmpMonth:function(){return cmpMonth();},S:S,B:B,isCenter:isCenter,validate:validate,validateMonthly:validateMonthly,validateBudget:validateBudget,records:records,agg:agg,init:init};
 })();
 </script>
 </body>

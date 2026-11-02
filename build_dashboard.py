@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.4.0"
+BUILD_VERSION = "1.4.1"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
@@ -157,8 +157,8 @@ RB = (f"CASE WHEN {ROOMS} IS NULL OR {ROOMS} <= 0 THEN 0 WHEN {ROOMS} < 3 THEN 2
 
 
 def fetch_monthly(anchor_month):
-    """36 חודשים עד חודש העוגן: ספירה, סכום, מינ' ומקס' לפי חודש, עיר וקבוצת חדרים (0 = לא ידוע, 2 = עד 2.5, 3, 4, 5+)."""
-    months = months_window(anchor_month, back=36)
+    """48 חודשים עד חודש העוגן: ספירה, סכום, מינ' ומקס' לפי חודש, עיר וקבוצת חדרים (0 = לא ידוע, 2 = עד 2.5, 3, 4, 5+)."""
+    months = months_window(anchor_month, back=48)  # 36 לגרף ועוד 12, כדי שלכל חודש בגרף תהיה שנה קודמת להשוואה
     years = sorted({m[:4] for m in months})
     yfilter = " OR ".join(f"deal_date LIKE '%/{y}'" for y in years)
     ym = "substr(deal_date, 4, 7)"
