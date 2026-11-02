@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UIEDObHEWXG0CNv94b2iG8AZqaCtB0pZo/ShQ3BElag=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-WdgTFTM0ZedCg7dLOBlYVmpNdq7jzVSRUl/Y6pwUTKs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-QT7KDjxdNkjazswWfrxd5l3yxPduyJUMcFHW2fmrKtY=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-WdgTFTM0ZedCg7dLOBlYVmpNdq7jzVSRUl/Y6pwUTKs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -416,10 +416,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.2.0';
+var APP_VERSION='1.2.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.2.1',date:'2026-11-02',items:[
+    'כפתור 🔄 בודק מול GitHub מה הגרסה האחרונה שהועלתה, בלי תלות במטמון של האתר.',
+    'אם הגרסה הועלתה אבל האתר עוד לא התעדכן, מופיעה הודעה, האפליקציה בודקת שוב כל 30 שניות, ונטענת מחדש לבד כשהגרסה זמינה.'
+  ]},
   {v:'1.2.0',date:'2026-11-02',items:[
     'לשונית ₪1.5M: לכל עיר מוצגות הדירות שנמכרו עד ₪1.5 מיליון ב-12 החודשים האחרונים, עם גודל ממוצע, מחיר למ"ר, מחיר ממוצע ואחוז מכלל העסקאות.',
     'מיון לפי הכי הרבה מ"ר (ברירת מחדל), מחיר למ"ר, מספר עסקאות או אחוז. מתג "רק מרכז" וחיפוש עיר.',
@@ -524,28 +528,58 @@ verBtn.textContent='v'+APP_VERSION;
 document.getElementById('footVer').textContent='גרסה '+APP_VERSION;
 
 /* ---------- בדיקת עדכון גרסה ---------- */
-var updBtn=document.getElementById('updBtn'),updBar=document.getElementById('updBar'),toastEl=document.getElementById('toast'),toastT=null,newVer=null,lastAuto=0;
-function toast(msg){toastEl.textContent=msg;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){toastEl.hidden=true;},2600);}
+var REPO_API='https://api.github.com/repos/tomtom0506/tom-nadlan/contents/index.html?ref=main';
+var updBtn=document.getElementById('updBtn'),updBar=document.getElementById('updBar'),updGo=document.getElementById('updGo'),toastEl=document.getElementById('toast'),toastT=null,newVer=null,lastAuto=0,pollT=null,pollN=0,busyUpd=false;
+function toast(msg,ms){toastEl.textContent=msg;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){toastEl.hidden=true;},ms||2600);}
 function vParts(v){return String(v).split('.').map(function(x){return parseInt(x,10)||0;});}
-function isNewer(a,b){var x=vParts(a),y=vParts(b);for(var i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;}
+function isNewer(a,b){if(!a)return false;if(!b)return true;var x=vParts(a),y=vParts(b);for(var i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)>(y[i]||0);}return false;}
+function verOf(txt){var m=String(txt||'').match(/APP_VERSION='(\d{1,3}\.\d{1,3}\.\d{1,3})'/);return m?m[1]:null;}
 function reloadFresh(v){location.replace(location.pathname+'?v='+encodeURIComponent(v||'')+'-'+Date.now()+location.hash);}
+function deployedVer(){
+  return fetch('index.html?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){if(!r.ok)throw new Error('http');return r.text();}).then(verOf);
+}
+function repoVer(){
+  return fetch(REPO_API+'&t='+Date.now(),{cache:'no-store',credentials:'omit',headers:{'Accept':'application/vnd.github.raw'}})
+    .then(function(r){if(!r.ok)throw new Error('http');return r.text();}).then(verOf);
+}
+function showBar(text,canGo){document.getElementById('updText').textContent=text;updGo.hidden=!canGo;updBar.hidden=false;}
+function stopPoll(){clearInterval(pollT);pollT=null;pollN=0;}
+function startPoll(target,manual){
+  stopPoll();
+  pollT=setInterval(function(){
+    if(document.visibilityState!=='visible')return;
+    if(++pollN>24){stopPoll();showBar('גרסה v'+target+' עלתה, אבל האתר עוד לא התעדכן. נסה שוב בעוד כמה דקות.',false);return;}
+    deployedVer().then(function(dep){
+      if(dep&&!isNewer(target,dep)){stopPoll();newVer=dep;
+        if(manual){toast('מעדכן לגרסה '+dep+'…');setTimeout(function(){reloadFresh(dep);},500);}
+        else showBar('גרסה חדשה זמינה: v'+dep,true);}
+    }).catch(function(){});
+  },30000);
+}
+function settle(p){return p.then(function(v){return v;},function(){return null;});}
 function checkUpdate(manual){
+  if(busyUpd)return Promise.resolve();busyUpd=true;
   if(manual){updBtn.disabled=true;updBtn.classList.add('spin');}
-  return fetch('index.html?nc='+Date.now(),{cache:'no-store',credentials:'omit'}).then(function(r){
-    if(!r.ok)throw new Error('http');return r.text();
-  }).then(function(txt){
-    var m=String(txt).match(/APP_VERSION='(\d{1,3}\.\d{1,3}\.\d{1,3})'/);
-    if(!m)throw new Error('nover');
-    if(isNewer(m[1],APP_VERSION)){
-      newVer=m[1];
-      if(manual){toast('מעדכן לגרסה '+newVer+'…');setTimeout(function(){reloadFresh(newVer);},500);}
-      else{document.getElementById('updText').textContent='גרסה חדשה זמינה: v'+newVer;updBar.hidden=false;}
-    }else if(manual){toast('הגרסה עדכנית (v'+APP_VERSION+')');}
-  }).catch(function(){if(manual)toast('לא ניתן לבדוק כרגע. נסה שוב בעוד רגע.');})
-  .then(function(){if(manual){updBtn.disabled=false;updBtn.classList.remove('spin');}});
+  return Promise.all([settle(repoVer()),settle(deployedVer())]).then(function(r){
+    var repo=r[0],dep=r[1];
+    if(!repo&&!dep){if(manual)toast('לא ניתן לבדוק כרגע. נסה שוב בעוד רגע.');return;}
+    if(dep&&isNewer(dep,APP_VERSION)&&!isNewer(repo,dep)){
+      newVer=dep;stopPoll();
+      if(manual){toast('מעדכן לגרסה '+dep+'…');setTimeout(function(){reloadFresh(dep);},500);}
+      else showBar('גרסה חדשה זמינה: v'+dep,true);
+      return;
+    }
+    if(repo&&isNewer(repo,APP_VERSION)){
+      if(manual)toast('גרסה '+repo+' עלתה ותיטען אוטומטית בעוד כמה דקות.',5000);
+      showBar('גרסה v'+repo+' בדרך. האפליקציה תתעדכן לבד בעוד כמה דקות.',false);
+      startPoll(repo,manual);
+      return;
+    }
+    if(manual)toast('הגרסה עדכנית (v'+APP_VERSION+')');
+  }).then(function(){busyUpd=false;if(manual){updBtn.disabled=false;updBtn.classList.remove('spin');}});
 }
 updBtn.addEventListener('click',function(){checkUpdate(true);});
-document.getElementById('updGo').addEventListener('click',function(){reloadFresh(newVer);});
+updGo.addEventListener('click',function(){reloadFresh(newVer);});
 function autoCheck(){var n=Date.now();if(n-lastAuto<600000)return;lastAuto=n;checkUpdate(false);}
 autoCheck();
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')autoCheck();});
