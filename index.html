@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-QT7KDjxdNkjazswWfrxd5l3yxPduyJUMcFHW2fmrKtY=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-WdgTFTM0ZedCg7dLOBlYVmpNdq7jzVSRUl/Y6pwUTKs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-1kFK+KJS35PC/y17gI9J960xGYemuSNcjul9GDNLRes=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-mHCjS4Gj7wDLOd9ZnFvjgQ0KulMQ/+jadIz7ucArwAA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -230,6 +230,18 @@ tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
 .bg-meta .k{color:var(--muted);font-size:.78rem}
 .bg-foot{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font-size:.78rem;color:var(--muted)}
 
+/* trend */
+.cmp{display:flex;gap:12px;align-items:center;padding:12px;border-radius:var(--r-md);background:var(--surface-2);border:1px solid var(--line);border-inline-start:4px solid var(--muted);margin:10px 0 4px}
+.cmp.up{border-inline-start-color:var(--good)}.cmp.down{border-inline-start-color:var(--bad)}
+.cmp-pct{font-size:1.6rem;font-weight:700;min-width:72px;text-align:center;unicode-bidi:isolate}
+.cmp.up .cmp-pct{color:var(--good)}.cmp.down .cmp-pct{color:var(--bad)}
+.cmp-txt b{display:block;font-size:.95rem}.cmp-txt span{display:block;font-size:.82rem;color:var(--muted)}
+.mbars{height:110px}
+.dbar.ref .fill{background:var(--muted);opacity:.75}
+.dbar.last .fill{background:var(--text);opacity:.85}
+.maxis{display:flex;direction:ltr;gap:2px;margin-top:4px}
+.maxis span{flex:1;min-width:0;font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:visible}
+
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
 /* changelog */
@@ -318,6 +330,12 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
         <div class="stats four" id="mkSum"></div>
         <h3>עסקאות לפי יום</h3>
         <div id="mkChart"></div>
+      </article>
+      <article class="sec" id="mkTrend" hidden>
+        <div class="h-top"><h2>מגמה חודשית</h2><span class="note" id="mkTrendScope" style="margin:0"></span></div>
+        <div class="cmp" id="mkCmp"></div>
+        <h3>עסקאות לפי חודש, 3 שנים</h3>
+        <div id="mkMonth"></div>
       </article>
       <article class="sec">
         <div class="h-top"><h2>לפי עיר</h2><span class="note" id="mkCount" style="margin:0"></span></div>
@@ -416,10 +434,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.2.1';
+var APP_VERSION='1.3.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.3.0',date:'2026-11-02',items:[
+    'בגיליון הראשי: גרף של עסקאות לפי חודש ל-3 שנים, שמתעדכן לפי העיר ומספר החדרים שבחרת. לחיצה על עמודה מציגה את פרטי החודש.',
+    'ריבוע השוואה: החודש המלא האחרון מול הממוצע החודשי של השנה הקודמת, באחוזים. ירוק לעלייה, אדום לירידה. השנה הקודמת מסומנת בגרף באפור.'
+  ]},
   {v:'1.2.1',date:'2026-11-02',items:[
     'כפתור 🔄 בודק מול GitHub מה הגרסה האחרונה שהועלתה, בלי תלות במטמון של האתר.',
     'אם הגרסה הועלתה אבל האתר עוד לא התעדכן, מופיעה הודעה, האפליקציה בודקת שוב כל 30 שניות, ונטענת מחדש לבד כשהגרסה זמינה.'
@@ -1105,7 +1127,67 @@ function renderChips(){
   [].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.setAttribute('aria-pressed',String(b.dataset.rooms===S.rooms));});
   $('mkClear').hidden=(S.city==null&&!S.day);
 }
-function renderAll(){renderChips();renderSummary();renderChart();renderTable();}
+
+/* ---------- מגמה חודשית (3 שנים) ---------- */
+var HEB_M=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+var MO=null,moSel=null;
+function validateMonthly(m){
+  if(!m||typeof m!=='object'||!Array.isArray(m.months)||!Array.isArray(m.cities)||!Array.isArray(m.rows))return null;
+  var months=m.months.map(String).filter(function(x){return /^\d{4}-\d{2}$/.test(x);});
+  if(months.length!==m.months.length||!months.length)return null;
+  var idx={};m.cities.forEach(function(c,i){idx[String(c).slice(0,40)]=i;});
+  var rows=m.rows.filter(function(r){return Array.isArray(r)&&r.length===5&&r.every(function(x){return typeof x==='number'&&isFinite(x);})&&months[r[0]]&&m.cities[r[1]]!=null&&[0,2,3,4,5].indexOf(r[2])>=0&&r[3]>0;});
+  return {months:months,cityIdx:idx,rows:rows};
+}
+function monthSeries(){
+  var want=S.rooms==='all'?null:+S.rooms,ci=null;
+  if(S.city!=null){ci=MO.cityIdx[S.data.cities[S.city]];if(ci==null)ci=-1;}
+  var n=MO.months.map(function(){return 0;}),sum=MO.months.map(function(){return 0;});
+  MO.rows.forEach(function(r){if(want!=null&&r[2]!==want)return;if(ci!=null&&r[1]!==ci)return;n[r[0]]+=r[3];sum[r[0]]+=r[4];});
+  return {n:n,sum:sum};
+}
+function renderTrend(){
+  var card=$('mkTrend');if(!MO){card.hidden=true;return;}card.hidden=false;
+  $('mkTrendScope').textContent=(S.city!=null?S.data.cities[S.city]:'כל הארץ')+(S.rooms==='all'?'':', '+{'2':'עד 2.5','3':'3–3.5','4':'4–4.5','5':'5+'}[S.rooms]+' חדרים');
+  var se=monthSeries(),last=MO.months.length-1,lastM=MO.months[last],ly=+lastM.slice(0,4),prevY=String(ly-1);
+  // ריבוע השוואה
+  var cmp=$('mkCmp');cmp.textContent='';
+  var pv=[];MO.months.forEach(function(m,i){if(m.slice(0,4)===prevY)pv.push(se.n[i]);});
+  var lastN=se.n[last];
+  if(pv.length>=6){
+    var avg=pv.reduce(function(a,b){return a+b;},0)/pv.length;
+    var mname=HEB_M[+lastM.slice(5,7)-1]+' '+ly;
+    if(avg>0){
+      var d=lastN/avg-1,cls=d>=0.005?'up':d<=-0.005?'down':'flat';
+      cmp.className='cmp '+cls;
+      cmp.appendChild(el('div',{class:'cmp-pct',dir:'ltr',text:(d>0?'+':'')+Math.round(d*100)+'%'}));
+      cmp.appendChild(el('div',{class:'cmp-txt'},
+        el('b',{text:mname+': '+lastN.toLocaleString('en-US')+' עסקאות'}),
+        el('span',{text:'מול ממוצע חודשי של '+Math.round(avg).toLocaleString('en-US')+' ב-'+prevY+(pv.length<12?' ('+pv.length+' חודשים)':'')})));
+    }else{cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('span',{text:'אין עסקאות ב-'+prevY+' בסינון הזה, ולכן אין למה להשוות.'})));}
+  }else{cmp.className='cmp flat';cmp.appendChild(el('div',{class:'cmp-txt'},el('span',{text:'אין מספיק נתונים מ-'+prevY+' להשוואה.'})));}
+  // גרף
+  var box=$('mkMonth');box.textContent='';
+  var max=Math.max.apply(null,se.n.concat([1]));
+  var wrap=el('div',{class:'dbars mbars',role:'list','aria-label':'עסקאות לפי חודש'});
+  MO.months.forEach(function(m,i){
+    var b=el('button',{class:'dbar'+(m.slice(0,4)===prevY?' ref':'')+(i===last?' last':'')+(moSel===i?' on':'')+(se.n[i]===0?' zero':''),type:'button',role:'listitem',
+      'aria-label':m.slice(5,7)+'/'+m.slice(0,4)+': '+se.n[i]+' עסקאות','aria-pressed':moSel===i?'true':'false'});
+    var f=el('span',{class:'fill'});f.style.height=Math.max(2,Math.round(se.n[i]/max*100))+'%';b.appendChild(f);
+    b.addEventListener('click',function(){moSel=(moSel===i?null:i);renderTrend();});
+    wrap.appendChild(b);
+  });
+  box.appendChild(wrap);
+  var ax=el('div',{class:'maxis'});
+  MO.months.forEach(function(m,i){ax.appendChild(el('span',{text:(m.slice(5,7)==='01'||i===0)?m.slice(0,4):''}));});
+  box.appendChild(ax);
+  var info;
+  if(moSel!=null&&MO.months[moSel]){var mm=MO.months[moSel];info=HEB_M[+mm.slice(5,7)-1]+' '+mm.slice(0,4)+': '+se.n[moSel].toLocaleString('en-US')+' עסקאות'+(se.n[moSel]?', ממוצע '+nis(se.sum[moSel]/se.n[moSel]):'')+'.';}
+  else info='העמודות האפורות הן '+prevY+', השנה שאליה משווים. העמודה האחרונה היא '+HEB_M[+lastM.slice(5,7)-1]+' '+ly+'. לחיצה על עמודה מציגה את פרטי החודש.';
+  box.appendChild(el('p',{class:'note',text:info}));
+}
+
+function renderAll(){renderChips();renderSummary();renderChart();renderTrend();renderTable();}
 
 function renderFresh(){
   var D=S.data,f=$('mkFresh');f.textContent='';
@@ -1117,7 +1199,7 @@ function init(d){
   var v=validate(d);
   if(!v||!v.rows.length){$('mkBody').hidden=true;$('mkState').hidden=false;
     $('mkState').textContent='עוד אין נתונים לגיליון. מריצים את "גיליון ראשי - עדכון יומי" ב-GitHub, ואחרי כמה דקות מרעננים.';return;}
-  S.data=v;$('mkState').hidden=true;$('mkBody').hidden=false;
+  S.data=v;MO=validateMonthly(d.monthly);$('mkState').hidden=true;$('mkBody').hidden=false;
   renderFresh();renderAll();
 }
 
@@ -1179,7 +1261,7 @@ fetch('data/dashboard.json',{cache:'no-store'}).then(function(r){
   $('bgState').hidden=false;$('bgState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';
   $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
 });
-window.__mk={B:B,isCenter:isCenter,validateBudget:validateBudget,S:S,validate:validate,bucket:bucket,filtered:filtered,agg:agg,init:init};
+window.__mk={validateMonthly:validateMonthly,monthSeries:function(){return monthSeries();},B:B,isCenter:isCenter,validateBudget:validateBudget,S:S,validate:validate,bucket:bucket,filtered:filtered,agg:agg,init:init};
 })();
 </script>
 </body>

@@ -16,12 +16,12 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.2.0"
+BUILD_VERSION = "1.3.0"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "dashboard.json")
-UA = "tom-nadlan-dashboard/1.2 (personal, read-only, daily)"
+UA = "tom-nadlan-dashboard/1.3 (personal, read-only, daily)"
 TIMEOUT = 60
 PAUSE = 1.5
 PAGE = 500
@@ -149,6 +149,50 @@ def fetch_budget(anchor_month):
     return {"from": months[0], "to": months[-1], "limit": BUDGET, "rows": rows}
 
 
+PAGE_M = 1000
+MAX_PAGES_M = 150
+ROOMS = "CAST(NULLIF(room_num, '') AS REAL)"
+RB = (f"CASE WHEN {ROOMS} IS NULL OR {ROOMS} <= 0 THEN 0 WHEN {ROOMS} < 3 THEN 2 "
+      f"WHEN {ROOMS} < 4 THEN 3 WHEN {ROOMS} < 5 THEN 4 ELSE 5 END")
+
+
+def fetch_monthly(anchor_month):
+    """36 חודשים עד חודש העוגן: ספירה וסכום לפי חודש, עיר וקבוצת חדרים (0 = לא ידוע, 2 = עד 2.5, 3, 4, 5+)."""
+    months = months_window(anchor_month, back=36)
+    years = sorted({m[:4] for m in months})
+    yfilter = " OR ".join(f"deal_date LIKE '%/{y}'" for y in years)
+    ym = "substr(deal_date, 4, 7)"
+    raw, offset = [], 0
+    for _ in range(MAX_PAGES_M):
+        sql = (f"SELECT {ym} AS ym, settlement, {RB} AS rb, COUNT(*) AS n, SUM({AMT}) AS s FROM {TABLE} "
+               f"WHERE ({yfilter}) AND {BASE_WHERE} GROUP BY {ym}, settlement, {RB} "
+               f"ORDER BY 1, 2, 3 LIMIT {PAGE_M} OFFSET {offset}")
+        page = post_sql(sql)
+        raw.extend(page)
+        if len(page) < PAGE_M:
+            break
+        offset += PAGE_M
+    else:
+        raise SqlError("too many pages (monthly)")
+    mi = {m: i for i, m in enumerate(months)}
+    cities, rows = {}, []
+    for r in raw:
+        mm = re.fullmatch(r"(\d{2})/(\d{4})", str(r.get("ym", "")))
+        if not mm:
+            continue
+        key = f"{mm.group(2)}-{mm.group(1)}"
+        name = str(r.get("settlement") or "").strip()[:40]
+        n, sm, rb = num(r.get("n")), num(r.get("s")), num(r.get("rb"))
+        if key not in mi or not name or not n or n <= 0 or sm is None or rb not in (0, 2, 3, 4, 5):
+            continue
+        ci = cities.setdefault(name, len(cities))
+        rows.append([mi[key], ci, int(rb), int(n), round(sm)])
+    names = [None] * len(cities)
+    for k, v in cities.items():
+        names[v] = k
+    return {"months": months, "cities": names, "rows": rows}
+
+
 def freshness():
     try:
         r = post_sql(f"SELECT MAX(scraped_at) AS scraped, MAX(first_seen) AS seen FROM {TABLE}")
@@ -210,6 +254,11 @@ def build(today=None):
     except SqlError as e:
         print(f"budget: failed ({e})")
         budget = None
+    try:
+        monthly = fetch_monthly(anchor_month)
+    except SqlError as e:
+        print(f"monthly: failed ({e})")
+        monthly = None
     fr = freshness()
     return {
         "build_version": BUILD_VERSION,
@@ -225,6 +274,7 @@ def build(today=None):
         "cities": data["cities"],
         "rows": data["rows"],
         "budget": budget,
+        "monthly": monthly,
     }
 
 
