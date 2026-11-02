@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-22puU1KM1ZMBDsWyAxpY385nWH6Nu0iCaLuZZRKakes=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-RfyRC4kKV3X1Xl3q4pMvA+5hKkNVS1dnORweV+QpKIs=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-IY43uf+44qJLOwxzYV3zbtrJuTfP/f28ajMTHBYeC4c='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -34,6 +34,7 @@
   --good:#1E8A5C; --bad:#C2452D; --warn:#9A6B00; --focus:#1F5F99;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{
   margin:0;min-height:100vh;font-family:var(--font);font-size:16px;line-height:1.6;color:var(--text);
@@ -194,6 +195,27 @@ p.warn{font-size:.9rem;margin:12px 0 0}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (max-width:360px){.brand span{font-size:.92rem}}
 
+/* market */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-size:.85rem;cursor:pointer;color:var(--text)}
+.chips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.stats.four{grid-template-columns:repeat(2,1fr)}
+.dbars{display:flex;align-items:flex-end;gap:2px;height:120px;direction:ltr;margin-top:6px}
+.dbar{flex:1;height:100%;display:flex;align-items:flex-end;border:0;background:transparent;padding:0;cursor:pointer;min-width:2px}
+.dbar .fill{display:block;width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:.85}
+.dbar.on .fill{background:var(--good);opacity:1}
+.dbar.zero .fill{background:var(--line)}
+.dbar-axis{display:flex;justify-content:space-between;direction:ltr;color:var(--muted);margin-top:4px}
+.tools{display:grid;grid-template-columns:1fr auto;gap:8px;margin:10px 0}
+select{font:inherit;font-size:16px;color:var(--text);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 10px}
+tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
+.c-name{font-weight:600}
+.checks th{font-size:.78rem;color:var(--muted);font-weight:500;text-align:start;padding:6px 4px}.checks th.n{text-align:left}
+.checks.cities small{color:var(--muted);font-size:.78rem}
+.fresh{border-inline-start:3px solid var(--warn);padding-inline-start:10px;margin-top:0}
+#mkSumCard{scroll-margin-top:calc(150px + env(safe-area-inset-top,0px))}
+#mkBody{padding-bottom:0}
+
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
 /* changelog */
@@ -252,10 +274,48 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
   </section>
 
   <nav class="tabs" role="tablist" aria-label="אזורי האפליקציה">
+    <button class="tab" role="tab" id="t-market" aria-controls="p-market" data-tab="market" type="button">📊 שוק</button>
     <button class="tab" role="tab" id="t-check" aria-controls="p-check" data-tab="check" type="button">🔍 בדוק נכס</button>
-    <button class="tab" role="tab" id="t-budget" aria-controls="p-budget" data-tab="budget" type="button">🗺️ איפה ₪1.5M קונה הכי הרבה</button>
-    <button class="tab" role="tab" id="t-track" aria-controls="p-track" data-tab="track" type="button">📈 מעקב אזורים</button>
+    <button class="tab" role="tab" id="t-budget" aria-controls="p-budget" data-tab="budget" type="button">🗺️ ₪1.5M</button>
+    <button class="tab" role="tab" id="t-track" aria-controls="p-track" data-tab="track" type="button">📈 מעקב</button>
   </nav>
+
+  <!-- גיליון ראשי: שוק -->
+  <section class="panel" id="p-market" role="tabpanel" aria-labelledby="t-market" hidden>
+    <article class="sec">
+      <h2>שוק הדירות</h2>
+      <p class="lead">דירות שנמכרו בפועל לפי רשות המסים: כמה נמכרו, באיזה מחיר ובאיזו עיר. דירות בלבד, עסקאות על דירה שלמה.</p>
+      <p class="note fresh" id="mkFresh"></p>
+      <div class="empty" id="mkState">טוען…</div>
+    </article>
+    <div id="mkBody" class="panel" hidden>
+      <article class="sec">
+        <div class="lbl">תקופה</div>
+        <div class="chips" role="group" aria-label="תקופה">
+          <button type="button" data-period="7">7 ימים</button><button type="button" data-period="30">30 ימים</button><button type="button" data-period="90">90 ימים</button>
+        </div>
+        <div class="lbl" style="margin-top:12px">חדרים</div>
+        <div class="chips" role="group" aria-label="מספר חדרים">
+          <button type="button" data-rooms="all">הכל</button><button type="button" data-rooms="2">עד 2.5</button><button type="button" data-rooms="3">3–3.5</button><button type="button" data-rooms="4">4–4.5</button><button type="button" data-rooms="5">5+</button>
+        </div>
+      </article>
+      <article class="sec" id="mkSumCard">
+        <div class="h-top"><h2 id="mkScope">כל הארץ</h2><button class="btn small" id="mkClear" type="button" hidden>נקה בחירה</button></div>
+        <div class="stats four" id="mkSum"></div>
+        <h3>עסקאות לפי יום</h3>
+        <div id="mkChart"></div>
+      </article>
+      <article class="sec">
+        <div class="h-top"><h2>לפי עיר</h2><span class="note" id="mkCount" style="margin:0"></span></div>
+        <div class="tools">
+          <input id="mkSearch" type="text" maxlength="40" placeholder="חיפוש עיר" autocomplete="off" aria-label="חיפוש עיר">
+          <select id="mkSort" aria-label="מיון"><option value="n">הכי הרבה עסקאות</option><option value="avg">ממוצע זול קודם</option><option value="mn">הכי זול קודם</option></select>
+        </div>
+        <div id="mkTable"></div>
+        <p class="note">לחיצה על עיר מציגה את הנתונים שלה בלבד, וגם את העסקאות שלה לפי יום.</p>
+      </article>
+    </div>
+  </section>
 
   <!-- בדוק נכס -->
   <section class="panel" id="p-check" role="tabpanel" aria-labelledby="t-check">
@@ -332,10 +392,16 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.0.1';
+var APP_VERSION='1.1.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.1.0',date:'2026-11-02',items:[
+    'גיליון ראשי חדש, 📊 שוק: דירות שנמכרו בפועל לפי עיר, עם מספר עסקאות, מחיר ממוצע, הכי זול והכי יקר.',
+    'סינון לפי תקופה (7, 30 או 90 ימים) ולפי מספר חדרים. חיפוש עיר ומיון.',
+    'גרף של עסקאות לפי יום. לחיצה על עמודה מציגה רק את היום הזה, ולחיצה על עיר מציגה רק אותה.',
+    'הנתונים מתעדכנים כל בוקר. רשות המסים מפרסמת באיחור, ולכן התקופות נספרות מהתאריך האחרון שיש עליו נתונים מלאים.'
+  ]},
   {v:'1.0.1',date:'2026-10-03',items:[
     'כפתור 🔄 בכותרת: בודק אם יש גרסה חדשה, ואם יש, טוען אותה מיד בלי מטמון. עובד גם מאייקון מסך הבית.',
     'בדיקה אוטומטית בכל פתיחה: כשיש גרסה חדשה, מופיע פס עליון עם כפתור "עדכן עכשיו".'
@@ -405,7 +471,7 @@ paintTheme();
 /* ---------- לשוניות ---------- */
 var tabs=[].slice.call(document.querySelectorAll('.tab'));
 function showTab(name,focus){
-  var found=tabs.some(function(t){return t.dataset.tab===name;});if(!found)name='check';
+  var found=tabs.some(function(t){return t.dataset.tab===name;});if(!found)name='market';
   tabs.forEach(function(t){
     var on=t.dataset.tab===name;
     t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;
@@ -421,7 +487,7 @@ tabs.forEach(function(t,i){
     e.preventDefault();showTab(tabs[(i+d+tabs.length)%tabs.length].dataset.tab,true);
   });
 });
-showTab((location.hash||'#check').slice(1));
+showTab((location.hash||'#market').slice(1));
 
 /* ---------- גרסה ויומן ---------- */
 var verBtn=document.getElementById('verBtn'),dlg=document.getElementById('logDlg'),logBody=document.getElementById('logBody');
@@ -863,6 +929,147 @@ $('checkBtn').addEventListener('click',runCheck);
 $('histClear').addEventListener('click',function(){saveHist([]);renderHist();});
 renderHist();
 window.__tn={parseAd:parseAd,analyze:analyze,cleanDeals:cleanDeals,ringPoints:ringPoints,cityVariants:cityVariants};
+})();
+</script>
+<script>
+(function(){
+'use strict';
+function $(id){return document.getElementById(id);}
+function el(tag,props){
+  var n=document.createElement(tag);props=props||{};
+  Object.keys(props).forEach(function(k){var v=props[k];if(v==null)return;
+    if(k==='class')n.className=v;else if(k==='text')n.textContent=String(v);else n.setAttribute(k,String(v));});
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null||c===false)continue;n.appendChild(typeof c==='object'?c:document.createTextNode(String(c)));}
+  return n;
+}
+function nis(v){return '₪'+Math.round(v).toLocaleString('en-US');}
+function nisK(v){return v>=1e6?'₪'+(v/1e6).toFixed(2).replace(/\.?0+$/,'')+'M':'₪'+Math.round(v/1000)+'K';}
+function fmtD(iso){var p=String(iso).split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0].slice(2):'';}
+function addDays(iso,k){var d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+k);return d.toISOString().slice(0,10);}
+var DOW=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+
+var S={data:null,period:30,rooms:'all',city:null,day:null,q:'',sort:'n'};
+function bucket(r){if(!(r>0))return null;if(r<3)return '2';if(r<4)return '3';if(r<5)return '4';return '5';}
+
+function validate(d){
+  if(!d||typeof d!=='object'||!Array.isArray(d.days)||!Array.isArray(d.cities)||!Array.isArray(d.rows))return null;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(d.anchor||'')))return null;
+  var rows=d.rows.filter(function(r){
+    return Array.isArray(r)&&r.length===7&&r.every(function(x){return typeof x==='number'&&isFinite(x);})&&
+      d.days[r[0]]&&d.cities[r[1]]!=null&&r[3]>0&&r[6]>=r[5];
+  });
+  return {anchor:d.anchor,days:d.days.map(String),cities:d.cities.map(function(c){return String(c).slice(0,40);}),rows:rows,
+    generated:String(d.generated_at||''),scraped:String(d.db_scraped_at||''),months:Array.isArray(d.months)?d.months:[]};
+}
+
+function filtered(opts){
+  var D=S.data,start=addDays(D.anchor,-(S.period-1)),end=D.anchor;
+  return D.rows.filter(function(r){
+    var day=D.days[r[0]];
+    if(day<start||day>end)return false;
+    if(S.rooms!=='all'&&bucket(r[2])!==S.rooms)return false;
+    if(!opts.ignoreCity&&S.city!=null&&r[1]!==S.city)return false;
+    if(!opts.ignoreDay&&S.day&&day!==S.day)return false;
+    return true;
+  });
+}
+function agg(rows,keyFn){
+  var m={};
+  rows.forEach(function(r){var k=keyFn(r),a=m[k];
+    if(!a)m[k]=a={n:0,s:0,mn:Infinity,mx:-Infinity};
+    a.n+=r[3];a.s+=r[4];if(r[5]<a.mn)a.mn=r[5];if(r[6]>a.mx)a.mx=r[6];});
+  return m;
+}
+
+function renderSummary(){
+  var all=agg(filtered({}),function(){return 'x';}).x;
+  var box=$('mkSum');box.textContent='';
+  var scope=(S.city!=null?S.data.cities[S.city]:'כל הארץ')+(S.day?', '+fmtD(S.day):'');
+  $('mkScope').textContent=scope;
+  if(!all){box.appendChild(el('div',{class:'empty',text:'אין עסקאות בסינון הזה.'}));return;}
+  [['עסקאות',String(all.n)],['מחיר ממוצע',nis(all.s/all.n)],['הכי זול',nis(all.mn)],['הכי יקר',nis(all.mx)]].forEach(function(x){
+    box.appendChild(el('div',{class:'stat'},el('b',{dir:'ltr',text:x[1]}),el('span',{text:x[0]})));
+  });
+}
+
+function renderChart(){
+  var D=S.data,end=D.anchor,box=$('mkChart');box.textContent='';
+  var byDay=agg(filtered({ignoreDay:true}),function(r){return D.days[r[0]];});
+  var list=[];for(var k=S.period-1;k>=0;k--){var d=addDays(end,-k);list.push({d:d,n:byDay[d]?byDay[d].n:0});}
+  var max=Math.max.apply(null,list.map(function(x){return x.n;}).concat([1]));
+  var wrap=el('div',{class:'dbars',role:'list','aria-label':'עסקאות לפי יום'});
+  list.forEach(function(x){
+    var b=el('button',{class:'dbar'+(S.day===x.d?' on':'')+(x.n===0?' zero':''),type:'button',role:'listitem',
+      'aria-label':fmtD(x.d)+': '+x.n+' עסקאות','aria-pressed':S.day===x.d?'true':'false'});
+    var fill=el('span',{class:'fill'});fill.style.height=Math.max(2,Math.round(x.n/max*100))+'%';b.appendChild(fill);
+    b.addEventListener('click',function(){S.day=(S.day===x.d?null:x.d);renderAll();});
+    wrap.appendChild(b);
+  });
+  box.appendChild(wrap);
+  box.appendChild(el('div',{class:'dbar-axis'},el('small',{text:fmtD(list[0].d)}),el('small',{text:fmtD(list[list.length-1].d)})));
+  var info=S.day?(DOW[new Date(S.day+'T12:00:00Z').getUTCDay()]+' '+fmtD(S.day)+': '+(byDay[S.day]?byDay[S.day].n:0)+' עסקאות. לחיצה נוספת מבטלת.')
+    :'לחיצה על עמודה מציגה את היום הזה בלבד.';
+  box.appendChild(el('p',{class:'note',text:info}));
+}
+
+function renderTable(){
+  var D=S.data,box=$('mkTable');box.textContent='';
+  var m=agg(filtered({ignoreCity:true}),function(r){return r[1];});
+  var q=S.q.trim();
+  var list=Object.keys(m).map(function(k){var a=m[k];return {c:+k,name:D.cities[+k],n:a.n,avg:a.s/a.n,mn:a.mn,mx:a.mx};})
+    .filter(function(x){return !q||x.name.indexOf(q)>=0;});
+  var key={n:function(a,b){return b.n-a.n;},avg:function(a,b){return a.avg-b.avg;},mn:function(a,b){return a.mn-b.mn;}}[S.sort];
+  list.sort(key);
+  $('mkCount').textContent=list.length+' ערים';
+  if(!list.length){box.appendChild(el('div',{class:'empty',text:'לא נמצאו ערים.'}));return;}
+  var tb=el('tbody');
+  list.slice(0,150).forEach(function(x){
+    var tr=el('tr',{class:'city'+(S.city===x.c?' on':''),tabindex:'0'},
+      el('td',null,el('div',{class:'c-name',text:x.name}),el('small',{text:x.n+' עסקאות'})),
+      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(x.avg)}),el('small',{text:nisK(x.mn)+' – '+nisK(x.mx)}))
+    );
+    function pick(){S.city=(S.city===x.c?null:x.c);renderAll();if(S.city!=null)$('mkSumCard').scrollIntoView({behavior:'smooth',block:'start'});}
+    tr.addEventListener('click',pick);tr.addEventListener('keydown',function(e){if(e.key==='Enter')pick();});
+    tb.appendChild(tr);
+  });
+  box.appendChild(el('table',{class:'checks cities'},
+    el('thead',null,el('tr',null,el('th',{text:'עיר'}),el('th',{class:'n',text:'ממוצע (זול – יקר)'}))),tb));
+  if(list.length>150)box.appendChild(el('p',{class:'note',text:'מוצגות 150 הערים הראשונות. אפשר לחפש עיר בשדה החיפוש.'}));
+}
+
+function renderChips(){
+  [].forEach.call(document.querySelectorAll('[data-period]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.period===S.period));});
+  [].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.setAttribute('aria-pressed',String(b.dataset.rooms===S.rooms));});
+  $('mkClear').hidden=(S.city==null&&!S.day);
+}
+function renderAll(){renderChips();renderSummary();renderChart();renderTable();}
+
+function renderFresh(){
+  var D=S.data,f=$('mkFresh');f.textContent='';
+  f.appendChild(el('span',{text:'עסקאות מעודכנות עד '+fmtD(D.anchor)+'. '}));
+  f.appendChild(el('span',{text:'רשות המסים מפרסמת עסקאות באיחור של כמה חודשים, ולכן התקופות נספרות אחורה מהתאריך הזה ולא מהיום.'}));
+}
+
+function init(d){
+  var v=validate(d);
+  if(!v||!v.rows.length){$('mkBody').hidden=true;$('mkState').hidden=false;
+    $('mkState').textContent='עוד אין נתונים לגיליון. מריצים את "גיליון ראשי - עדכון יומי" ב-GitHub, ואחרי כמה דקות מרעננים.';return;}
+  S.data=v;$('mkState').hidden=true;$('mkBody').hidden=false;
+  renderFresh();renderAll();
+}
+
+[].forEach.call(document.querySelectorAll('[data-period]'),function(b){b.addEventListener('click',function(){S.period=+b.dataset.period;S.day=null;renderAll();});});
+[].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.addEventListener('click',function(){S.rooms=b.dataset.rooms;renderAll();});});
+$('mkSearch').addEventListener('input',function(){S.q=String(this.value).slice(0,40);renderTable();});
+$('mkSort').addEventListener('change',function(){var v=this.value;S.sort=(v==='avg'||v==='mn')?v:'n';renderTable();});
+$('mkClear').addEventListener('click',function(){S.city=null;S.day=null;renderAll();});
+
+fetch('data/dashboard.json',{cache:'no-store'}).then(function(r){
+  if(r.status===404)return null;if(!r.ok)throw new Error('http');return r.json();
+}).then(function(d){init(d);}).catch(function(){
+  $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
+});
+window.__mk={S:S,validate:validate,bucket:bucket,filtered:filtered,agg:agg,init:init};
 })();
 </script>
 </body>
