@@ -16,12 +16,12 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.4.1"
+BUILD_VERSION = "1.5.0"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "dashboard.json")
-UA = "tom-nadlan-dashboard/1.4 (personal, read-only, daily)"
+UA = "tom-nadlan-dashboard/1.5 (personal, read-only, daily)"
 TIMEOUT = 60
 PAUSE = 1.5
 PAGE = 500
@@ -196,6 +196,94 @@ def fetch_monthly(anchor_month):
     return {"months": months, "cities": names, "rows": rows}
 
 
+WATCH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "watch.json")
+WATCH_MONTHS = 3
+SAFE_NAME = re.compile(r"^[\u0590-\u05FF0-9 \-'\"().]{2,40}$")
+
+
+def load_watch():
+    try:
+        with open(WATCH_FILE, encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, ValueError):
+        return None
+    cities = [str(c).strip() for c in cfg.get("cities", []) if SAFE_NAME.match(str(c).strip())][:12]
+    pct = cfg.get("below_median_pct", 15)
+    mx = cfg.get("max_flags_per_city", 3)
+    pct = pct if isinstance(pct, (int, float)) and 5 <= pct <= 50 else 15
+    mx = mx if isinstance(mx, int) and 0 <= mx <= 10 else 3
+    return {"cities": cities, "pct": pct, "max_flags": mx} if cities else None
+
+
+def _med(vals):
+    vals = sorted(vals)
+    if not vals:
+        return None
+    m = len(vals) // 2
+    return vals[m] if len(vals) % 2 else (vals[m - 1] + vals[m]) / 2
+
+
+def rooms_bucket(r):
+    if r is None or r <= 0:
+        return 0
+    return 2 if r < 3 else 3 if r < 4 else 4 if r < 5 else 5
+
+
+def fetch_watch(anchor_month, cfg):
+    """ערי מעקב: עסקאות של 3 החודשים המלאים האחרונים. חציון מחיר למ"ר לפי עיר וקבוצת חדרים,
+    ועסקאות בחודש העוגן שנסגרו לפחות pct% מתחת לחציון של אותה קבוצה."""
+    months = months_window(anchor_month, back=WATCH_MONTHS)
+    like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
+    names = ",".join("'" + c.replace("'", "''") + "'" for c in cfg["cities"])
+    raw, offset = [], 0
+    for _ in range(MAX_PAGES_M):
+        sql = (f"SELECT * FROM {TABLE} WHERE ({like}) AND settlement IN ({names}) AND {BASE_WHERE} "
+               f"AND {AREA} BETWEEN 25 AND 400 ORDER BY deal_date LIMIT {PAGE_M} OFFSET {offset}")
+        page = post_sql(sql)
+        raw.extend(page)
+        if len(page) < PAGE_M:
+            break
+        offset += PAGE_M
+    else:
+        raise SqlError("too many pages (watch)")
+    deals = []
+    for r in raw:
+        d = to_iso(r.get("deal_date"))
+        city = str(r.get("settlement") or "").strip()
+        amt, area = num(r.get("deal_amount")), num(r.get("asset_area"))
+        if not d or city not in cfg["cities"] or not amt or not area or area <= 0:
+            continue
+        rooms = num(r.get("room_num"))
+        deals.append({"date": d, "city": city, "rooms": rooms if rooms and 0 < rooms <= 20 else None,
+                      "rb": rooms_bucket(rooms), "area": round(area), "amount": round(amt), "ppm": amt / area,
+                      "gush": str(r.get("gush") or "")[:10], "chelka": str(r.get("chelka") or "")[:10],
+                      "sub": str(r.get("sub_chelka") or "")[:10], "year": int(num(r.get("year_built")) or 0)})
+    out = []
+    for city in cfg["cities"]:
+        cd = [x for x in deals if x["city"] == city]
+        med_all = _med([x["ppm"] for x in cd])
+        by_rb = {}
+        for rb in (2, 3, 4, 5):
+            v = [x["ppm"] for x in cd if x["rb"] == rb]
+            if len(v) >= 5:
+                by_rb[str(rb)] = round(_med(v))
+        flags = []
+        for x in cd:
+            if not x["date"].startswith(anchor_month):
+                continue
+            ref = by_rb.get(str(x["rb"])) if x["rb"] else None
+            if not ref:
+                continue
+            pct = x["ppm"] / ref - 1
+            if pct <= -cfg["pct"] / 100:
+                flags.append(dict(x, ppm=round(x["ppm"]), ref=ref, pct=round(pct * 100)))
+        flags.sort(key=lambda f: f["pct"])
+        out.append({"name": city, "n_ref": len(cd), "median_ppm": round(med_all) if med_all else None,
+                    "median_by_rooms": by_rb, "flags": [{k: v for k, v in f.items() if k != "city"} for f in flags[:cfg["max_flags"]]],
+                    "flags_total": len(flags)})
+    return {"ref_months": months, "anchor_month": anchor_month, "below_pct": cfg["pct"], "cities": out}
+
+
 def freshness():
     try:
         r = post_sql(f"SELECT MAX(scraped_at) AS scraped, MAX(first_seen) AS seen FROM {TABLE}")
@@ -262,6 +350,13 @@ def build(today=None):
     except SqlError as e:
         print(f"monthly: failed ({e})")
         monthly = None
+    watch = None
+    cfg = load_watch()
+    if cfg:
+        try:
+            watch = fetch_watch(anchor_month, cfg)
+        except SqlError as e:
+            print(f"watch: failed ({e})")
     fr = freshness()
     return {
         "build_version": BUILD_VERSION,
@@ -278,6 +373,7 @@ def build(today=None):
         "rows": data["rows"],
         "budget": budget,
         "monthly": monthly,
+        "watch": watch,
     }
 
 

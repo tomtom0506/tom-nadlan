@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-oCnhx6XWbW9H1TjuRXJTiVkiZu9gdht5OgiS7FgRw+k=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-1BZT4qG/5V7tu5o3WkbzgHN57v9Z4Ld9/mLFyx9Kosk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-rsvYbTzE0id8WHormpE8XvJyVM5E1uHKEb/Wh/QSHP8=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Qe8v9gWgBQ+dZB8TTTncBPSJSKR+JcnAF9I/7s1GOpo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -69,6 +69,7 @@ button{font:inherit;color:inherit}
 
 /* hero */
 .hero{padding:36px 0 8px}
+.tabs{margin-top:16px}
 .hero h1{font-size:clamp(1.9rem,7vw,2.6rem);line-height:1.15;margin:0 0 10px;font-weight:700;letter-spacing:-.02em}
 .hero p{margin:0;color:var(--muted);max-width:52ch}
 .dim{position:relative;margin:30px 0 4px;color:var(--accent)}
@@ -243,6 +244,27 @@ tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
 .maxis{display:flex;direction:ltr;gap:2px;margin-top:4px}
 .maxis span{flex:1;min-width:0;font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:visible}
 
+/* track */
+.tr-list{display:grid;gap:12px}
+.tr-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer}
+.tr-card:active{transform:scale(.995)}
+.tr-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tr-head .c-name{font-size:1.1rem}
+.tr-pctw{text-align:left;line-height:1.1}.tr-pctw small{display:block;font-size:.7rem;color:var(--muted)}
+.tr-pct{font-weight:700;font-size:1.1rem;unicode-bidi:isolate}
+.tr-pct.up{color:var(--good)}.tr-pct.down{color:var(--bad)}.tr-pct.flat{color:var(--muted)}
+.tr-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.tr-stats b{display:block;font-size:1.05rem;line-height:1.2;text-align:right}
+.tr-stats span{font-size:.74rem;color:var(--muted)}
+.tr-spark{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:10px;direction:ltr}
+.tr-spark span{flex:1;background:var(--accent);opacity:.7;border-radius:2px 2px 0 0}
+.tr-spark span.last{opacity:1;background:var(--text)}
+.tr-flags{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.tr-flags-h{font-size:.85rem;font-weight:600;color:var(--good)}
+.tr-flag{display:flex;justify-content:space-between;gap:10px;font-size:.88rem}
+.tr-flag small{display:block;color:var(--muted);font-size:.76rem}
+.tr-flag .n{text-align:left}
+
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
 /* changelog */
@@ -408,8 +430,15 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
   <!-- מעקב -->
   <section class="panel" id="p-track" role="tabpanel" aria-labelledby="t-track" hidden>
     <article class="sec">
-      <h2>מעקב אזורים <span class="soon">שלב שני</span></h2>
-      <p class="lead">בוחרים אזורים, ופעם בשבוע האפליקציה בודקת את מגמת המחיר למ"ר, את מספר העסקאות ועסקאות שנסגרו הרבה מתחת לחציון המקומי. כשיש שינוי משמעותי, מגיעה הודעה לבוט בטלגרם.</p>
+      <h2>מעקב אזורים</h2>
+      <p class="lead">הערים שבמעקב: כמה דירות נמכרו בחודש המלא האחרון לעומת השנה הקודמת, ועסקאות שנסגרו הרבה מתחת למחיר המקובל בעיר. פעם בשבוע, כשיש נתונים חדשים, מגיע סיכום לבוט בטלגרם.</p>
+      <p class="note fresh" id="trInfo"></p>
+      <div class="empty" id="trState">טוען…</div>
+    </article>
+    <div id="trList" class="tr-list"></div>
+    <article class="sec">
+      <p class="note" style="margin:0">לחיצה על עיר פותחת אותה בגיליון "שוק". כדי לשנות את רשימת הערים, עורכים את הקובץ watch.json בריפו:</p>
+      <p class="note"><a href="https://github.com/tomtom0506/tom-nadlan/edit/main/watch.json" target="_blank" rel="noopener noreferrer">עריכת רשימת הערים ב-GitHub</a></p>
     </article>
   </section>
 </main>
@@ -430,10 +459,16 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.4.1';
+var APP_VERSION='1.5.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.5.0',date:'2026-11-02',items:[
+    'לשונית מעקב: כרטיס לכל עיר במעקב, עם מספר העסקאות בחודש המלא האחרון מול השנה הקודמת, מחיר ממוצע, חציון למ"ר ומגמה של 12 חודשים.',
+    'לכל עיר מוצגות עסקאות שנסגרו לפחות 15% מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים, עם גוש וחלקה.',
+    'התראה שבועית בטלגרם בימי ראשון, שנשלחת רק כשיש נתונים חדשים.',
+    'הכותרת "עד ₪1,500,000" מופיעה רק בלשונית ₪1.5M.'
+  ]},
   {v:'1.4.1',date:'2026-11-02',items:[
     'תיקון: הריבוע עם האחוז, ו"שנה" ו"3 שנים", מוצגים מיד, גם לפני העדכון היומי הבא של הנתונים. עד העדכון יוצג מקף במקום "הכי זול" ו"הכי יקר" לתקופות האלה.',
     'הריבוע עם האחוז מתעדכן לפי החודש שלוחצים עליו: החודש שנבחר מול הממוצע החודשי של השנה שלפניו. העמודות של השנה הזו מסומנות באפור.'
@@ -539,6 +574,7 @@ function showTab(name,focus){
     document.getElementById(t.getAttribute('aria-controls')).hidden=!on;
     if(on&&focus)t.focus();
   });
+  var hero=document.querySelector('.hero');if(hero)hero.hidden=(name!=='budget');
   if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
 }
 tabs.forEach(function(t,i){
@@ -1287,13 +1323,73 @@ $('bgSort').addEventListener('change',function(){var v=this.value;B.sort=(['sqm'
 $('bgSearch').addEventListener('input',function(){B.q=String(this.value).slice(0,40);if(B.data)renderBudgetList();});
 
 
+
+/* ---------- מעקב אזורים ---------- */
+var RB_LBL={2:'עד 2.5 חד׳',3:'3–3.5 חד׳',4:'4–4.5 חד׳',5:'5+ חד׳'};
+function validateWatch(w){
+  if(!w||typeof w!=='object'||!Array.isArray(w.cities))return null;
+  var cities=w.cities.filter(function(c){return c&&typeof c.name==='string';}).slice(0,12).map(function(c){
+    var flags=(Array.isArray(c.flags)?c.flags:[]).filter(function(f){return f&&typeof f==='object'&&isFinite(f.amount)&&isFinite(f.ppm)&&isFinite(f.pct);}).slice(0,10);
+    return {name:c.name.slice(0,40),median:isFinite(c.median_ppm)&&c.median_ppm>0?+c.median_ppm:null,flags:flags,flagsTotal:isFinite(c.flags_total)?+c.flags_total:flags.length};
+  });
+  return cities.length?{cities:cities,pct:isFinite(w.below_pct)?+w.below_pct:15}:null;
+}
+function citySeries(name){
+  if(!MO)return null;var ci=MO.cities.indexOf(name);if(ci<0)return null;
+  var n=MO.months.map(function(){return 0;}),s=MO.months.map(function(){return 0;});
+  MO.rows.forEach(function(r){if(r[1]!==ci)return;n[r[0]]+=r[3];s[r[0]]+=r[4];});
+  return {n:n,s:s};
+}
+function renderWatch(raw){
+  var box=$('trList'),st=$('trState');box.textContent='';
+  var W=validateWatch(raw);
+  if(!W){st.hidden=false;st.textContent='נתוני המעקב ייווצרו בעדכון היומי הבא של הגיליון.';return;}
+  st.hidden=true;
+  $('trInfo').textContent='עסקאות שנסגרו לפחות '+W.pct+'% מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים, בחודש המלא האחרון. החציון מחושב מ-3 החודשים האחרונים.';
+  W.cities.forEach(function(c){
+    var card=el('div',{class:'tr-card',role:'button',tabindex:'0','aria-label':'פתח את '+c.name+' בגיליון שוק'});
+    var se=citySeries(c.name),last=MO?MO.months.length-1:-1;
+    var head=el('div',{class:'tr-head'},el('span',{class:'c-name',text:c.name}));
+    if(se&&last>=0){
+      var ym=MO.months[last],py=String(+ym.slice(0,4)-1),pv=[];
+      MO.months.forEach(function(m,i){if(m.slice(0,4)===py)pv.push(se.n[i]);});
+      if(pv.length>=6){var avg=pv.reduce(function(a,b){return a+b;},0)/pv.length;
+        if(avg>0){var d=se.n[last]/avg-1;head.appendChild(el('span',{class:'tr-pctw'},el('span',{class:'tr-pct '+(d>=0.005?'up':d<=-0.005?'down':'flat'),dir:'ltr',text:(d>0?'+':'')+Math.round(d*100)+'%'}),el('small',{text:'מול ממוצע '+py})));}}
+      card.appendChild(head);
+      card.appendChild(el('div',{class:'tr-stats'},
+        el('div',null,el('b',{dir:'ltr',text:se.n[last].toLocaleString('en-US')}),el('span',{text:'עסקאות ב'+monthName(ym)})),
+        el('div',null,el('b',{dir:'ltr',text:se.n[last]?nisK(se.s[last]/se.n[last]):'–'}),el('span',{text:'מחיר ממוצע'})),
+        el('div',null,el('b',{dir:'ltr',text:c.median?nis(c.median):'–'}),el('span',{text:'חציון למ"ר'}))));
+      var n12=se.n.slice(-12),mx=Math.max.apply(null,n12.concat([1]));
+      var spark=el('div',{class:'tr-spark','aria-hidden':'true'});
+      n12.forEach(function(v,i){var b=el('span',{class:i===11?'last':''});b.style.height=Math.max(3,Math.round(v/mx*100))+'%';spark.appendChild(b);});
+      card.appendChild(spark);
+    }else{card.appendChild(head);card.appendChild(el('p',{class:'note',text:'אין נתונים חודשיים לעיר הזו.'}));}
+    if(c.flags.length){
+      var fl=el('div',{class:'tr-flags'},el('div',{class:'tr-flags-h',text:'💎 '+c.flagsTotal+(c.flagsTotal===1?' עסקה':' עסקאות')+' מתחת לחציון'+(c.flagsTotal>c.flags.length?' (מוצגות '+c.flags.length+')':'')}));
+      c.flags.forEach(function(f){
+        var dd=String(f.date||''),ds=dd.length===10?dd.slice(8,10)+'.'+dd.slice(5,7):'';
+        var parcel=(f.gush&&f.chelka)?'גוש '+String(f.gush).slice(0,10)+' חלקה '+String(f.chelka).slice(0,10):'';
+        fl.appendChild(el('div',{class:'tr-flag'},
+          el('div',null,el('b',{text:(isFinite(f.rooms)&&f.rooms?f.rooms+' חד׳, ':'')+(isFinite(f.area)?f.area+' מ"ר':'')}),el('small',{text:[ds,parcel].filter(Boolean).join(', ')})),
+          el('div',{class:'n'},el('bdi',{text:nisK(f.amount)}),el('small',{dir:'ltr',text:nis(f.ppm)+' ('+f.pct+'%)'}))));
+      });
+      card.appendChild(fl);
+    }
+    function open(){S.city=c.name;S.sel=null;var t=$('t-market');if(t)t.click();renderAll();window.scrollTo(0,0);}
+    card.addEventListener('click',open);card.addEventListener('keydown',function(e){if(e.key==='Enter')open();});
+    box.appendChild(card);
+  });
+}
+
 fetch('data/dashboard.json?t='+Date.now(),{cache:'no-store'}).then(function(r){
   if(r.status===404)return null;if(!r.ok)throw new Error('http');return r.json();
-}).then(function(d){init(d);renderBudget(d&&d.budget);}).catch(function(){
+}).then(function(d){init(d);renderBudget(d&&d.budget);renderWatch(d&&d.watch);}).catch(function(){
+  $('trState').hidden=false;$('trState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';
   $('bgState').hidden=false;$('bgState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';
   $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
 });
-window.__mk={cmpMonth:function(){return cmpMonth();},S:S,B:B,isCenter:isCenter,validate:validate,validateMonthly:validateMonthly,validateBudget:validateBudget,records:records,agg:agg,init:init};
+window.__mk={validateWatch:validateWatch,cmpMonth:function(){return cmpMonth();},S:S,B:B,isCenter:isCenter,validate:validate,validateMonthly:validateMonthly,validateBudget:validateBudget,records:records,agg:agg,init:init};
 })();
 </script>
 </body>
