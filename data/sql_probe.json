@@ -1,0 +1,502 @@
+{
+  "probe_version": "1.0.2",
+  "run_at": "2026-11-02T11:52:19+00:00",
+  "sql_url": "https://www.over.org.il/api/append/fd06f5ae-8a4f-4120-b275-8a514ad23499/sql",
+  "table": "append_taxes_nadlan_full_f41fb496_fd06f5ae",
+  "queries": [
+    {
+      "id": "schema",
+      "label": "מבנה הטבלה",
+      "sql": "SELECT * FROM append_taxes_nadlan_full_f41fb496_fd06f5ae LIMIT 2",
+      "ok": true,
+      "status": 200,
+      "ms": 840,
+      "kb": 1.7,
+      "error": null,
+      "columns": [
+        "settlement_code",
+        "settlement",
+        "gush",
+        "chelka",
+        "sub_chelka",
+        "deal_date",
+        "deal_amount",
+        "declared_amount",
+        "deal_nature",
+        "portion",
+        "year_built",
+        "asset_area",
+        "room_num",
+        "scraped_at",
+        "first_seen",
+        "row_hash",
+        "last_seen"
+      ],
+      "row_count": 2,
+      "rows": [
+        {
+          "settlement_code": "8300",
+          "settlement": "ראשון לציון",
+          "gush": "3630",
+          "chelka": "129",
+          "sub_chelka": "000",
+          "deal_date": "08/02/2001",
+          "deal_amount": "248220",
+          "declared_amount": "248220",
+          "deal_nature": "קרקע",
+          "portion": "0.056",
+          "year_built": "0",
+          "asset_area": "1000",
+          "room_num": "0",
+          "scraped_at": "2026-07-19 15:47:08.593847+00",
+          "first_seen": "2026-09-18 10:41:08.843518+00:00",
+          "row_hash": "046d3464-d10e-918b-1336-0c065100a0d0",
+          "last_seen": null
+        },
+        {
+          "settlement_code": "8300",
+          "settlement": "ראשון לציון",
+          "gush": "3630",
+          "chelka": "130",
+          "sub_chelka": "000",
+          "deal_date": "20/01/2014",
+          "deal_amount": "240000",
+          "declared_amount": "240000",
+          "deal_nature": "ללא תיכנון",
+          "portion": "0.060",
+          "year_built": "0",
+          "asset_area": "0",
+          "room_num": "0",
+          "scraped_at": "2026-07-19 15:47:08.593847+00",
+          "first_seen": "2026-09-18 10:41:08.843518+00:00",
+          "row_hash": "07ec0c75-19eb-a36a-07e8-b5c00c84f2fc",
+          "last_seen": null
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "count_2026",
+      "label": "ספירה של 2026",
+      "sql": "SELECT COUNT(*) AS n FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/2026'",
+      "ok": true,
+      "status": 200,
+      "ms": 1289,
+      "kb": 0.1,
+      "error": null,
+      "columns": [
+        "n"
+      ],
+      "row_count": 1,
+      "rows": [
+        {
+          "n": 60594
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "days",
+      "label": "עסקאות לפי יום (אוק'-נוב')",
+      "sql": "SELECT deal_date, COUNT(*) AS n FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/10/2026' OR deal_date LIKE '%/11/2026' GROUP BY deal_date ORDER BY n DESC LIMIT 62",
+      "ok": true,
+      "status": 200,
+      "ms": 670,
+      "kb": 0.1,
+      "error": null,
+      "columns": [],
+      "row_count": 0,
+      "rows": [],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "natures",
+      "label": "סוגי עסקאות",
+      "sql": "SELECT deal_nature, COUNT(*) AS n FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/2026' GROUP BY deal_nature ORDER BY n DESC LIMIT 30",
+      "ok": true,
+      "status": 200,
+      "ms": 735,
+      "kb": 1.5,
+      "error": null,
+      "columns": [
+        "deal_nature",
+        "n"
+      ],
+      "row_count": 30,
+      "rows": [
+        {
+          "deal_nature": "דירה בבית קומות",
+          "n": 47214
+        },
+        {
+          "deal_nature": "ללא תיכנון",
+          "n": 4690
+        },
+        {
+          "deal_nature": "מגורים",
+          "n": 3020
+        },
+        {
+          "deal_nature": "קוטג' דו משפחתי",
+          "n": 983
+        },
+        {
+          "deal_nature": "קוטג' חד משפחתי",
+          "n": 744
+        },
+        {
+          "deal_nature": "משרד",
+          "n": 649
+        },
+        {
+          "deal_nature": "לא מעובדת",
+          "n": 607
+        },
+        {
+          "deal_nature": "דירת גן",
+          "n": 542
+        },
+        {
+          "deal_nature": "מחסנים",
+          "n": 442
+        },
+        {
+          "deal_nature": "בית בודד",
+          "n": 306
+        },
+        {
+          "deal_nature": "חנות",
+          "n": 299
+        },
+        {
+          "deal_nature": "תעשיה",
+          "n": 234
+        },
+        {
+          "deal_nature": "חניה",
+          "n": 214
+        },
+        {
+          "deal_nature": "אופציה",
+          "n": 185
+        },
+        {
+          "deal_nature": "במשק חקלאי-נחלה",
+          "n": 127
+        },
+        {
+          "deal_nature": "דירת גג",
+          "n": 76
+        },
+        {
+          "deal_nature": "מסחרי + משרדים",
+          "n": 51
+        },
+        {
+          "deal_nature": "דירת נופש",
+          "n": 50
+        },
+        {
+          "deal_nature": "מלאכה",
+          "n": 44
+        },
+        {
+          "deal_nature": "קבוצת רכישה - קרקע מ",
+          "n": 22
+        },
+        {
+          "deal_nature": "מסחרי + מגורים",
+          "n": 20
+        },
+        {
+          "deal_nature": "קוטג' טורי",
+          "n": 12
+        },
+        {
+          "deal_nature": "שלחין",
+          "n": 10
+        },
+        {
+          "deal_nature": "בניני ציבור",
+          "n": 8
+        },
+        {
+          "deal_nature": "מלונאות ונופש",
+          "n": 8
+        },
+        {
+          "deal_nature": "פרדס",
+          "n": 8
+        },
+        {
+          "deal_nature": "קרקע ל-8 יחידות ומעל",
+          "n": 5
+        },
+        {
+          "deal_nature": "בתהליכי תכנון",
+          "n": 5
+        },
+        {
+          "deal_nature": "דיור מוגן",
+          "n": 4
+        },
+        {
+          "deal_nature": "ניוד זכויות בניה",
+          "n": 4
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "cities",
+      "label": "סיכום לפי עיר (ספטמבר)",
+      "sql": "SELECT settlement, COUNT(*) AS n, AVG(CAST(deal_amount AS REAL)) AS avg_amt, MIN(CAST(deal_amount AS REAL)) AS min_amt, MAX(CAST(deal_amount AS REAL)) AS max_amt FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/09/2026' AND deal_nature LIKE '%דיר%' GROUP BY settlement ORDER BY n DESC LIMIT 15",
+      "ok": true,
+      "status": 200,
+      "ms": 630,
+      "kb": 1.5,
+      "error": null,
+      "columns": [
+        "settlement",
+        "n",
+        "avg_amt",
+        "min_amt",
+        "max_amt"
+      ],
+      "row_count": 13,
+      "rows": [
+        {
+          "settlement": "עכו",
+          "n": 28,
+          "avg_amt": 1320664.2857142857,
+          "min_amt": 937200.0,
+          "max_amt": 2111200.0
+        },
+        {
+          "settlement": "אופקים",
+          "n": 16,
+          "avg_amt": 1201182.125,
+          "min_amt": 563157.0,
+          "max_amt": 2390000.0
+        },
+        {
+          "settlement": "אשקלון",
+          "n": 10,
+          "avg_amt": 1587500.0,
+          "min_amt": 950000.0,
+          "max_amt": 2420000.0
+        },
+        {
+          "settlement": "בית שמש",
+          "n": 4,
+          "avg_amt": 2750000.0,
+          "min_amt": 2350000.0,
+          "max_amt": 3200000.0
+        },
+        {
+          "settlement": "אשדוד",
+          "n": 3,
+          "avg_amt": 2430000.0,
+          "min_amt": 1900000.0,
+          "max_amt": 2730000.0
+        },
+        {
+          "settlement": "נתיבות",
+          "n": 3,
+          "avg_amt": 1702326.6666666667,
+          "min_amt": 1356980.0,
+          "max_amt": 2300000.0
+        },
+        {
+          "settlement": "נהרייה",
+          "n": 2,
+          "avg_amt": 1057909.5,
+          "min_amt": 1037371.0,
+          "max_amt": 1078448.0
+        },
+        {
+          "settlement": "גדרה",
+          "n": 2,
+          "avg_amt": 1820000.0,
+          "min_amt": 1820000.0,
+          "max_amt": 1820000.0
+        },
+        {
+          "settlement": "כרמיאל",
+          "n": 1,
+          "avg_amt": 1600000.0,
+          "min_amt": 1600000.0,
+          "max_amt": 1600000.0
+        },
+        {
+          "settlement": "דימונה",
+          "n": 1,
+          "avg_amt": 1650000.0,
+          "min_amt": 1650000.0,
+          "max_amt": 1650000.0
+        },
+        {
+          "settlement": "באר יעקב",
+          "n": 1,
+          "avg_amt": 4700000.0,
+          "min_amt": 4700000.0,
+          "max_amt": 4700000.0
+        },
+        {
+          "settlement": "מודיעין-מכבים-רעות",
+          "n": 1,
+          "avg_amt": 3800000.0,
+          "min_amt": 3800000.0,
+          "max_amt": 3800000.0
+        },
+        {
+          "settlement": "יבנה",
+          "n": 1,
+          "avg_amt": 3750000.0,
+          "min_amt": 3750000.0,
+          "max_amt": 3750000.0
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "rooms",
+      "label": "פילוח חדרים",
+      "sql": "SELECT room_num, COUNT(*) AS n FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/09/2026' AND deal_nature LIKE '%דיר%' GROUP BY room_num ORDER BY n DESC LIMIT 20",
+      "ok": true,
+      "status": 200,
+      "ms": 636,
+      "kb": 0.3,
+      "error": null,
+      "columns": [
+        "room_num",
+        "n"
+      ],
+      "row_count": 6,
+      "rows": [
+        {
+          "room_num": "4",
+          "n": 25
+        },
+        {
+          "room_num": "5",
+          "n": 19
+        },
+        {
+          "room_num": "3",
+          "n": 15
+        },
+        {
+          "room_num": "6",
+          "n": 10
+        },
+        {
+          "room_num": "7",
+          "n": 3
+        },
+        {
+          "room_num": "3.5",
+          "n": 1
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    },
+    {
+      "id": "portion",
+      "label": "חלקי בעלות",
+      "sql": "SELECT portion, COUNT(*) AS n FROM append_taxes_nadlan_full_f41fb496_fd06f5ae WHERE deal_date LIKE '%/09/2026' AND deal_nature LIKE '%דיר%' GROUP BY portion ORDER BY n DESC LIMIT 15",
+      "ok": true,
+      "status": 200,
+      "ms": 689,
+      "kb": 0.2,
+      "error": null,
+      "columns": [
+        "portion",
+        "n"
+      ],
+      "row_count": 1,
+      "rows": [
+        {
+          "portion": "1.000",
+          "n": 73
+        }
+      ],
+      "response_keys": [
+        "columns",
+        "fields",
+        "row_count",
+        "rows",
+        "truncated"
+      ]
+    }
+  ],
+  "cors_preflight": {
+    "status": 200,
+    "allow_origin": "*",
+    "allow_methods": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, QUERY",
+    "allow_headers": "content-type"
+  },
+  "limit_headers": {},
+  "summary": {
+    "ok": 7,
+    "total": 7,
+    "group_by_ok": false,
+    "city_summary_ok": true,
+    "latest_deal_day": null,
+    "columns": [
+      "settlement_code",
+      "settlement",
+      "gush",
+      "chelka",
+      "sub_chelka",
+      "deal_date",
+      "deal_amount",
+      "declared_amount",
+      "deal_nature",
+      "portion",
+      "year_built",
+      "asset_area",
+      "room_num",
+      "scraped_at",
+      "first_seen",
+      "row_hash",
+      "last_seen"
+    ]
+  }
+}
