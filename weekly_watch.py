@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-WATCH_VERSION = "1.5.1"
+WATCH_VERSION = "1.5.2"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DASH = os.path.join(ROOT, "data", "dashboard.json")
 STATE = os.path.join(ROOT, "data", "watch_state.json")
@@ -47,44 +47,52 @@ def city_monthly(dash, city):
     return months, n, s
 
 
-def city_block(dash, wc):
-    name = wc["name"]
-    lines = [f"🏙 {name}"]
-    cm = city_monthly(dash, name)
+LRM = "\u200e"
+TOP_FLAGS = 3
+
+
+def short_name(name):
+    return re.sub(r"\s*-\s*", "-", name).strip()
+
+
+def k(v):
+    return f"₪{v / 1000:.1f}K"
+
+
+def pct_s(p):
+    return f"{LRM}{'+' if p > 0 else ''}{p}%"
+
+
+def city_line(dash, wc):
+    parts = []
+    cm = city_monthly(dash, wc["name"])
     if cm:
-        months, n, s = cm
-        last = len(months) - 1
-        ym = months[last]
+        months, n, _ = cm
+        ym = months[-1]
         prev_y = str(int(ym[:4]) - 1)
         pv = [n[i] for i, m in enumerate(months) if m.startswith(prev_y)]
-        line = f"{month_name(ym)}: {n[last]:,} עסקאות"
+        parts.append(f"{n[-1]:,}")
         if len(pv) >= 6 and sum(pv) > 0:
-            d = n[last] / (sum(pv) / len(pv)) - 1
-            line += f" ({'+' if d > 0 else ''}{round(d * 100)}% מול ממוצע {prev_y})"
-        lines.append(line)
-        if n[last]:
-            lines.append(f"ממוצע {nis(s[last] / n[last])}")
+            parts.append(pct_s(round((n[-1] / (sum(pv) / len(pv)) - 1) * 100)))
     if wc.get("median_ppm"):
-        lines.append(f"חציון 3 חודשים: {nis(wc['median_ppm'])} למ\"ר")
-    flags = wc.get("flags") or []
-    if flags:
-        tot = wc.get("flags_total", len(flags))
-        lo, hi = dash['watch'].get('below_pct', 15), dash['watch'].get('cap_pct', 45)
-        lines.append(f"💎 {tot} עסקאות {lo}%–{hi}% מתחת לחציון:" if tot > 1
-                     else f"💎 עסקה אחת {lo}%–{hi}% מתחת לחציון:")
-        if tot > len(flags):
-            lines.append(f"(מוצגות {len(flags)} הזולות ביותר)")
-        for f in flags:
-            dd = str(f.get("date", ""))
-            date_s = f"{dd[8:10]}.{dd[5:7]}" if len(dd) == 10 else ""
-            rooms = f.get("rooms")
-            rooms_s = (f"{rooms:g} חד׳, " if isinstance(rooms, (int, float)) else "")
-            parcel = f" גוש {f['gush']} חלקה {f['chelka']}" if f.get("gush") and f.get("chelka") else ""
-            lines.append(f"• {date_s} {rooms_s}{f.get('area')} מ\"ר, {nis(f.get('amount', 0))} "
-                         f"({nis(f.get('ppm', 0))} למ\"ר, {f.get('pct')}%){parcel}")
-    if wc.get("outliers"):
-        lines.append(f"({wc['outliers']} עסקאות זולות בצורה חריגה סוננו, כנראה לא בשוק החופשי)")
-    return "\n".join(lines)
+        parts.append(k(wc["median_ppm"]))
+    return f"{short_name(wc['name'])}: " + (", ".join(parts) if parts else "אין נתונים")
+
+
+def top_flags(cities):
+    best = []
+    for c in cities:
+        fl = [f for f in (c.get("flags") or []) if isinstance(f.get("pct"), (int, float))]
+        if fl:
+            f = min(fl, key=lambda x: x["pct"])
+            best.append((f["pct"], c["name"], f))
+    best.sort(key=lambda x: x[0])
+    out = []
+    for p, name, f in best[:TOP_FLAGS]:
+        rooms = f.get("rooms")
+        rooms_s = f"{rooms:g} חד׳, " if isinstance(rooms, (int, float)) else ""
+        out.append(f"• {short_name(name)}: {rooms_s}{f.get('area')} מ\"ר, {nis(f.get('amount', 0))} ({pct_s(p)})")
+    return out
 
 
 def build_message(dash):
@@ -92,10 +100,17 @@ def build_message(dash):
     cities = w.get("cities") or []
     if not cities:
         return None
-    head = [f"📈 הנדלן של תומר: מעקב שבועי",
-            f"עסקאות מעודכנות עד {month_name(dash['anchor_month'])}"]
-    blocks = [city_block(dash, c) for c in cities]
-    msg = "\n".join(head) + "\n\n" + "\n\n".join(blocks) + "\n\n" + APP_URL
+    m = dash.get("monthly") or {}
+    ym = (m.get("months") or [dash["anchor_month"]])[-1]
+    prev_y = str(int(ym[:4]) - 1)
+    lines = [f"📈 הנדלן של תומר: {month_name(ym)}",
+             f"(עסקאות בחודש, שינוי מול הממוצע של {prev_y}, חציון למ\"ר)", ""]
+    lines += [city_line(dash, c) for c in cities]
+    flags = top_flags(cities)
+    if flags:
+        lines += ["", "💎 הזדמנויות בולטות:"] + flags
+    lines += ["", "לפרטים, גוש וחלקה:", APP_URL]
+    msg = "\n".join(lines)
     if len(msg) > MAX_LEN:
         msg = msg[:MAX_LEN - len(APP_URL) - 5] + "…\n" + APP_URL
     return msg
