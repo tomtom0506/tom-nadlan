@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-WATCH_VERSION = "1.5.2"
+WATCH_VERSION = "1.5.3"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DASH = os.path.join(ROOT, "data", "dashboard.json")
 STATE = os.path.join(ROOT, "data", "watch_state.json")
@@ -47,7 +47,11 @@ def city_monthly(dash, city):
     return months, n, s
 
 
-LRM = "\u200e"
+LRI, PDI = "\u2066", "\u2069"  # בידוד כיווניות: כל מספר נשאר במקומו בשורה עברית
+
+
+def iso(t):
+    return f"{LRI}{t}{PDI}"
 TOP_FLAGS = 3
 
 
@@ -56,11 +60,11 @@ def short_name(name):
 
 
 def k(v):
-    return f"₪{v / 1000:.1f}K"
+    return iso(f"₪{v / 1000:.1f}K")
 
 
 def pct_s(p):
-    return f"{LRM}{'+' if p > 0 else ''}{p}%"
+    return iso(f"{'+' if p > 0 else ''}{p}%")
 
 
 def city_line(dash, wc):
@@ -71,7 +75,7 @@ def city_line(dash, wc):
         ym = months[-1]
         prev_y = str(int(ym[:4]) - 1)
         pv = [n[i] for i, m in enumerate(months) if m.startswith(prev_y)]
-        parts.append(f"{n[-1]:,}")
+        parts.append(iso(f"{n[-1]:,}"))
         if len(pv) >= 6 and sum(pv) > 0:
             parts.append(pct_s(round((n[-1] / (sum(pv) / len(pv)) - 1) * 100)))
     if wc.get("median_ppm"):
@@ -90,8 +94,8 @@ def top_flags(cities):
     out = []
     for p, name, f in best[:TOP_FLAGS]:
         rooms = f.get("rooms")
-        rooms_s = f"{rooms:g} חד׳, " if isinstance(rooms, (int, float)) else ""
-        out.append(f"• {short_name(name)}: {rooms_s}{f.get('area')} מ\"ר, {nis(f.get('amount', 0))} ({pct_s(p)})")
+        rooms_s = f"{iso(f'{rooms:g}')} חד׳, " if isinstance(rooms, (int, float)) else ""
+        out.append(f"• {short_name(name)}: {rooms_s}{iso(f.get('area'))} מ\"ר, {iso(nis(f.get('amount', 0)))}, {pct_s(p)}")
     return out
 
 
