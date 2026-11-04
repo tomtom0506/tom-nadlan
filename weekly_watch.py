@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-WATCH_VERSION = "1.5.0"
+WATCH_VERSION = "1.5.1"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DASH = os.path.join(ROOT, "data", "dashboard.json")
 STATE = os.path.join(ROOT, "data", "watch_state.json")
@@ -69,8 +69,9 @@ def city_block(dash, wc):
     flags = wc.get("flags") or []
     if flags:
         tot = wc.get("flags_total", len(flags))
-        lines.append(f"💎 {tot} עסקאות לפחות {dash['watch'].get('below_pct', 15)}% מתחת לחציון:" if tot > 1
-                     else f"💎 עסקה אחת לפחות {dash['watch'].get('below_pct', 15)}% מתחת לחציון:")
+        lo, hi = dash['watch'].get('below_pct', 15), dash['watch'].get('cap_pct', 45)
+        lines.append(f"💎 {tot} עסקאות {lo}%–{hi}% מתחת לחציון:" if tot > 1
+                     else f"💎 עסקה אחת {lo}%–{hi}% מתחת לחציון:")
         if tot > len(flags):
             lines.append(f"(מוצגות {len(flags)} הזולות ביותר)")
         for f in flags:
@@ -81,6 +82,8 @@ def city_block(dash, wc):
             parcel = f" גוש {f['gush']} חלקה {f['chelka']}" if f.get("gush") and f.get("chelka") else ""
             lines.append(f"• {date_s} {rooms_s}{f.get('area')} מ\"ר, {nis(f.get('amount', 0))} "
                          f"({nis(f.get('ppm', 0))} למ\"ר, {f.get('pct')}%){parcel}")
+    if wc.get("outliers"):
+        lines.append(f"({wc['outliers']} עסקאות זולות בצורה חריגה סוננו, כנראה לא בשוק החופשי)")
     return "\n".join(lines)
 
 

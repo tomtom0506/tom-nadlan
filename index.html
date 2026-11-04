@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-rsvYbTzE0id8WHormpE8XvJyVM5E1uHKEb/Wh/QSHP8=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Qe8v9gWgBQ+dZB8TTTncBPSJSKR+JcnAF9I/7s1GOpo='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UXI+P0SbOG4n0Ln4NZBf6ZqF6OngUceqQpxeZxFb87E=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-x8UEoNKgA22GpypdjokSZ05Nwj6xLeZRRKvP8EU/KcM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -264,6 +264,7 @@ tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
 .tr-flag{display:flex;justify-content:space-between;gap:10px;font-size:.88rem}
 .tr-flag small{display:block;color:var(--muted);font-size:.76rem}
 .tr-flag .n{text-align:left}
+.tr-out{margin:10px 0 0;font-size:.78rem}
 
 footer{padding:8px 0 32px;color:var(--muted);font-size:.8rem;text-align:center}
 
@@ -459,10 +460,13 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.5.0';
+var APP_VERSION='1.5.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.5.1',date:'2026-11-02',items:[
+    'מעקב: הזדמנות היא רק עסקה שנסגרה 15%–45% מתחת לחציון. עסקאות זולות יותר, שכמעט תמיד אינן עסקאות שוק (העברה במשפחה, דייר מוגן, שגיאה בשטח), נספרות בנפרד ולא מוצגות כהזדמנות.'
+  ]},
   {v:'1.5.0',date:'2026-11-02',items:[
     'לשונית מעקב: כרטיס לכל עיר במעקב, עם מספר העסקאות בחודש המלא האחרון מול השנה הקודמת, מחיר ממוצע, חציון למ"ר ומגמה של 12 חודשים.',
     'לכל עיר מוצגות עסקאות שנסגרו לפחות 15% מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים, עם גוש וחלקה.',
@@ -1330,9 +1334,9 @@ function validateWatch(w){
   if(!w||typeof w!=='object'||!Array.isArray(w.cities))return null;
   var cities=w.cities.filter(function(c){return c&&typeof c.name==='string';}).slice(0,12).map(function(c){
     var flags=(Array.isArray(c.flags)?c.flags:[]).filter(function(f){return f&&typeof f==='object'&&isFinite(f.amount)&&isFinite(f.ppm)&&isFinite(f.pct);}).slice(0,10);
-    return {name:c.name.slice(0,40),median:isFinite(c.median_ppm)&&c.median_ppm>0?+c.median_ppm:null,flags:flags,flagsTotal:isFinite(c.flags_total)?+c.flags_total:flags.length};
+    return {name:c.name.slice(0,40),median:isFinite(c.median_ppm)&&c.median_ppm>0?+c.median_ppm:null,flags:flags,flagsTotal:isFinite(c.flags_total)?+c.flags_total:flags.length,outliers:isFinite(c.outliers)?+c.outliers:0};
   });
-  return cities.length?{cities:cities,pct:isFinite(w.below_pct)?+w.below_pct:15}:null;
+  return cities.length?{cities:cities,pct:isFinite(w.below_pct)?+w.below_pct:15,cap:isFinite(w.cap_pct)?+w.cap_pct:null}:null;
 }
 function citySeries(name){
   if(!MO)return null;var ci=MO.cities.indexOf(name);if(ci<0)return null;
@@ -1345,7 +1349,7 @@ function renderWatch(raw){
   var W=validateWatch(raw);
   if(!W){st.hidden=false;st.textContent='נתוני המעקב ייווצרו בעדכון היומי הבא של הגיליון.';return;}
   st.hidden=true;
-  $('trInfo').textContent='עסקאות שנסגרו לפחות '+W.pct+'% מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים, בחודש המלא האחרון. החציון מחושב מ-3 החודשים האחרונים.';
+  $('trInfo').textContent='הזדמנויות: עסקאות מהחודש המלא האחרון שנסגרו '+W.pct+'%'+(W.cap?'–'+W.cap+'%':'')+' מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים. החציון מחושב מ-3 החודשים האחרונים. עסקאות זולות מזה כנראה אינן עסקאות שוק, והן נספרות בנפרד.';
   W.cities.forEach(function(c){
     var card=el('div',{class:'tr-card',role:'button',tabindex:'0','aria-label':'פתח את '+c.name+' בגיליון שוק'});
     var se=citySeries(c.name),last=MO?MO.months.length-1:-1;
@@ -1376,6 +1380,7 @@ function renderWatch(raw){
       });
       card.appendChild(fl);
     }
+    if(c.outliers)card.appendChild(el('p',{class:'note tr-out',text:c.outliers+(c.outliers===1?' עסקה זולה בצורה חריגה סוננה':' עסקאות זולות בצורה חריגה סוננו')+', כנראה לא בשוק החופשי.'}));
     function open(){S.city=c.name;S.sel=null;var t=$('t-market');if(t)t.click();renderAll();window.scrollTo(0,0);}
     card.addEventListener('click',open);card.addEventListener('keydown',function(e){if(e.key==='Enter')open();});
     box.appendChild(card);

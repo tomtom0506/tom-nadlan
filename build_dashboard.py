@@ -16,7 +16,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.5.0"
+BUILD_VERSION = "1.5.1"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
@@ -212,7 +212,9 @@ def load_watch():
     mx = cfg.get("max_flags_per_city", 3)
     pct = pct if isinstance(pct, (int, float)) and 5 <= pct <= 50 else 15
     mx = mx if isinstance(mx, int) and 0 <= mx <= 10 else 3
-    return {"cities": cities, "pct": pct, "max_flags": mx} if cities else None
+    cap = cfg.get("max_below_pct", 45)
+    cap = cap if isinstance(cap, (int, float)) and pct < cap <= 90 else 45
+    return {"cities": cities, "pct": pct, "cap": cap, "max_flags": mx} if cities else None
 
 
 def _med(vals):
@@ -267,7 +269,7 @@ def fetch_watch(anchor_month, cfg):
             v = [x["ppm"] for x in cd if x["rb"] == rb]
             if len(v) >= 5:
                 by_rb[str(rb)] = round(_med(v))
-        flags = []
+        flags, outliers = [], 0
         for x in cd:
             if not x["date"].startswith(anchor_month):
                 continue
@@ -275,13 +277,15 @@ def fetch_watch(anchor_month, cfg):
             if not ref:
                 continue
             pct = x["ppm"] / ref - 1
-            if pct <= -cfg["pct"] / 100:
+            if pct < -cfg["cap"] / 100:
+                outliers += 1  # זול מדי: כנראה לא עסקת שוק (משפחה, דייר מוגן, שגיאת שטח)
+            elif pct <= -cfg["pct"] / 100:
                 flags.append(dict(x, ppm=round(x["ppm"]), ref=ref, pct=round(pct * 100)))
         flags.sort(key=lambda f: f["pct"])
         out.append({"name": city, "n_ref": len(cd), "median_ppm": round(med_all) if med_all else None,
                     "median_by_rooms": by_rb, "flags": [{k: v for k, v in f.items() if k != "city"} for f in flags[:cfg["max_flags"]]],
-                    "flags_total": len(flags)})
-    return {"ref_months": months, "anchor_month": anchor_month, "below_pct": cfg["pct"], "cities": out}
+                    "flags_total": len(flags), "outliers": outliers})
+    return {"ref_months": months, "anchor_month": anchor_month, "below_pct": cfg["pct"], "cap_pct": cfg["cap"], "cities": out}
 
 
 def freshness():
