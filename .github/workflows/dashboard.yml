@@ -36,3 +36,13 @@ jobs:
             sleep 5
           done
           echo "push failed"; exit 1
+
+      # התראה בטלגרם כשאחד השלבים נכשל או שה-job נעצר (למשל חריגה מ-timeout), כדי שעצירה של העדכון היומי לא תעבור בשקט.
+      # הסודות עוברים רק דרך env ולא מודפסים. הקישור לריצה נבנה מערכי GitHub ולא מקלט חיצוני.
+      - name: Notify failure
+        if: ${{ failure() || cancelled() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 notify_failure.py "העדכון היומי של הגיליון נכשל"
