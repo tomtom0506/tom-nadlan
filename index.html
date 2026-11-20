@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-UXI+P0SbOG4n0Ln4NZBf6ZqF6OngUceqQpxeZxFb87E=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-x8UEoNKgA22GpypdjokSZ05Nwj6xLeZRRKvP8EU/KcM='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-r1yeArlmQ1B5e0gUtYmMqHjByL7ni35QqanZl/6nz6s=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-QTdJbXBJDlmFVYXNcnIw/1WeIpwn20hLYoNB/u7oEpY='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -460,10 +460,16 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.5.1';
+var APP_VERSION='1.5.4';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.5.4',date:'2026-11-20',items:[
+    'בגיליון הראשי מוצג מתי הגיליון נבנה ומתי המאגר של רשות המסים עודכן. אם העדכון היומי לא רץ בהצלחה יותר מ-48 שעות, או שהמאגר לא התעדכן יותר מ-30 יום, מוצגת אזהרה.',
+    'העדכון היומי עמיד יותר: שגיאות רשת ותשובות פגומות מנוסות שוב במקום להפיל את כל הבנייה, ויש תקציב זמן כולל כדי שהריצה לא תיעצר באמצע.',
+    'אם האיסוף של לשונית ₪1.5M, של "מעקב" או של הנתונים החודשיים נכשל, נשארת הגרסה הקודמת עם הערה מאיזה תאריך היא, במקום שהלשונית תתרוקן.',
+    'התראה בטלגרם כשהעדכון היומי נכשל. ההתראה השבועית מסומנת כנכשלת אם השליחה לטלגרם לא הצליחה, ולא נשלחת על נתוני מעקב ישנים.'
+  ]},
   {v:'1.5.1',date:'2026-11-02',items:[
     'מעקב: הזדמנות היא רק עסקה שנסגרה 15%–45% מתחת לחציון. עסקאות זולות יותר, שכמעט תמיד אינן עסקאות שוק (העברה במשפחה, דייר מוגן, שגיאה בשטח), נספרות בנפרד ולא מוצגות כהזדמנות.'
   ]},
@@ -1258,10 +1264,36 @@ function renderChips(){
   [].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.setAttribute('aria-pressed',String(b.dataset.rooms===S.rooms));});
   $('mkClear').hidden=(S.city==null&&!S.sel);
 }
-function renderFresh(){
+/* טריות: מתי הגיליון נבנה ומתי המאגר עודכן. חותמת בלי אזור זמן נקראת כ-UTC. */
+var STALE_BUILD_H=48,STALE_DB_D=30;
+function parseTs(v){
+  var s=String(v||'');if(!/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(s))return null;
+  s=s.replace(' ','T');if(!/(Z|[+-]\d{2}:?\d{2})$/.test(s))s+='Z';
+  var t=Date.parse(s);return isFinite(t)?t:null;
+}
+function agoText(ms){var d=Math.floor(ms/864e5);return d<=0?'היום':d===1?'אתמול':'לפני '+d+' ימים';}
+function isoDay(t){return new Date(t).toISOString().slice(0,10);}
+function staleNote(box,raw,what){
+  if(!raw||!raw.stale)return;
+  var t=parseTs(raw.stale_since);
+  box.appendChild(el('span',{class:'warn',text:' '+what+' לא התעדכנו בבנייה האחרונה'+(t?' ומוצגים כפי שנבנו ב-'+fmtD(isoDay(t)):'')+'.'}));
+}
+function renderFresh(d){
   var f=$('mkFresh');f.textContent='';
   f.appendChild(el('span',{text:'עסקאות מעודכנות עד '+fmtD(S.data.anchor)+'. '}));
   f.appendChild(el('span',{text:'רשות המסים מפרסמת עסקאות באיחור של כמה חודשים, ולכן התקופות נספרות אחורה מהתאריך הזה ולא מהיום.'}));
+  var now=Date.now(),g=parseTs(d&&d.generated_at),db=parseTs(d&&d.db_scraped_at);
+  if(g){
+    var gOld=now-g>STALE_BUILD_H*36e5;
+    f.appendChild(el('span',{class:gOld?'warn':null,text:' הגיליון נבנה ב-'+fmtD(isoDay(g))+' ('+agoText(now-g)+')'+
+      (gOld?'. העדכון היומי לא רץ בהצלחה מאז, ולכן ייתכן שחסרות עסקאות חדשות.':'.')}));
+  }
+  if(db){
+    var dbOld=now-db>STALE_DB_D*864e5;
+    f.appendChild(el('span',{class:dbOld?'warn':null,text:' המאגר של רשות המסים עודכן לאחרונה ב-'+fmtD(isoDay(db))+' ('+agoText(now-db)+')'+
+      (dbOld?'. המקור עצמו לא התעדכן, ולכן גם בנייה מוצלחת לא תביא עסקאות חדשות.':'.')}));
+  }
+  staleNote(f,d&&d.monthly,'הנתונים לתקופות "שנה" ו"3 שנים"');
 }
 function renderAll(){renderChips();renderSummary();renderCmp();renderChart();renderTable();}
 
@@ -1272,7 +1304,7 @@ function init(d){
   S.data=v;MO=validateMonthly(d.monthly);
   if(MONTHS_OF[S.period]&&!(MO&&MO.months.length>=MONTHS_OF[S.period]))S.period=30;
   $('mkState').hidden=true;$('mkBody').hidden=false;
-  renderFresh();renderAll();
+  renderFresh(d);renderAll();
 }
 
 [].forEach.call(document.querySelectorAll('[data-period]'),function(b){b.addEventListener('click',function(){
@@ -1320,6 +1352,7 @@ function renderBudget(raw){
   if(!v||!v.rows.length){$('bgState').hidden=false;$('bgBody').hidden=true;$('bgState').textContent='הנתונים ללשונית הזו ייווצרו בעדכון היומי הבא של הגיליון.';return;}
   B.data=v;$('bgState').hidden=true;$('bgBody').hidden=false;
   $('bgPeriod').textContent='עסקאות דירות מ-'+ym(v.from)+' עד '+ym(v.to)+' (12 חודשים). מוצגות ערים עם לפחות '+B.minN+' דירות עד ₪1.5M. חיפוש מציג גם ערים עם פחות.';
+  staleNote($('bgPeriod'),raw,'הנתונים בלשונית הזו');
   renderBudgetList();
 }
 $('bgCenter').addEventListener('click',function(){B.center=!B.center;this.setAttribute('aria-pressed',String(B.center));if(B.data)renderBudgetList();});
@@ -1350,6 +1383,7 @@ function renderWatch(raw){
   if(!W){st.hidden=false;st.textContent='נתוני המעקב ייווצרו בעדכון היומי הבא של הגיליון.';return;}
   st.hidden=true;
   $('trInfo').textContent='הזדמנויות: עסקאות מהחודש המלא האחרון שנסגרו '+W.pct+'%'+(W.cap?'–'+W.cap+'%':'')+' מתחת לחציון למ"ר של העיר, באותה קבוצת חדרים. החציון מחושב מ-3 החודשים האחרונים. עסקאות זולות מזה כנראה אינן עסקאות שוק, והן נספרות בנפרד.';
+  staleNote($('trInfo'),raw,'נתוני המעקב');
   W.cities.forEach(function(c){
     var card=el('div',{class:'tr-card',role:'button',tabindex:'0','aria-label':'פתח את '+c.name+' בגיליון שוק'});
     var se=citySeries(c.name),last=MO?MO.months.length-1:-1;

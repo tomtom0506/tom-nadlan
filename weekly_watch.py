@@ -11,7 +11,7 @@ import sys
 import urllib.parse
 import urllib.request
 
-WATCH_VERSION = "1.5.3"
+WATCH_VERSION = "1.5.4"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DASH = os.path.join(ROOT, "data", "dashboard.json")
 STATE = os.path.join(ROOT, "data", "watch_state.json")
@@ -153,6 +153,11 @@ def main(force=False):
     if not dash or not dash.get("watch") or not dash.get("anchor_month"):
         print("watch: no data")
         return 0
+    if dash["watch"].get("stale"):
+        # נתוני המעקב לא התעדכנו בבנייה האחרונה. לא שולחים נתונים ישנים כאילו הם חדשים;
+        # על כשל הבנייה עצמה מתריע ה-workflow היומי.
+        print("watch: stale data, skipped")
+        return 0
     state = load_json(STATE) or {}
     key = data_key(dash)
     if not force and state.get("last_key") == key:
@@ -167,7 +172,9 @@ def main(force=False):
         with open(STATE, "w", encoding="utf-8") as f:
             json.dump({"last_key": key, "sent_at": dash.get("generated_at"), "version": WATCH_VERSION}, f, ensure_ascii=False)
         print("watch: sent")
-    return 0
+        return 0
+    print("watch: send failed")
+    return 1
 
 
 if __name__ == "__main__":

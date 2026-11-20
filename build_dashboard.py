@@ -7,6 +7,7 @@
 - המאגר מתעדכן בפיגור, ולכן "העוגן" הוא היום האחרון בחודש המלא האחרון, לא התאריך של היום.
 - בלוגים נרשם רק סוג השגיאה.
 """
+import http.client
 import json
 import os
 import re
@@ -16,7 +17,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.5.1"
+BUILD_VERSION = "1.5.4"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
@@ -28,6 +29,9 @@ PAGE = 500
 MAX_PAGES = 80
 MONTHS_BACK = 3          # חודש העוגן ועוד שניים לפניו (כ-90 יום)
 FULL_MONTH_RATIO = 0.70  # חודש "מלא" = לפחות 70% מהחציון של 6 החודשים שלפניו
+ATTEMPTS = 5
+BUDGET_SECONDS = 15 * 60  # תקציב זמן לכל הבנייה. ה-job מוגבל ל-20 דקות, וצריך זמן גם ל-commit
+_deadline = None          # time.monotonic() שאחריו לא מתחילים ניסיון חדש
 
 APT_NATURES = ("דירה בבית קומות", "דירת גן", "דירת גג")
 NATURE_SQL = "deal_nature IN (" + ",".join("'" + n.replace("'", "''") + "'" for n in APT_NATURES) + ")"
@@ -39,31 +43,55 @@ class SqlError(Exception):
     pass
 
 
+def start_clock(seconds=BUDGET_SECONDS):
+    global _deadline
+    _deadline = time.monotonic() + seconds
+
+
+def _left():
+    return float("inf") if _deadline is None else _deadline - time.monotonic()
+
+
+def _wait(seconds):
+    """השהיה לפני ניסיון חוזר, אבל לא מעבר לתקציב הזמן."""
+    if _left() <= seconds:
+        raise SqlError("deadline")
+    time.sleep(seconds)
+
+
 def post_sql(sql):
-    """שאילתה אחת, עם ניסיון חוזר על 429 ו-5xx. מחזיר רשימת שורות."""
+    """שאילתה אחת, עם ניסיון חוזר על 429, 5xx, שגיאות רשת ותשובה פגומה.
+    כל כשל יוצא כ-SqlError, כדי שכשל של חלק אחד לא יפיל את כל הבנייה."""
     body = json.dumps({"sql": sql}).encode("utf-8")
-    for attempt in range(1, 6):
+    last = "none"
+    for attempt in range(1, ATTEMPTS + 1):
+        if _left() <= 0:
+            raise SqlError(f"deadline (last: {last})")
         req = urllib.request.Request(SQL_URL, data=body, method="POST", headers={
             "User-Agent": UA, "Content-Type": "application/json", "Accept": "application/json"})
+        delay = 10 * attempt
         try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            with urllib.request.urlopen(req, timeout=max(5, min(TIMEOUT, _left()))) as r:
                 data = json.loads(r.read(20_000_000).decode("utf-8"))
-                rows = data.get("rows") if isinstance(data, dict) else None
-                if not isinstance(rows, list):
-                    raise SqlError("NoRows")
-                time.sleep(PAUSE)
-                return rows
+            rows = data.get("rows") if isinstance(data, dict) else None
+            if not isinstance(rows, list):
+                raise SqlError("NoRows")
+            if data.get("truncated"):
+                raise SqlError("Truncated")
+            time.sleep(PAUSE)
+            return rows
         except urllib.error.HTTPError as e:
-            if e.code == 429 or e.code >= 500:
-                ra = (e.headers or {}).get("retry-after", "")
-                time.sleep(min(int(ra) + 2, 90) if str(ra).isdigit() else 15 * attempt)
-                continue
-            raise SqlError(f"HTTP {e.code}")
-        except (urllib.error.URLError, TimeoutError) as e:
-            time.sleep(10 * attempt)
+            if not (e.code == 429 or e.code >= 500):
+                raise SqlError(f"HTTP {e.code}")
+            last = f"HTTP {e.code}"
+            ra = (e.headers or {}).get("retry-after", "")
+            delay = min(int(ra) + 2, 90) if str(ra).isdigit() else 15 * attempt
+        except (OSError, http.client.HTTPException, ValueError) as e:
+            # URLError, TimeoutError, ConnectionResetError, RemoteDisconnected, IncompleteRead, JSON/UTF-8 פגום
             last = type(e).__name__
-            continue
-    raise SqlError("retries exhausted")
+        if attempt < ATTEMPTS:
+            _wait(delay)
+    raise SqlError(f"retries exhausted (last: {last})")
 
 
 def month_counts():
@@ -335,7 +363,28 @@ def pack(raw_rows, anchor_month):
     return {"days": day_list, "cities": city_list, "rows": packed, "anchor": anchor}
 
 
-def build(today=None):
+def load_previous(path=OUT):
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def keep_previous(name, prev):
+    """כשאיסוף של חלק נכשל: מחזיר את הגרסה הקודמת שלו, מסומנת stale עם התאריך שבו נבנתה. אין גרסה קודמת: None."""
+    old = prev.get(name)
+    if not isinstance(old, dict):
+        return None
+    out = dict(old)
+    out["stale"] = True
+    out["stale_since"] = old.get("stale_since") or prev.get("generated_at")
+    return out
+
+
+def build(today=None, prev=None):
+    prev = prev if prev is not None else {}
     counts = month_counts()
     anchor_month = pick_anchor_month(counts, today)
     if not anchor_month:
@@ -347,20 +396,21 @@ def build(today=None):
     try:
         budget = fetch_budget(anchor_month)
     except SqlError as e:
-        print(f"budget: failed ({e})")
-        budget = None
+        print(f"budget: failed ({e}), keeping previous")
+        budget = keep_previous("budget", prev)
     try:
         monthly = fetch_monthly(anchor_month)
     except SqlError as e:
-        print(f"monthly: failed ({e})")
-        monthly = None
+        print(f"monthly: failed ({e}), keeping previous")
+        monthly = keep_previous("monthly", prev)
     watch = None
     cfg = load_watch()
     if cfg:
         try:
             watch = fetch_watch(anchor_month, cfg)
         except SqlError as e:
-            print(f"watch: failed ({e})")
+            print(f"watch: failed ({e}), keeping previous")
+            watch = keep_previous("watch", prev)
     fr = freshness()
     return {
         "build_version": BUILD_VERSION,
@@ -382,7 +432,8 @@ def build(today=None):
 
 
 def main():
-    report = build()
+    start_clock()
+    report = build(prev=load_previous())
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tmp = OUT + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
