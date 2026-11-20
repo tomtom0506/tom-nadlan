@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.5.4"
+BUILD_VERSION = "1.5.5"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
@@ -35,7 +35,7 @@ _deadline = None          # time.monotonic() שאחריו לא מתחילים נ
 
 APT_NATURES = ("דירה בבית קומות", "דירת גן", "דירת גג")
 NATURE_SQL = "deal_nature IN (" + ",".join("'" + n.replace("'", "''") + "'" for n in APT_NATURES) + ")"
-AMT = "CAST(deal_amount AS REAL)"
+AMT = "CAST(deal_amount AS DOUBLE PRECISION)"  # REAL הוא float4: סכומים מעל ~16.7M מעוגלים ומשתנים בין הרצות
 BASE_WHERE = f"{NATURE_SQL} AND (portion = '1.000' OR portion = '1') AND {AMT} BETWEEN 150000 AND 40000000"
 
 
@@ -150,36 +150,61 @@ def fetch_detail(months):
 
 
 BUDGET = 1500000
-AREA = "CAST(NULLIF(asset_area, '') AS REAL)"
+AREA = "CAST(NULLIF(asset_area, '') AS DOUBLE PRECISION)"
+PPM_FLOOR = 0.35  # עסקה שמחירה למ"ר נמוך מ-35% מהממוצע של העיר: כנראה לא עסקת שוק או שגיאת שטח
+
+
+def budget_sql(like, ppm_filter=True):
+    """שאילתת התקציב. עם ppm_filter: עסקה עם שטח ידוע (25–400 מ"ר) שמחירה למ"ר נמוך מ-PPM_FLOOR
+    מהממוצע של אותה עיר באותה תקופה לא נספרת. עסקאות בלי שטח סביר לא נבדקות ונספרות כמו קודם."""
+    inb = f"{AMT} <= {BUDGET}"
+    ok_area = f"{AREA} BETWEEN 25 AND 400"
+    if ppm_filter:
+        plaus = f"(c.ref IS NULL OR NOT ({ok_area}) OR {AMT} >= {PPM_FLOOR} * c.ref * {AREA})"
+        inb = f"{inb} AND {plaus}"
+        src = (f"{TABLE} t LEFT JOIN (SELECT settlement, SUM({AMT}) / SUM({AREA}) AS ref FROM {TABLE} "
+               f"WHERE ({like}) AND {BASE_WHERE} AND {ok_area} GROUP BY settlement) c ON c.settlement = t.settlement")
+        name = "t.settlement"
+    else:
+        src, name = TABLE, "settlement"
+    return (f"SELECT {name} AS settlement, COUNT(*) AS n_all, "
+            f"SUM(CASE WHEN {inb} THEN 1 ELSE 0 END) AS n_b, "
+            f"SUM(CASE WHEN {inb} THEN {AMT} ELSE 0 END) AS s_b, "
+            f"SUM(CASE WHEN {inb} AND {ok_area} THEN 1 ELSE 0 END) AS na_b, "
+            f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AREA} ELSE 0 END) AS a_b, "
+            f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AMT} ELSE 0 END) AS sa_b "
+            f"FROM {src} WHERE ({like}) AND {BASE_WHERE} GROUP BY {name} LIMIT 3000")
 
 
 def fetch_budget(anchor_month):
-    """12 חודשים עד חודש העוגן: לכל עיר, כמה דירות נמכרו עד התקציב, ובאיזה גודל ומחיר."""
+    """12 חודשים עד חודש העוגן: לכל עיר, כמה דירות נמכרו עד התקציב, ובאיזה גודל ומחיר.
+    אם השרת לא מקבל את השאילתה עם הסינון (שגיאת 4xx), חוזרים לשאילתה בלי סינון ומסמנים ppm_filter=False."""
     months = months_window(anchor_month, back=12)
     like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
-    inb = f"{AMT} <= {BUDGET}"
-    ok_area = f"{AREA} BETWEEN 25 AND 400"
-    sql = (f"SELECT settlement, COUNT(*) AS n_all, "
-           f"SUM(CASE WHEN {inb} THEN 1 ELSE 0 END) AS n_b, "
-           f"SUM(CASE WHEN {inb} THEN {AMT} ELSE 0 END) AS s_b, "
-           f"SUM(CASE WHEN {inb} AND {ok_area} THEN 1 ELSE 0 END) AS na_b, "
-           f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AREA} ELSE 0 END) AS a_b, "
-           f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AMT} ELSE 0 END) AS sa_b "
-           f"FROM {TABLE} WHERE ({like}) AND {BASE_WHERE} GROUP BY settlement LIMIT 3000")
+    ppm_filter = True
+    try:
+        raw = post_sql(budget_sql(like))
+    except SqlError as e:
+        if not str(e).startswith("HTTP 4"):
+            raise
+        print(f"budget: ppm filter rejected ({e}), falling back")
+        ppm_filter = False
+        raw = post_sql(budget_sql(like, ppm_filter=False))
     rows = []
-    for r in post_sql(sql):
+    for r in raw:
         name = str(r.get("settlement") or "").strip()[:40]
         vals = [num(r.get(k)) for k in ("n_all", "n_b", "s_b", "na_b", "a_b", "sa_b")]
         if not name or any(v is None for v in vals) or vals[0] <= 0:
             continue
         rows.append([name] + [round(v) for v in vals])
     rows.sort(key=lambda x: x[0])
-    return {"from": months[0], "to": months[-1], "limit": BUDGET, "rows": rows}
+    return {"from": months[0], "to": months[-1], "limit": BUDGET, "rows": rows,
+            "ppm_filter": ppm_filter, "ppm_floor": PPM_FLOOR}
 
 
 PAGE_M = 1000
 MAX_PAGES_M = 150
-ROOMS = "CAST(NULLIF(room_num, '') AS REAL)"
+ROOMS = "CAST(NULLIF(room_num, '') AS DOUBLE PRECISION)"
 RB = (f"CASE WHEN {ROOMS} IS NULL OR {ROOMS} <= 0 THEN 0 WHEN {ROOMS} < 3 THEN 2 "
       f"WHEN {ROOMS} < 4 THEN 3 WHEN {ROOMS} < 5 THEN 4 ELSE 5 END")
 
@@ -226,6 +251,9 @@ def fetch_monthly(anchor_month):
 
 WATCH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "watch.json")
 WATCH_MONTHS = 3
+MIN_COMPS = 5                 # לפחות 5 עסקאות להשוואה (כלל "הזדמנות" של הפרויקט)
+COMP_AREA = 0.20              # דומה = אותה קבוצת חדרים ושטח בטווח ±20%
+SQM_PER_ROOM = (12, 45)       # מ"ר לחדר מחוץ לטווח: כנראה שגיאה בשטח או במספר החדרים
 SAFE_NAME = re.compile(r"^[\u0590-\u05FF0-9 \-'\"().]{2,40}$")
 
 
@@ -259,16 +287,30 @@ def rooms_bucket(r):
     return 2 if r < 3 else 3 if r < 4 else 4 if r < 5 else 5
 
 
+def plausible(x):
+    """עסקה שאפשר להשוות: מספר חדרים ידוע ושטח סביר למספר החדרים."""
+    if not x["rooms"] or not x["rb"]:
+        return False
+    return SQM_PER_ROOM[0] <= x["area"] / x["rooms"] <= SQM_PER_ROOM[1]
+
+
+def similar(x, pool):
+    """עסקאות דומות: אותה עיר וקבוצת חדרים, שטח בטווח ±COMP_AREA, בלי העסקה עצמה."""
+    lo, hi = x["area"] * (1 - COMP_AREA), x["area"] * (1 + COMP_AREA)
+    return [c for c in pool if c is not x and c["city"] == x["city"] and c["rb"] == x["rb"] and lo <= c["area"] <= hi]
+
+
 def fetch_watch(anchor_month, cfg):
     """ערי מעקב: עסקאות של 3 החודשים המלאים האחרונים. חציון מחיר למ"ר לפי עיר וקבוצת חדרים,
-    ועסקאות בחודש העוגן שנסגרו לפחות pct% מתחת לחציון של אותה קבוצה."""
+    ועסקאות בחודש העוגן שנסגרו לפחות pct% מתחת לחציון של עסקאות דומות (אותה קבוצת חדרים, שטח ±20%,
+    לפחות MIN_COMPS). עסקאות עם שטח לא סביר למספר החדרים לא נכנסות לחציונים ולא מסומנות."""
     months = months_window(anchor_month, back=WATCH_MONTHS)
     like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
     names = ",".join("'" + c.replace("'", "''") + "'" for c in cfg["cities"])
     raw, offset = [], 0
     for _ in range(MAX_PAGES_M):
         sql = (f"SELECT * FROM {TABLE} WHERE ({like}) AND settlement IN ({names}) AND {BASE_WHERE} "
-               f"AND {AREA} BETWEEN 25 AND 400 ORDER BY deal_date LIMIT {PAGE_M} OFFSET {offset}")
+               f"AND {AREA} BETWEEN 25 AND 400 ORDER BY row_hash LIMIT {PAGE_M} OFFSET {offset}")
         page = post_sql(sql)
         raw.extend(page)
         if len(page) < PAGE_M:
@@ -276,8 +318,13 @@ def fetch_watch(anchor_month, cfg):
         offset += PAGE_M
     else:
         raise SqlError("too many pages (watch)")
-    deals = []
+    deals, seen = [], set()
     for r in raw:
+        h = str(r.get("row_hash") or "")
+        if h:
+            if h in seen:
+                continue  # הגנה מכפילויות בין דפים
+            seen.add(h)
         d = to_iso(r.get("deal_date"))
         city = str(r.get("settlement") or "").strip()
         amt, area = num(r.get("deal_amount")), num(r.get("asset_area"))
@@ -288,31 +335,39 @@ def fetch_watch(anchor_month, cfg):
                       "rb": rooms_bucket(rooms), "area": round(area), "amount": round(amt), "ppm": amt / area,
                       "gush": str(r.get("gush") or "")[:10], "chelka": str(r.get("chelka") or "")[:10],
                       "sub": str(r.get("sub_chelka") or "")[:10], "year": int(num(r.get("year_built")) or 0)})
+    for x in deals:
+        x["plausible"] = plausible(x)
     out = []
     for city in cfg["cities"]:
         cd = [x for x in deals if x["city"] == city]
-        med_all = _med([x["ppm"] for x in cd])
+        ok = [x for x in cd if x["plausible"]]
+        med_all = _med([x["ppm"] for x in ok])
         by_rb = {}
         for rb in (2, 3, 4, 5):
-            v = [x["ppm"] for x in cd if x["rb"] == rb]
-            if len(v) >= 5:
+            v = [x["ppm"] for x in ok if x["rb"] == rb]
+            if len(v) >= MIN_COMPS:
                 by_rb[str(rb)] = round(_med(v))
-        flags, outliers = [], 0
+        flags, outliers, implausible = [], 0, 0
         for x in cd:
             if not x["date"].startswith(anchor_month):
                 continue
-            ref = by_rb.get(str(x["rb"])) if x["rb"] else None
-            if not ref:
+            if not x["plausible"]:
+                implausible += 1
                 continue
+            comps = similar(x, ok)
+            if len(comps) < MIN_COMPS:
+                continue
+            ref = _med([c["ppm"] for c in comps])
             pct = x["ppm"] / ref - 1
             if pct < -cfg["cap"] / 100:
                 outliers += 1  # זול מדי: כנראה לא עסקת שוק (משפחה, דייר מוגן, שגיאת שטח)
             elif pct <= -cfg["pct"] / 100:
-                flags.append(dict(x, ppm=round(x["ppm"]), ref=ref, pct=round(pct * 100)))
+                flags.append(dict(x, ppm=round(x["ppm"]), ref=round(ref), n_comps=len(comps), pct=round(pct * 100)))
         flags.sort(key=lambda f: f["pct"])
-        out.append({"name": city, "n_ref": len(cd), "median_ppm": round(med_all) if med_all else None,
-                    "median_by_rooms": by_rb, "flags": [{k: v for k, v in f.items() if k != "city"} for f in flags[:cfg["max_flags"]]],
-                    "flags_total": len(flags), "outliers": outliers})
+        out.append({"name": city, "n_ref": len(ok), "median_ppm": round(med_all) if med_all else None,
+                    "median_by_rooms": by_rb,
+                    "flags": [{k: v for k, v in f.items() if k not in ("city", "plausible")} for f in flags[:cfg["max_flags"]]],
+                    "flags_total": len(flags), "outliers": outliers, "implausible": implausible})
     return {"ref_months": months, "anchor_month": anchor_month, "below_pct": cfg["pct"], "cap_pct": cfg["cap"], "cities": out}
 
 
