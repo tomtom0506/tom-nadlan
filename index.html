@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-SIZIIIaEvM/uC/bV6NccdnOsWbE8KgfDNxDJ4rjUmaY=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-BEAkruDgK0DTWjOP3hGyukexMYYjF2JC9Iy2rlW4Kus=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -460,10 +460,13 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.5.5';
+var APP_VERSION='1.5.6';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.5.6',date:'2026-11-20',items:[
+    'אבחון: כשהשרת של רשות המסים דוחה את העדכון היומי, הלוג מציג את הסיבה שהשרת מחזיר ולא רק את מספר השגיאה.'
+  ]},
   {v:'1.5.5',date:'2026-11-20',items:[
     'מעקב: הזדמנות מושווית לחציון של עסקאות דומות באותה עיר, עם אותה קבוצת חדרים ושטח בטווח ±20%, ונדרשות לפחות 5 עסקאות כאלה. עסקאות שהשטח שלהן לא סביר למספר החדרים לא נכנסות לחציון ולא מסומנות.',
     'מעקב: העסקאות נאספות בסדר קבוע וללא כפילויות, כך שאותם נתוני מקור נותנים את אותן הזדמנויות בכל יום.',

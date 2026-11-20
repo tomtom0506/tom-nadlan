@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.5.5"
+BUILD_VERSION = "1.5.6"
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
 TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
 SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
@@ -59,6 +59,26 @@ def _wait(seconds):
     time.sleep(seconds)
 
 
+DETAIL_MAX = 300
+
+
+def error_detail(e):
+    """תקציר בטוח של תשובת שגיאה מהשרת, ללוג: כותרת WWW-Authenticate ותחילת הגוף.
+    הבקשות שלנו לא כוללות סודות, ולכן אין מה לחשוף. תווי בקרה ורווחים מצומצמים, והאורך מוגבל."""
+    parts = []
+    auth = (e.headers or {}).get("www-authenticate") if hasattr(e, "headers") else None
+    if auth:
+        parts.append(f"auth={auth}")
+    try:
+        body = e.read(2000)
+    except Exception:  # noqa: BLE001
+        body = b""
+    if body:
+        parts.append(body.decode("utf-8", "replace"))
+    text = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", " | ".join(parts))).strip()
+    return text[:DETAIL_MAX] + ("…" if len(text) > DETAIL_MAX else "")
+
+
 def post_sql(sql):
     """שאילתה אחת, עם ניסיון חוזר על 429, 5xx, שגיאות רשת ותשובה פגומה.
     כל כשל יוצא כ-SqlError, כדי שכשל של חלק אחד לא יפיל את כל הבנייה."""
@@ -82,7 +102,8 @@ def post_sql(sql):
             return rows
         except urllib.error.HTTPError as e:
             if not (e.code == 429 or e.code >= 500):
-                raise SqlError(f"HTTP {e.code}")
+                detail = error_detail(e)
+                raise SqlError(f"HTTP {e.code}" + (f": {detail}" if detail else ""))
             last = f"HTTP {e.code}"
             ra = (e.headers or {}).get("retry-after", "")
             delay = min(int(ra) + 2, 90) if str(ra).isdigit() else 15 * attempt
