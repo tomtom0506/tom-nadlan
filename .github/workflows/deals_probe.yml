@@ -1,0 +1,38 @@
+name: בדיקת API חדש - גרסאות לעם
+
+# הרצה ידנית בלבד. אין קלט מהמשתמש ואין סודות: הסקריפט שולח בקשות קריאה לאתר ציבורי
+# ושומר את התשובות ב-data/. ההרשאה contents: write נדרשת רק ל-commit של התוצאות.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run probe
+        run: python3 deals_probe.py
+
+      - name: Save results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/deals_probe.json
+          for f in data/over_api_doc.txt data/over_openapi.json; do [ -f "$f" ] && git add "$f"; done
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "probe: over.org.il deals API"
+          for i in 1 2 3 4 5; do
+            git pull --rebase --quiet && git push --quiet && exit 0
+            sleep 5
+          done
+          echo "push failed"; exit 1
