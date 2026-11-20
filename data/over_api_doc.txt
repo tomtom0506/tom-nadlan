@@ -1,0 +1,9 @@
+# https://www.over.org.il/api, נשמר 2026-11-20T22:25:32+00:00
+# נתיבים שמופיעים בדף:
+
+
+# טקסט הדף:
+replaces this one instead of joining it.
+What is written here is what a build served without the API shows —
+the dev server, or dist/ opened straight from disk. -->
+API ציבורי — גרסאות לעם

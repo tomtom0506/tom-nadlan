@@ -1,0 +1,1198 @@
+{
+ "probe_version": "1.0.0",
+ "run_at": "2026-11-20T22:25:32+00:00",
+ "base": "https://www.over.org.il",
+ "doc_saved": true,
+ "openapi_saved": true,
+ "checks": [
+  {
+   "id": "doc",
+   "label": "דף התיעוד /api",
+   "path": "/api",
+   "ok": true,
+   "status": 200,
+   "ms": 789,
+   "kb": 4.1,
+   "error": null
+  },
+  {
+   "id": "openapi_openapi",
+   "label": "מפרט OpenAPI /openapi.json",
+   "path": "/openapi.json",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 1350,
+   "kb": 268.3,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "components",
+     "info",
+     "openapi",
+     "paths"
+    ]
+   }
+  },
+  {
+   "id": "stats",
+   "label": "מוני על וטריות",
+   "path": "/api/deals/stats",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 1017,
+   "kb": 0.3,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "dataset_id",
+     "deals",
+     "first_deal",
+     "last_deal",
+     "natures",
+     "parcels",
+     "scraped_at",
+     "settlements",
+     "source_url",
+     "table"
+    ]
+   },
+   "sample": {
+    "deals": 3217592,
+    "first_deal": "1998-01-01",
+    "last_deal": "2026-09-17",
+    "settlements": 1336,
+    "parcels": 381177,
+    "natures": 47,
+    "scraped_at": "2026-09-19 11:07:39.013275+00",
+    "dataset_id": "fd06f5ae-8a4f-4120-b275-8a514ad23499",
+    "source_url": "https://nadlan.taxes.gov.il/svinfonadlan2010/startpage.aspx",
+    "table": "public.append_taxes_nadlan_full_f41fb496_fd06f5ae"
+   }
+  },
+  {
+   "id": "natures",
+   "label": "סוגי עסקאות",
+   "path": "/api/deals/natures",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 425,
+   "kb": 8.4,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "count",
+     "data"
+    ],
+    "lists": {
+     "data": {
+      "count": 47,
+      "item_keys": [
+       "deals",
+       "median_amount",
+       "nature",
+       "note",
+       "pct_no_area",
+       "pct_no_rooms"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "data": [
+     {
+      "nature": "דירה בבית קומות",
+      "deals": 1972801,
+      "median_amount": 1027500,
+      "pct_no_area": 5,
+      "pct_no_rooms": 6,
+      "note": null
+     },
+     {
+      "nature": "ד. מגורים",
+      "deals": 320040,
+      "median_amount": 498000,
+      "pct_no_area": 19,
+      "pct_no_rooms": 34,
+      "note": "מתוך העסקאות מסוג \"ד. מגורים\": ב-34% אין מספר חדרים."
+     },
+     {
+      "nature": "מגורים",
+      "deals": 272934,
+      "median_amount": 260000,
+      "pct_no_area": 69,
+      "pct_no_rooms": 99,
+      "note": "מתוך העסקאות מסוג \"מגורים\": ב-69% אין שטח וב-99% אין מספר חדרים. למרות השם, רוב העסקאות מהסוג הזה אינן דירות: כמעט לאף אחת אין מספר חדרים ולרובן אין שטח, והן נראות כעסקאות בקרקע או בזכויות. לדירות סננו \"דירה בבית קומות\" (ולצדה \"דירת גן\", \"דירת גג\" וסוגי הקוטג'ים)."
+     },
+     "… ועוד 44"
+    ],
+    "count": 47
+   }
+  },
+  {
+   "id": "settlements",
+   "label": "יישובים",
+   "path": "/api/deals/settlements",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 911,
+   "kb": 213.4,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "count",
+     "data"
+    ],
+    "lists": {
+     "data": {
+      "count": 1335,
+      "item_keys": [
+       "authority",
+       "deals",
+       "last_deal",
+       "resolved_code",
+       "resolved_name",
+       "settlement",
+       "settlement_code"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "data": [
+     {
+      "settlement": "תל אביב -יפו",
+      "settlement_code": "5000",
+      "deals": 250853,
+      "last_deal": "2026-07-26",
+      "resolved_code": 5000,
+      "resolved_name": "תל אביב -יפו",
+      "authority": "תל אביב -יפו"
+     },
+     {
+      "settlement": "ירושלים",
+      "settlement_code": "3000",
+      "deals": 183550,
+      "last_deal": "2026-08-24",
+      "resolved_code": 3000,
+      "resolved_name": "ירושלים",
+      "authority": "ירושלים"
+     },
+     {
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "deals": 125738,
+      "last_deal": "2026-08-23",
+      "resolved_code": 4000,
+      "resolved_name": "חיפה",
+      "authority": "חיפה"
+     },
+     "… ועוד 1332"
+    ],
+    "count": 1335
+   }
+  },
+  {
+   "id": "search_small",
+   "label": "חיפוש: חיפה, דירה, 5 תוצאות",
+   "path": "/api/deals/search",
+   "params": {
+    "settlement": "חיפה",
+    "nature": "דירה בבית קומות",
+    "date_from": "2026-05-01",
+    "limit": "5"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 376,
+   "kb": 4.6,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "address",
+     "area",
+     "caveats",
+     "console_sql",
+     "count",
+     "data",
+     "limit",
+     "notes",
+     "offset",
+     "processed",
+     "query",
+     "row_url",
+     "sort",
+     "total",
+     "total_capped"
+    ],
+    "lists": {
+     "data": {
+      "count": 5,
+      "item_keys": [
+       "addresses",
+       "addresses_total",
+       "amount",
+       "area_sqm",
+       "date",
+       "date_src",
+       "declared_amount",
+       "gush",
+       "helka",
+       "nature",
+       "portion",
+       "portion_fraction",
+       "price_per_sqm",
+       "price_per_sqm_normalized",
+       "rooms",
+       "settlement",
+       "settlement_code",
+       "sub_parcel",
+       "year_built"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "settlement": "חיפה",
+     "nature": "דירה בבית קומות",
+     "date_from": "2026-05-01"
+    },
+    "data": [
+     {
+      "date": "2026-08-23",
+      "date_src": "23/08/2026",
+      "amount": 1230252,
+      "declared_amount": 1230252,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 91,
+      "rooms": 3,
+      "year_built": 2029,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 13519,
+      "price_per_sqm_normalized": 13519,
+      "sub_parcel": "006",
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "gush": "11359",
+      "helka": "81",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     {
+      "date": "2026-08-17",
+      "date_src": "17/08/2026",
+      "amount": 1099977,
+      "declared_amount": 1099977,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 82,
+      "rooms": 3,
+      "year_built": 2029,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 13414,
+      "price_per_sqm_normalized": 13414,
+      "sub_parcel": "103",
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "gush": "11359",
+      "helka": "207",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     {
+      "date": "2026-08-10",
+      "date_src": "10/08/2026",
+      "amount": 1222516,
+      "declared_amount": 1222516,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 90,
+      "rooms": 3,
+      "year_built": 2029,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 13584,
+      "price_per_sqm_normalized": 13584,
+      "sub_parcel": "029",
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "gush": "11359",
+      "helka": "81",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     "… ועוד 2"
+    ],
+    "total": 877,
+    "total_capped": false,
+    "limit": 5,
+    "offset": 0,
+    "sort": "date_desc",
+    "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\"\nWHERE settlement = 'חיפה' AND deal_nature = 'דירה בבית קומות' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) >= '20260501'\nORDER BY substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2)…",
+    "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIgpXSEVSRSBzZXR0bGVtZW50ID0gJ9eX15nXpNeUJyBBTkQgZGVhbF9uYXR1cmUgPSAn15PXmdeo15Qg15HXkdeZ16og16fXldee15XXqicgQU5EIHN1YnN0cihkZWFsX2RhdGUsNyw0KSB8fCBzdWJzdHIoZGVhbF9kYXRlLDQsMikgfHwgc…",
+    "count": 5,
+    "address": null,
+    "area": null,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": [
+     "אותו יישוב (חיפה) מופיע במאגר גם בשם אחר: \"קרית חיים\" (7,663) עסקאות. הן אינן כלולות בתוצאה הזו; בחרו את השם השני כדי לראות אותן."
+    ]
+   }
+  },
+  {
+   "id": "search_page",
+   "label": "חיפוש: כל הארץ, דירה, חודש, 200 תוצאות",
+   "path": "/api/deals/search",
+   "params": {
+    "date_from": "2026-05-01",
+    "date_to": "2026-05-31",
+    "nature": "דירה בבית קומות",
+    "limit": "200",
+    "sort": "date_asc"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 1536,
+   "kb": 87.0,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "address",
+     "area",
+     "caveats",
+     "console_sql",
+     "count",
+     "data",
+     "limit",
+     "notes",
+     "offset",
+     "processed",
+     "query",
+     "row_url",
+     "sort",
+     "total",
+     "total_capped"
+    ],
+    "lists": {
+     "data": {
+      "count": 200,
+      "item_keys": [
+       "addresses",
+       "addresses_total",
+       "amount",
+       "area_sqm",
+       "date",
+       "date_src",
+       "declared_amount",
+       "gush",
+       "helka",
+       "nature",
+       "portion",
+       "portion_fraction",
+       "price_per_sqm",
+       "price_per_sqm_normalized",
+       "rooms",
+       "settlement",
+       "settlement_code",
+       "sub_parcel",
+       "year_built"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "nature": "דירה בבית קומות",
+     "date_from": "2026-05-01",
+     "date_to": "2026-05-31"
+    },
+    "data": [
+     {
+      "date": "2026-05-01",
+      "date_src": "01/05/2026",
+      "amount": 5111612,
+      "declared_amount": 5111612,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 91,
+      "rooms": 3.5,
+      "year_built": 2028,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 56172,
+      "price_per_sqm_normalized": 56172,
+      "sub_parcel": "031",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": "5000",
+      "gush": "6900",
+      "helka": "23",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     {
+      "date": "2026-05-01",
+      "date_src": "01/05/2026",
+      "amount": 3613417,
+      "declared_amount": 3613417,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 65,
+      "rooms": 3,
+      "year_built": 2028,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 55591,
+      "price_per_sqm_normalized": 55591,
+      "sub_parcel": "028",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": "5000",
+      "gush": "6900",
+      "helka": "23",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     {
+      "date": "2026-05-01",
+      "date_src": "01/05/2026",
+      "amount": 1000000,
+      "declared_amount": 1000000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 57,
+      "rooms": 3,
+      "year_built": 1950,
+      "portion": "0.250",
+      "portion_fraction": 0.25,
+      "price_per_sqm": 17544,
+      "price_per_sqm_normalized": 70175,
+      "sub_parcel": "035",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": "5000",
+      "gush": "7074",
+      "helka": "28",
+      "addresses": [
+       "נחל עוז 27",
+       "סג'רה 7"
+      ],
+      "addresses_total": 2
+     },
+     "… ועוד 197"
+    ],
+    "total": 6723,
+    "total_capped": false,
+    "limit": 200,
+    "offset": 0,
+    "sort": "date_asc",
+    "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\"\nWHERE deal_nature = 'דירה בבית קומות' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) >= '20260501' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) <= '20260531'\nORDER BY subst…",
+    "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIgpXSEVSRSBkZWFsX25hdHVyZSA9ICfXk9eZ16jXlCDXkdeR15nXqiDXp9eV157XldeqJyBBTkQgc3Vic3RyKGRlYWxfZGF0ZSw3LDQpIHx8IHN1YnN0cihkZWFsX2RhdGUsNCwyKSB8fCBzdWJzdHIoZGVhbF9kYXRlLDEsMikgPj0gJzIwM…",
+    "count": 200,
+    "address": null,
+    "area": null,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": []
+   }
+  },
+  {
+   "id": "search_offset",
+   "label": "חיפוש: אותו דבר, offset=200",
+   "path": "/api/deals/search",
+   "params": {
+    "date_from": "2026-05-01",
+    "date_to": "2026-05-31",
+    "nature": "דירה בבית קומות",
+    "limit": "200",
+    "offset": "200",
+    "sort": "date_asc"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 726,
+   "kb": 86.9,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "address",
+     "area",
+     "caveats",
+     "console_sql",
+     "count",
+     "data",
+     "limit",
+     "notes",
+     "offset",
+     "processed",
+     "query",
+     "row_url",
+     "sort",
+     "total",
+     "total_capped"
+    ],
+    "lists": {
+     "data": {
+      "count": 200,
+      "item_keys": [
+       "addresses",
+       "addresses_total",
+       "amount",
+       "area_sqm",
+       "date",
+       "date_src",
+       "declared_amount",
+       "gush",
+       "helka",
+       "nature",
+       "portion",
+       "portion_fraction",
+       "price_per_sqm",
+       "price_per_sqm_normalized",
+       "rooms",
+       "settlement",
+       "settlement_code",
+       "sub_parcel",
+       "year_built"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "nature": "דירה בבית קומות",
+     "date_from": "2026-05-01",
+     "date_to": "2026-05-31"
+    },
+    "data": [
+     {
+      "date": "2026-05-03",
+      "date_src": "03/05/2026",
+      "amount": 2359000,
+      "declared_amount": 2359000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 103,
+      "rooms": 4,
+      "year_built": 2024,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 22903,
+      "price_per_sqm_normalized": 22903,
+      "sub_parcel": "041",
+      "settlement": "אשדוד",
+      "settlement_code": "70",
+      "gush": "2062",
+      "helka": "77",
+      "addresses": [
+       "שד הרצל 46",
+       "שד הרצל 48"
+      ],
+      "addresses_total": 2
+     },
+     {
+      "date": "2026-05-03",
+      "date_src": "03/05/2026",
+      "amount": 2744000,
+      "declared_amount": 2744000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 123,
+      "rooms": 5,
+      "year_built": 2021,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 22309,
+      "price_per_sqm_normalized": 22309,
+      "sub_parcel": "149",
+      "settlement": "אשדוד",
+      "settlement_code": "70",
+      "gush": "2062",
+      "helka": "77",
+      "addresses": [
+       "שד הרצל 46",
+       "שד הרצל 48"
+      ],
+      "addresses_total": 2
+     },
+     {
+      "date": "2026-05-03",
+      "date_src": "03/05/2026",
+      "amount": 2759000,
+      "declared_amount": 2759000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 123,
+      "rooms": 5,
+      "year_built": 2021,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 22431,
+      "price_per_sqm_normalized": 22431,
+      "sub_parcel": "155",
+      "settlement": "אשדוד",
+      "settlement_code": "70",
+      "gush": "2062",
+      "helka": "77",
+      "addresses": [
+       "שד הרצל 46",
+       "שד הרצל 48"
+      ],
+      "addresses_total": 2
+     },
+     "… ועוד 197"
+    ],
+    "total": 6723,
+    "total_capped": false,
+    "limit": 200,
+    "offset": 200,
+    "sort": "date_asc",
+    "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\"\nWHERE deal_nature = 'דירה בבית קומות' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) >= '20260501' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) <= '20260531'\nORDER BY subst…",
+    "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIgpXSEVSRSBkZWFsX25hdHVyZSA9ICfXk9eZ16jXlCDXkdeR15nXqiDXp9eV157XldeqJyBBTkQgc3Vic3RyKGRlYWxfZGF0ZSw3LDQpIHx8IHN1YnN0cihkZWFsX2RhdGUsNCwyKSB8fCBzdWJzdHIoZGVhbF9kYXRlLDEsMikgPj0gJzIwM…",
+    "count": 200,
+    "address": null,
+    "area": null,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": []
+   }
+  },
+  {
+   "id": "search_budget",
+   "label": "חיפוש: עד ₪1.5M, 3–4 חדרים",
+   "path": "/api/deals/search",
+   "params": {
+    "date_from": "2026-05-01",
+    "date_to": "2026-05-31",
+    "nature": "דירה בבית קומות",
+    "max_amount": "1500000",
+    "min_rooms": "3",
+    "max_rooms": "4",
+    "limit": "5"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 445,
+   "kb": 4.7,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "address",
+     "area",
+     "caveats",
+     "console_sql",
+     "count",
+     "data",
+     "limit",
+     "notes",
+     "offset",
+     "processed",
+     "query",
+     "row_url",
+     "sort",
+     "total",
+     "total_capped"
+    ],
+    "lists": {
+     "data": {
+      "count": 5,
+      "item_keys": [
+       "addresses",
+       "addresses_total",
+       "amount",
+       "area_sqm",
+       "date",
+       "date_src",
+       "declared_amount",
+       "gush",
+       "helka",
+       "nature",
+       "portion",
+       "portion_fraction",
+       "price_per_sqm",
+       "price_per_sqm_normalized",
+       "rooms",
+       "settlement",
+       "settlement_code",
+       "sub_parcel",
+       "year_built"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "nature": "דירה בבית קומות",
+     "date_from": "2026-05-01",
+     "date_to": "2026-05-31",
+     "max_amount": 1500000,
+     "min_rooms": 3.0,
+     "max_rooms": 4.0
+    },
+    "data": [
+     {
+      "date": "2026-05-31",
+      "date_src": "31/05/2026",
+      "amount": 1400000,
+      "declared_amount": 1400000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 97,
+      "rooms": 4,
+      "year_built": 1970,
+      "portion": "0.500",
+      "portion_fraction": 0.5,
+      "price_per_sqm": 14433,
+      "price_per_sqm_normalized": 28866,
+      "sub_parcel": "011",
+      "settlement": "רמת גן",
+      "settlement_code": "8600",
+      "gush": "6126",
+      "helka": "556",
+      "addresses": [
+       "הרצל 24",
+       "נתן 20"
+      ],
+      "addresses_total": 2
+     },
+     {
+      "date": "2026-05-31",
+      "date_src": "31/05/2026",
+      "amount": 1478726,
+      "declared_amount": 1478726,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 111,
+      "rooms": 4,
+      "year_built": 2029,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 13322,
+      "price_per_sqm_normalized": 13322,
+      "sub_parcel": "013",
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "gush": "11359",
+      "helka": "81",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     {
+      "date": "2026-05-31",
+      "date_src": "31/05/2026",
+      "amount": 1480208,
+      "declared_amount": 1480208,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 111,
+      "rooms": 4,
+      "year_built": 2029,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 13335,
+      "price_per_sqm_normalized": 13335,
+      "sub_parcel": "028",
+      "settlement": "חיפה",
+      "settlement_code": "4000",
+      "gush": "11359",
+      "helka": "81",
+      "addresses": [],
+      "addresses_total": 0
+     },
+     "… ועוד 2"
+    ],
+    "total": 1949,
+    "total_capped": false,
+    "limit": 5,
+    "offset": 0,
+    "sort": "date_desc",
+    "console_sql": "SELECT * FROM \"public\".\"append_taxes_nadlan_full_f41fb496_fd06f5ae\"\nWHERE deal_nature = 'דירה בבית קומות' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) >= '20260501' AND substr(deal_date,7,4) || substr(deal_date,4,2) || substr(deal_date,1,2) <= '20260531'\nORDER BY subst…",
+    "row_url": "https://www.over.org.il/data?q=U0VMRUNUICogRlJPTSAicHVibGljIi4iYXBwZW5kX3RheGVzX25hZGxhbl9mdWxsX2Y0MWZiNDk2X2ZkMDZmNWFlIgpXSEVSRSBkZWFsX25hdHVyZSA9ICfXk9eZ16jXlCDXkdeR15nXqiDXp9eV157XldeqJyBBTkQgc3Vic3RyKGRlYWxfZGF0ZSw3LDQpIHx8IHN1YnN0cihkZWFsX2RhdGUsNCwyKSB8fCBzdWJzdHIoZGVhbF9kYXRlLDEsMikgPj0gJzIwM…",
+    "count": 5,
+    "address": null,
+    "area": null,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": []
+   }
+  },
+  {
+   "id": "series",
+   "label": "סדרה שנתית: חיפה, דירה",
+   "path": "/api/deals/series",
+   "params": {
+    "settlement": "חיפה",
+    "nature": "דירה בבית קומות"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 613,
+   "kb": 4.5,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "caveats",
+     "count",
+     "data",
+     "notes",
+     "processed",
+     "query"
+    ],
+    "lists": {
+     "data": {
+      "count": 29,
+      "item_keys": [
+       "deals",
+       "median_amount",
+       "median_area",
+       "median_ppsqm_normalized",
+       "year"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "settlement": "חיפה",
+     "nature": "דירה בבית קומות"
+    },
+    "data": [
+     {
+      "year": 1998,
+      "deals": 63,
+      "median_amount": 569254,
+      "median_area": 75,
+      "median_ppsqm_normalized": 8324
+     },
+     {
+      "year": 1999,
+      "deals": 66,
+      "median_amount": 540662,
+      "median_area": 75,
+      "median_ppsqm_normalized": 8922
+     },
+     {
+      "year": 2000,
+      "deals": 121,
+      "median_amount": 619983,
+      "median_area": 62,
+      "median_ppsqm_normalized": 7538
+     },
+     "… ועוד 26"
+    ],
+    "count": 29,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": [
+     "אותו יישוב (חיפה) מופיע במאגר גם בשם אחר: \"קרית חיים\" (7,663) עסקאות. הן אינן כלולות בתוצאה הזו; בחרו את השם השני כדי לראות אותן."
+    ]
+   }
+  },
+  {
+   "id": "breakdown",
+   "label": "פילוח לפי מהות: חיפה",
+   "path": "/api/deals/breakdown",
+   "params": {
+    "settlement": "חיפה"
+   },
+   "ok": true,
+   "status": 200,
+   "ms": 546,
+   "kb": 3.6,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "caveats",
+     "count",
+     "data",
+     "notes",
+     "processed",
+     "query"
+    ],
+    "lists": {
+     "data": {
+      "count": 20,
+      "item_keys": [
+       "deals",
+       "median_amount",
+       "median_ppsqm_normalized",
+       "nature"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "settlement": "חיפה"
+    },
+    "data": [
+     {
+      "nature": "דירה בבית קומות",
+      "deals": 93064,
+      "median_amount": 780000,
+      "median_ppsqm_normalized": 13000
+     },
+     {
+      "nature": "ד. מגורים",
+      "deals": 14437,
+      "median_amount": 479700,
+      "median_ppsqm_normalized": 7972
+     },
+     {
+      "nature": "מגורים",
+      "deals": 3796,
+      "median_amount": 411772,
+      "median_ppsqm_normalized": 8747
+     },
+     "… ועוד 17"
+    ],
+    "count": 20,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ],
+    "notes": [
+     "אותו יישוב (חיפה) מופיע במאגר גם בשם אחר: \"קרית חיים\" (7,663) עסקאות. הן אינן כלולות בתוצאה הזו; בחרו את השם השני כדי לראות אותן."
+    ]
+   }
+  },
+  {
+   "id": "parcel",
+   "label": "עסקאות בחלקה 7104/289",
+   "path": "/api/deals/parcel/7104/289",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 547,
+   "kb": 18.4,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "caveats",
+     "count",
+     "data",
+     "limit",
+     "offset",
+     "processed",
+     "query",
+     "total"
+    ],
+    "lists": {
+     "data": {
+      "count": 50,
+      "item_keys": [
+       "amount",
+       "area_sqm",
+       "date",
+       "date_src",
+       "declared_amount",
+       "nature",
+       "portion",
+       "portion_fraction",
+       "price_per_sqm",
+       "price_per_sqm_normalized",
+       "rooms",
+       "settlement",
+       "settlement_code",
+       "sub_parcel",
+       "year_built"
+      ]
+     }
+    }
+   },
+   "sample": {
+    "query": {
+     "gush": 7104,
+     "helka": 289,
+     "sub_parcel": null
+    },
+    "data": [
+     {
+      "date": "2026-07-06",
+      "date_src": "06/07/2026",
+      "amount": 5380000,
+      "declared_amount": 5380000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 95,
+      "rooms": 4,
+      "year_built": 2025,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 56632,
+      "price_per_sqm_normalized": 56632,
+      "sub_parcel": "073",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": 5000
+     },
+     {
+      "date": "2026-06-29",
+      "date_src": "29/06/2026",
+      "amount": 5290000,
+      "declared_amount": 5290000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 93,
+      "rooms": 4,
+      "year_built": 2025,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 56882,
+      "price_per_sqm_normalized": 56882,
+      "sub_parcel": "097",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": 5000
+     },
+     {
+      "date": "2026-06-04",
+      "date_src": "04/06/2026",
+      "amount": 11650000,
+      "declared_amount": 11650000,
+      "nature": "דירה בבית קומות",
+      "area_sqm": 200,
+      "rooms": 6,
+      "year_built": 2025,
+      "portion": "1.000",
+      "portion_fraction": 1.0,
+      "price_per_sqm": 58250,
+      "price_per_sqm_normalized": 58250,
+      "sub_parcel": "350",
+      "settlement": "תל אביב -יפו",
+      "settlement_code": 5000
+     },
+     "… ועוד 47"
+    ],
+    "count": 50,
+    "total": 1850,
+    "limit": 50,
+    "offset": 0,
+    "processed": false,
+    "caveats": [
+     "המאגר מדווח לפי גוש וחלקה בלבד, ללא תת-גוש וללא כתובת: הקישור לנכס מסוים עובר דרך הצלבת גוש-חלקה ואינו מבחין בין חלקות שחולקות מספר.",
+     "הכתובות המוצגות והחיפוש לפי כתובת אינם מהמאגר: הם מגיעים מהצלבת הכתובות של נדל\"ן לעם, שמקשרת כתובת לחלקה שהנקודה שלה נופלת בה. לחלק ניכר מהחלקות (בעיקר מחוץ לערים הגדולות) אין כתובת מקושרת, ולכן היעדר כתובת אינו אומר שאין עסקאות.",
+     "ל-674,340 עסקאות (17.5%) אין קוד יישוב במקור, ולכן הסינון לפי יישוב הוא לפי השם כפי שפורסם.",
+     "… ועוד 2"
+    ]
+   }
+  },
+  {
+   "id": "nadlan_stats",
+   "label": "API הישן של 'בדוק נכס'",
+   "path": "/api/nadlan/stats",
+   "params": {},
+   "ok": true,
+   "status": 200,
+   "ms": 1508,
+   "kb": 0.8,
+   "limits": {},
+   "cors": "*",
+   "content_type": "application/json",
+   "shape": {
+    "type": "object",
+    "keys": [
+     "addresses",
+     "addresses_linked_govmap_parcel",
+     "addresses_linked_pip",
+     "addresses_with_address_zip",
+     "addresses_with_locality_zip",
+     "addresses_with_parcel",
+     "addresses_with_point",
+     "addresses_with_zip",
+     "coverage",
+     "localities_with_addresses",
+     "parcels",
+     "parcels_ambiguous",
+     "parcels_with_gazetteer",
+     "parcels_with_settlement",
+     "streets",
+     "streets_in_gazetteer",
+     "streets_located",
+     "streets_register_only",
+     "zip5_codes"
+    ]
+   },
+   "sample": {
+    "parcels": 1097775,
+    "parcels_ambiguous": 2923,
+    "parcels_with_settlement": 1032249,
+    "addresses": 934296,
+    "addresses_with_point": 767035,
+    "addresses_with_zip": 608586,
+    "addresses_with_address_zip": 514662,
+    "addresses_with_locality_zip": 93924,
+    "addresses_with_parcel": 745250,
+    "addresses_linked_pip": 438680,
+    "addresses_linked_govmap_parcel": 306570,
+    "streets": 65795,
+    "streets_located": 37832,
+    "streets_register_only": 27963,
+    "streets_in_gazetteer": 33065,
+    "parcels_with_gazetteer": 758864,
+    "zip5_codes": 14627,
+    "localities_with_addresses": 472,
+    "coverage": {
+     "addresses_with_point_pct": 82.1,
+     "addresses_with_zip_pct": 65.1,
+     "addresses_with_address_zip_pct": 55.1,
+     "addresses_with_locality_zip_pct": 10.1,
+     "addresses_linked_pct": 79.8,
+     "parcels_with_gazetteer_pct": 69.1,
+     "streets_in_gazetteer_pct": 87.4,
+     "streets_register_only_pct": 42.5
+    }
+   }
+  }
+ ]
+}
