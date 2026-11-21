@@ -19,13 +19,18 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-PROBE_VERSION = "1.0.0"
+PROBE_VERSION = "1.1.0"
 BASE = "https://www.over.org.il"
 ORIGIN = "https://tomtom0506.github.io"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "data", "deals_probe.json")
 DOC_OUT = os.path.join(ROOT, "data", "over_api_doc.txt")
 OPENAPI_OUT = os.path.join(ROOT, "data", "over_openapi.json")
+DAY_OUT = os.path.join(ROOT, "data", "deals_probe_day.json")
+DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
+DUP_DAYS = ("2026-05-10", "2026-07-12", "2026-02-15")
+DAY_FIELDS = ("deal_date", "settlement", "gush", "chelka", "sub_chelka", "deal_amount", "deal_nature", "portion",
+              "asset_area", "room_num", "row_hash", "scraped_at", "first_seen", "last_seen")
 UA = "tom-nadlan-probe/1.0 (personal, read-only)"
 TIMEOUT = 30
 PAUSE = 1.5
@@ -143,6 +148,41 @@ def check(cid, label, path, params=None):
     return c, data
 
 
+def total_of(data):
+    """total מתשובת datastore_search (מעטפת CKAN) או מ-/api/deals/search."""
+    if not isinstance(data, dict):
+        return None
+    if isinstance(data.get("result"), dict):
+        return data["result"].get("total")
+    return data.get("total")
+
+
+def duplicates():
+    """v1.6.0: ה-API מחזיר 10%-20% פחות עסקאות מה-SQL הישן. השערה: הטבלה היא ארכיון שמצטבר, וה-SQL ספר כמה
+    דגימות של אותה עסקה. לכל יום: ספירה בארכיון (כל הדגימות, latest, current) מול total של /api/deals/search."""
+    out, day_rows = [], None
+    ds = f"/api/append/{DATASET_ID}/datastore_search"
+    for day in DUP_DAYS:
+        y, m, d = day.split("-")
+        filt = json.dumps({"deal_date": f"{d}/{m}/{y}", "deal_nature": APT}, ensure_ascii=False)
+        row = {"day": day}
+        for name, extra in (("archive_all", {"limit": "1000"}), ("archive_latest", {"latest": "true", "limit": "1"}),
+                            ("archive_current", {"current": "true", "limit": "1"})):
+            c, data = check(f"dup_{day}_{name}", f"{day}: {name}", ds, dict(extra, filters=filt, include_total="true"))
+            row[name] = total_of(data) if c["ok"] else f"error {c['status']}: {c.get('error_body')}"
+            if name == "archive_all" and c["ok"] and day_rows is None:
+                recs = (data.get("result") or {}).get("records") or []
+                day_rows = {"day": day, "count": len(recs),
+                            "records": [{k: r.get(k) for k in DAY_FIELDS} for r in recs if isinstance(r, dict)]}
+        c, data = check(f"dup_{day}_api", f"{day}: /api/deals/search", "/api/deals/search",
+                        {"nature": APT, "date_from": day, "date_to": day, "limit": "1"})
+        row["api_total"] = total_of(data) if c["ok"] else f"error {c['status']}"
+        out.append(row)
+        print(f"[dup] {row}")
+    c, log = check("deals_log", "יומן תיקונים /api/deals/log", "/api/deals/log")
+    return out, day_rows, (log if c["ok"] else None)
+
+
 def probe():
     checks = []
     doc = fetch("/api", accept="text/html,application/json")
@@ -184,7 +224,11 @@ def probe():
     ]:
         checks.append(check(cid, label, path, params)[0])
 
+    dup, day_rows, log = duplicates()
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    if day_rows is not None or log is not None:
+        with open(DAY_OUT, "w", encoding="utf-8") as f:
+            json.dump({"day": day_rows, "log": log}, f, ensure_ascii=False, indent=1)
     if doc_text:
         paths = api_paths(doc_text)
         with open(DOC_OUT, "w", encoding="utf-8") as f:
@@ -195,7 +239,8 @@ def probe():
         with open(OPENAPI_OUT, "w", encoding="utf-8") as f:
             json.dump(openapi, f, ensure_ascii=False, indent=1)
     return {"probe_version": PROBE_VERSION, "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "base": BASE, "doc_saved": bool(doc_text), "openapi_saved": openapi is not None, "checks": checks}
+            "base": BASE, "doc_saved": bool(doc_text), "openapi_saved": openapi is not None, "duplicates": dup,
+            "checks": checks}
 
 
 def main():

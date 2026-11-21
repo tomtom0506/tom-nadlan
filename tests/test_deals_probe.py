@@ -29,6 +29,29 @@ class DealsProbeTests(unittest.TestCase):
     def test_clean_strips_control_chars_and_caps(self):
         self.assertEqual(dp.clean("a\x1b\n b" + "x" * 10, 5), "a bxx…")
 
+    def test_total_of_both_envelopes(self):
+        self.assertEqual(dp.total_of({"success": True, "result": {"total": 7}}), 7)
+        self.assertEqual(dp.total_of({"total": 5, "data": []}), 5)
+        self.assertIsNone(dp.total_of(None))
+
+    def test_duplicates_collects_counts(self):
+        from unittest import mock
+        answers = {"archive_all": {"result": {"total": 120, "records": [{"deal_date": "10/05/2026", "row_hash": "a", "x": 1}]}},
+                   "archive_latest": {"result": {"total": 100}}, "archive_current": {"result": {"total": 100}},
+                   "api": {"total": 100, "data": []}, "log": {"items": []}}
+
+        def fake(cid, label, path, params=None):
+            key = "log" if cid == "deals_log" else cid.rsplit("_", 1)[-1]
+            key = {"all": "archive_all", "latest": "archive_latest", "current": "archive_current"}.get(key, key)
+            return {"ok": True, "status": 200}, answers[key]
+        with mock.patch.object(dp, "check", side_effect=fake):
+            out, day, log = dp.duplicates()
+        self.assertEqual(out[0], {"day": "2026-05-10", "archive_all": 120, "archive_latest": 100,
+                                  "archive_current": 100, "api_total": 100})
+        self.assertEqual(day["records"][0]["row_hash"], "a")
+        self.assertNotIn("x", day["records"][0])
+        self.assertEqual(log, {"items": []})
+
 
 if __name__ == "__main__":
     unittest.main()
