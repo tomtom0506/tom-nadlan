@@ -1,0 +1,47 @@
+name: מודעות חדשות - התראות יד2
+
+# כל שעתיים, וגם הרצה ידנית. קורא את התראות החיפוש של יד2 מתיבת Gmail ייעודית (IMAP),
+# משווה כל מודעה לעסקאות דומות (over.org.il), ושולח לטלגרם רק מודעות 15%+ מתחת לשוק.
+# אבטחה: אין הרשאת כתיבה ל-repo ואין commit; כתובת המייל, סיסמת האפליקציה וסודות הטלגרם
+# עוברים רק דרך env של השלב שצריך אותם. בלוג (ציבורי) נרשמים רק מספרים, בלי מודעות ובלי כתובות.
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      send_all:
+        description: "שלח את כל המודעות שזוהו (לבדיקת החילוץ), לא רק הזדמנויות"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yad2-alerts
+  cancel-in-progress: false
+
+jobs:
+  alerts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check new listings
+        env:
+          YAD2_IMAP_USER: ${{ secrets.YAD2_IMAP_USER }}
+          YAD2_IMAP_PASSWORD: ${{ secrets.YAD2_IMAP_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SEND_ALL: ${{ inputs.send_all && '1' || '0' }}
+        run: python3 yad2_alerts.py
+
+      - name: Notify failure
+        if: ${{ failure() || cancelled() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 notify_failure.py "בדיקת המודעות החדשות מיד2 נכשלה"
