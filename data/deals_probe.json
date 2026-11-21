@@ -1,30 +1,45 @@
 {
- "probe_version": "1.1.0",
- "run_at": "2026-11-21T19:07:53+00:00",
+ "probe_version": "1.2.0",
+ "run_at": "2026-11-21T19:19:27+00:00",
  "base": "https://www.over.org.il",
  "doc_saved": true,
  "openapi_saved": true,
- "duplicates": [
+ "compare": [
   {
    "day": "2026-05-10",
-   "archive_all": 281,
-   "archive_latest": "error 400: {\"detail\":\"latest=true needs an item key, and this dataset declares none (scraper_config.sampling.item_key)\"}",
-   "archive_current": 281,
-   "api_total": 281
+   "nature": "דירה בבית קומות",
+   "api_total": 281,
+   "archive_total": 281
+  },
+  {
+   "day": "2026-05-10",
+   "nature": "דירת גן",
+   "api_total": 3,
+   "archive_total": 3
+  },
+  {
+   "day": "2026-05-10",
+   "nature": "דירת גג",
+   "api_total": 0,
+   "archive_total": 0
   },
   {
    "day": "2026-07-12",
-   "archive_all": 173,
-   "archive_latest": "error 400: {\"detail\":\"latest=true needs an item key, and this dataset declares none (scraper_config.sampling.item_key)\"}",
-   "archive_current": 173,
-   "api_total": 173
+   "nature": "דירה בבית קומות",
+   "api_total": 173,
+   "archive_total": 173
   },
   {
-   "day": "2026-02-15",
-   "archive_all": 290,
-   "archive_latest": "error 400: {\"detail\":\"latest=true needs an item key, and this dataset declares none (scraper_config.sampling.item_key)\"}",
-   "archive_current": 290,
-   "api_total": 290
+   "day": "2026-07-12",
+   "nature": "דירת גן",
+   "api_total": 0,
+   "archive_total": 0
+  },
+  {
+   "day": "2026-07-12",
+   "nature": "דירת גג",
+   "api_total": 0,
+   "archive_total": 0
   }
  ],
  "checks": [
@@ -34,7 +49,7 @@
    "path": "/api",
    "ok": true,
    "status": 200,
-   "ms": 680,
+   "ms": 659,
    "kb": 4.1,
    "error": null
   },
@@ -45,7 +60,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 805,
+   "ms": 674,
    "kb": 268.3,
    "limits": {},
    "cors": "*",
@@ -67,7 +82,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 317,
+   "ms": 984,
    "kb": 0.3,
    "limits": {},
    "cors": "*",
@@ -107,7 +122,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 415,
+   "ms": 322,
    "kb": 8.4,
    "limits": {},
    "cors": "*",
@@ -170,7 +185,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 735,
+   "ms": 813,
    "kb": 213.4,
    "limits": {},
    "cors": "*",
@@ -242,7 +257,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 360,
+   "ms": 415,
    "kb": 4.6,
    "limits": {},
    "cors": "*",
@@ -400,7 +415,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 1159,
+   "ms": 1116,
    "kb": 87.0,
    "limits": {},
    "cors": "*",
@@ -560,7 +575,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 590,
+   "ms": 656,
    "kb": 86.9,
    "limits": {},
    "cors": "*",
@@ -727,7 +742,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 432,
+   "ms": 433,
    "kb": 4.7,
    "limits": {},
    "cors": "*",
@@ -886,7 +901,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 533,
+   "ms": 602,
    "kb": 4.5,
    "limits": {},
    "cors": "*",
@@ -965,7 +980,7 @@
    },
    "ok": true,
    "status": 200,
-   "ms": 492,
+   "ms": 453,
    "kb": 3.6,
    "limits": {},
    "cors": "*",
@@ -1037,7 +1052,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 512,
+   "ms": 423,
    "kb": 18.4,
    "limits": {},
    "cors": "*",
@@ -1157,7 +1172,7 @@
    "params": {},
    "ok": true,
    "status": 200,
-   "ms": 1489,
+   "ms": 1361,
    "kb": 0.8,
    "limits": {},
    "cors": "*",
