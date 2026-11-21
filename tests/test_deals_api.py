@@ -117,17 +117,25 @@ class StoreTests(unittest.TestCase):
             self.assertEqual(api.load_month("2026-05", root)["n"], 1)
             self.assertIsNone(api.load_month("2026-04", root))
 
-    def test_sharp_drop_does_not_overwrite(self):
-        # בדיקת האמינות: שליפה שמחזירה הרבה פחות עסקאות מהקובץ הקיים (למשל מה-SQL הישן) לא דורסת אותו
+    def test_sharp_drop_vs_previous_api_does_not_overwrite(self):
+        # בדיקת האמינות: שליפה שמחזירה הרבה פחות עסקאות משליפה קודמת מה-API לא דורסת אותה
         with tempfile.TemporaryDirectory() as root:
-            api.save_month({"month": "2026-05", "n": 100, "source": "sql-legacy", "monthly": []}, root)
+            api.save_month({"month": "2026-05", "n": 100, "source": "api", "monthly": []}, root)
             few = [raw("2026-05-01", helka=str(i)) for i in range(90)]
             with self.assertRaises(api.ApiError):
                 api.refresh_month("2026-05", root, fetch=lambda m: few)
-            self.assertEqual(api.load_month("2026-05", root)["source"], "sql-legacy")
+            self.assertEqual(api.load_month("2026-05", root)["n"], 100)
             many = [raw("2026-05-01", helka=str(i)) for i in range(98)]
             rec, deals = api.refresh_month("2026-05", root, fetch=lambda m: many)
             self.assertEqual((rec["n"], rec["source"], len(deals)), (98, "api", 98))
+
+    def test_legacy_sql_is_replaced_even_if_higher(self):
+        # deals_probe 1.2.0: ב-SQL הישן חלק מהעסקאות נספרו פעמיים (מגדל העמק 12.07: 78 מול 39). ה-API מחליף אותו
+        with tempfile.TemporaryDirectory() as root:
+            api.save_month({"month": "2026-07", "n": 220, "source": "sql-legacy", "monthly": []}, root)
+            rows = [raw("2026-07-12", helka=str(i)) for i in range(164)]
+            rec, _ = api.refresh_month("2026-07", root, fetch=lambda m: rows)
+            self.assertEqual((rec["n"], api.load_month("2026-07", root)["source"]), (164, "api"))
 
     def test_legacy_roundtrip(self):
         dash = {"generated_at": "g", "days": ["2026-05-01", "2026-07-02"], "cities": ["א", "ב"],
@@ -142,7 +150,7 @@ class StoreTests(unittest.TestCase):
 
 class PlanTests(unittest.TestCase):
     def test_recent_and_watch_first_then_missing(self):
-        have = {m: "api" for m in bd.months_window("2026-09", 15)}
+        have = {m: "api" for m in bd.months_window("2026-09", bd.KEEP_MONTHS)}
         have["2025-11"] = "sql-legacy"
         plan = bd.plan_months("2026-09", have, extra=("2026-04", "2026-05", "2026-06"))
         self.assertEqual(plan, ["2026-09", "2026-08", "2026-07", "2026-06", "2026-05", "2026-04", "2025-11"])
@@ -156,7 +164,7 @@ class PlanTests(unittest.TestCase):
 
 
 class BuildTests(unittest.TestCase):
-    """בנייה מלאה מול API מדומה: 15 חודשים, עם עוגן, תקציב ומעקב."""
+    """בנייה מלאה מול API מדומה: כל חלון ההיסטוריה, עם עוגן, תקציב ומעקב."""
 
     def fake_month(self, month):
         n = 30 if month < "2026-09" else 3  # החודש האחרון חלקי, כמו במאגר האמיתי
@@ -183,7 +191,9 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(out["watch"]["ref_months"], ["2026-06", "2026-07", "2026-08"])
             self.assertEqual(out["db_scraped_at"], "2026-09-19 11:07:39")
             self.assertEqual(out["monthly"]["months"][-1], "2026-08")
-            self.assertEqual(len(api.list_months(root)), 15)
+            self.assertEqual(len(api.list_months(root)), bd.KEEP_MONTHS)
+            self.assertEqual(len(out["monthly"]["months"]), 48)
+            self.assertEqual(sum(r[3] for r in out["monthly"]["rows"]), 48 * 30)
             self.assertEqual(sum(r[3] for r in out["rows"]), 30 * 3 + 3)  # 3 חודשי העוגן ועוד ספטמבר
 
 
