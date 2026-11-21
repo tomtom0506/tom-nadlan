@@ -28,7 +28,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/deals_probe.json
-          for f in data/over_api_doc.txt data/over_openapi.json; do [ -f "$f" ] && git add "$f"; done
+          for f in data/over_api_doc.txt data/over_openapi.json data/deals_probe_day.json; do [ -f "$f" ] && git add "$f"; done
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
           git commit -m "probe: over.org.il deals API"
           for i in 1 2 3 4 5; do
