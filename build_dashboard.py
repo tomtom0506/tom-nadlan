@@ -1,131 +1,40 @@
 #!/usr/bin/env python3
 """tom-nadlan / build_dashboard.py
 בונה את data/dashboard.json לגיליון הראשי: דירות שנמכרו, לפי יום, עיר ומספר חדרים.
-המקור: נקודת הקצה של שאילתות SQL ב"גרסאות לעם" (רשות המסים). קריאה בלבד.
 
-- רק דירות (דירה בבית קומות, דירת גן, דירת גג), עסקה על הדירה כולה (portion=1), מחיר סביר.
+המקור: ה-API הציבורי של "גרסאות לעם" (/api/deals/*, נתוני רשות המסים). קריאה בלבד.
+עד 07.11.2026 הנתונים נשלפו בשאילתות SQL; מאז נקודת ה-SQL דורשת התחברות (401).
+השליפה והסיכום החודשי נמצאים ב-deals_api.py. כאן:
+  1. מושכים מחדש את החודשים האחרונים ומשלימים חודשים חסרים, כל עוד יש זמן.
+  2. בונים את dashboard.json מתוך data/months/, באותו פורמט שהאפליקציה מכירה.
+
+- רק דירות (דירה בבית קומות, דירת גן, דירת גג), עסקה על הדירה כולה, מחיר סביר.
 - המאגר מתעדכן בפיגור, ולכן "העוגן" הוא היום האחרון בחודש המלא האחרון, לא התאריך של היום.
 - בלוגים נרשם רק סוג השגיאה.
 """
-import http.client
 import json
 import os
 import re
 import statistics
-import time
-import urllib.error
-import urllib.request
 from datetime import date, datetime, timezone
 
-BUILD_VERSION = "1.5.6"
-DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
-TABLE = "append_taxes_nadlan_full_f41fb496_fd06f5ae"
-SQL_URL = f"https://www.over.org.il/api/append/{DATASET_ID}/sql"
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "dashboard.json")
-UA = "tom-nadlan-dashboard/1.5 (personal, read-only, daily)"
-TIMEOUT = 60
-PAUSE = 1.5
-PAGE = 500
-MAX_PAGES = 80
-MONTHS_BACK = 3          # חודש העוגן ועוד שניים לפניו (כ-90 יום)
-FULL_MONTH_RATIO = 0.70  # חודש "מלא" = לפחות 70% מהחציון של 6 החודשים שלפניו
-ATTEMPTS = 5
+import deals_api as api
+from deals_api import ApiError as SqlError  # השם הישן נשאר, כדי שקוד ובדיקות קיימים ימשיכו לעבוד
+
+BUILD_VERSION = "1.6.0"
+ROOT = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(ROOT, "data", "dashboard.json")
+MONTHS_BACK = 3           # חודש העוגן ועוד שניים לפניו (כ-90 יום)
+FULL_MONTH_RATIO = 0.70   # חודש "מלא" = לפחות 70% מהחציון של 6 החודשים שלפניו
 BUDGET_SECONDS = 15 * 60  # תקציב זמן לכל הבנייה. ה-job מוגבל ל-20 דקות, וצריך זמן גם ל-commit
-_deadline = None          # time.monotonic() שאחריו לא מתחילים ניסיון חדש
-
-APT_NATURES = ("דירה בבית קומות", "דירת גן", "דירת גג")
-NATURE_SQL = "deal_nature IN (" + ",".join("'" + n.replace("'", "''") + "'" for n in APT_NATURES) + ")"
-AMT = "CAST(deal_amount AS DOUBLE PRECISION)"  # REAL הוא float4: סכומים מעל ~16.7M מעוגלים ומשתנים בין הרצות
-BASE_WHERE = f"{NATURE_SQL} AND (portion = '1.000' OR portion = '1') AND {AMT} BETWEEN 150000 AND 40000000"
-
-
-class SqlError(Exception):
-    pass
-
-
-def start_clock(seconds=BUDGET_SECONDS):
-    global _deadline
-    _deadline = time.monotonic() + seconds
-
-
-def _left():
-    return float("inf") if _deadline is None else _deadline - time.monotonic()
-
-
-def _wait(seconds):
-    """השהיה לפני ניסיון חוזר, אבל לא מעבר לתקציב הזמן."""
-    if _left() <= seconds:
-        raise SqlError("deadline")
-    time.sleep(seconds)
-
-
-DETAIL_MAX = 300
-
-
-def error_detail(e):
-    """תקציר בטוח של תשובת שגיאה מהשרת, ללוג: כותרת WWW-Authenticate ותחילת הגוף.
-    הבקשות שלנו לא כוללות סודות, ולכן אין מה לחשוף. תווי בקרה ורווחים מצומצמים, והאורך מוגבל."""
-    parts = []
-    auth = (e.headers or {}).get("www-authenticate") if hasattr(e, "headers") else None
-    if auth:
-        parts.append(f"auth={auth}")
-    try:
-        body = e.read(2000)
-    except Exception:  # noqa: BLE001
-        body = b""
-    if body:
-        parts.append(body.decode("utf-8", "replace"))
-    text = re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", " | ".join(parts))).strip()
-    return text[:DETAIL_MAX] + ("…" if len(text) > DETAIL_MAX else "")
-
-
-def post_sql(sql):
-    """שאילתה אחת, עם ניסיון חוזר על 429, 5xx, שגיאות רשת ותשובה פגומה.
-    כל כשל יוצא כ-SqlError, כדי שכשל של חלק אחד לא יפיל את כל הבנייה."""
-    body = json.dumps({"sql": sql}).encode("utf-8")
-    last = "none"
-    for attempt in range(1, ATTEMPTS + 1):
-        if _left() <= 0:
-            raise SqlError(f"deadline (last: {last})")
-        req = urllib.request.Request(SQL_URL, data=body, method="POST", headers={
-            "User-Agent": UA, "Content-Type": "application/json", "Accept": "application/json"})
-        delay = 10 * attempt
-        try:
-            with urllib.request.urlopen(req, timeout=max(5, min(TIMEOUT, _left()))) as r:
-                data = json.loads(r.read(20_000_000).decode("utf-8"))
-            rows = data.get("rows") if isinstance(data, dict) else None
-            if not isinstance(rows, list):
-                raise SqlError("NoRows")
-            if data.get("truncated"):
-                raise SqlError("Truncated")
-            time.sleep(PAUSE)
-            return rows
-        except urllib.error.HTTPError as e:
-            if not (e.code == 429 or e.code >= 500):
-                detail = error_detail(e)
-                raise SqlError(f"HTTP {e.code}" + (f": {detail}" if detail else ""))
-            last = f"HTTP {e.code}"
-            ra = (e.headers or {}).get("retry-after", "")
-            delay = min(int(ra) + 2, 90) if str(ra).isdigit() else 15 * attempt
-        except (OSError, http.client.HTTPException, ValueError) as e:
-            # URLError, TimeoutError, ConnectionResetError, RemoteDisconnected, IncompleteRead, JSON/UTF-8 פגום
-            last = type(e).__name__
-        if attempt < ATTEMPTS:
-            _wait(delay)
-    raise SqlError(f"retries exhausted (last: {last})")
-
-
-def month_counts():
-    years = [date.today().year - 1, date.today().year]
-    yfilter = " OR ".join(f"deal_date LIKE '%/{y}'" for y in years)
-    sql = (f"SELECT substr(deal_date, 4, 7) AS ym, COUNT(*) AS n FROM {TABLE} "
-           f"WHERE ({yfilter}) AND {BASE_WHERE} GROUP BY substr(deal_date, 4, 7)")
-    out = {}
-    for r in post_sql(sql):
-        m = re.fullmatch(r"(\d{2})/(\d{4})", str(r.get("ym", "")))
-        if m:
-            out[f"{m.group(2)}-{m.group(1)}"] = int(r.get("n") or 0)
-    return out
+RECENT_MONTHS = 4         # נמשכים מחדש בכל ריצה: עסקאות מגיעות באיחור של כמה חודשים
+KEEP_MONTHS = 15          # חודשים שחייבים להיות בשליפה מלאה מה-API: 12 ללשונית ₪1.5M ועוד פיגור העוגן
+MONTH_RESERVE = 150       # שניות: לא מתחילים חודש חדש אם נשאר פחות מזה
+MONTHLY_BACK = 48         # 36 לגרף ועוד 12, כדי שלכל חודש בגרף תהיה שנה קודמת להשוואה
+BUDGET = api.BUDGET
+PPM_FLOOR = 0.35          # עסקה שמחירה למ"ר נמוך מ-35% מהממוצע של העיר: כנראה לא עסקת שוק או שגיאת שטח
+APT_NATURES = api.APT_NATURES
+rooms_bucket = api.rooms_bucket
 
 
 def pick_anchor_month(counts, today=None):
@@ -154,128 +63,138 @@ def months_window(anchor, back=MONTHS_BACK, extra_after=None):
     return res + sorted(extra_after or [])
 
 
-def fetch_detail(months):
-    like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
-    rows, offset = [], 0
-    for _ in range(MAX_PAGES):
-        sql = (f"SELECT deal_date, settlement, room_num, COUNT(*) AS n, SUM({AMT}) AS s, "
-               f"MIN({AMT}) AS mn, MAX({AMT}) AS mx FROM {TABLE} WHERE ({like}) AND {BASE_WHERE} "
-               f"GROUP BY deal_date, settlement, room_num ORDER BY deal_date, settlement, room_num "
-               f"LIMIT {PAGE} OFFSET {offset}")
-        page = post_sql(sql)
-        rows.extend(page)
-        if len(page) < PAGE:
-            return rows
-        offset += PAGE
-    raise SqlError("too many pages")
-
-
-BUDGET = 1500000
-AREA = "CAST(NULLIF(asset_area, '') AS DOUBLE PRECISION)"
-PPM_FLOOR = 0.35  # עסקה שמחירה למ"ר נמוך מ-35% מהממוצע של העיר: כנראה לא עסקת שוק או שגיאת שטח
-
-
-def budget_sql(like, ppm_filter=True):
-    """שאילתת התקציב. עם ppm_filter: עסקה עם שטח ידוע (25–400 מ"ר) שמחירה למ"ר נמוך מ-PPM_FLOOR
-    מהממוצע של אותה עיר באותה תקופה לא נספרת. עסקאות בלי שטח סביר לא נבדקות ונספרות כמו קודם."""
-    inb = f"{AMT} <= {BUDGET}"
-    ok_area = f"{AREA} BETWEEN 25 AND 400"
-    if ppm_filter:
-        plaus = f"(c.ref IS NULL OR NOT ({ok_area}) OR {AMT} >= {PPM_FLOOR} * c.ref * {AREA})"
-        inb = f"{inb} AND {plaus}"
-        src = (f"{TABLE} t LEFT JOIN (SELECT settlement, SUM({AMT}) / SUM({AREA}) AS ref FROM {TABLE} "
-               f"WHERE ({like}) AND {BASE_WHERE} AND {ok_area} GROUP BY settlement) c ON c.settlement = t.settlement")
-        name = "t.settlement"
-    else:
-        src, name = TABLE, "settlement"
-    return (f"SELECT {name} AS settlement, COUNT(*) AS n_all, "
-            f"SUM(CASE WHEN {inb} THEN 1 ELSE 0 END) AS n_b, "
-            f"SUM(CASE WHEN {inb} THEN {AMT} ELSE 0 END) AS s_b, "
-            f"SUM(CASE WHEN {inb} AND {ok_area} THEN 1 ELSE 0 END) AS na_b, "
-            f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AREA} ELSE 0 END) AS a_b, "
-            f"SUM(CASE WHEN {inb} AND {ok_area} THEN {AMT} ELSE 0 END) AS sa_b "
-            f"FROM {src} WHERE ({like}) AND {BASE_WHERE} GROUP BY {name} LIMIT 3000")
-
-
-def fetch_budget(anchor_month):
-    """12 חודשים עד חודש העוגן: לכל עיר, כמה דירות נמכרו עד התקציב, ובאיזה גודל ומחיר.
-    אם השרת לא מקבל את השאילתה עם הסינון (שגיאת 4xx), חוזרים לשאילתה בלי סינון ומסמנים ppm_filter=False."""
-    months = months_window(anchor_month, back=12)
-    like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
-    ppm_filter = True
+def num(v):
     try:
-        raw = post_sql(budget_sql(like))
-    except SqlError as e:
-        if not str(e).startswith("HTTP 4"):
-            raise
-        print(f"budget: ppm filter rejected ({e}), falling back")
-        ppm_filter = False
-        raw = post_sql(budget_sql(like, ppm_filter=False))
+        f = float(v)
+        return f if f == f else None
+    except (TypeError, ValueError):
+        return None
+
+
+# ---------- שליפה ----------
+
+def plan_months(last_month, have, extra=()):
+    """איזה חודשים למשוך, לפי סדר: קודם החודשים האחרונים וחודשי המעקב (extra), מהחדש לישן,
+    ואחר כך חודשים חסרים בחלון של KEEP_MONTHS. have: חודש -> מקור הקובץ הקיים ("api" או "sql-legacy")."""
+    recent = sorted(set(months_window(last_month, RECENT_MONTHS)) | set(extra), reverse=True)
+    missing = [m for m in reversed(months_window(last_month, KEEP_MONTHS)) if m not in recent and have.get(m) != "api"]
+    return recent + missing
+
+
+def migrate_legacy(prev, root=None):
+    """פעם אחת: ההיסטוריה שנאספה ב-SQL עוברת לקבצי חודש, כדי שגרף "3 שנים" לא יתרוקן."""
+    root = root or api.MONTHS_DIR
+    if api.list_months(root) or not prev:
+        return 0
+    recs = api.legacy_months(prev)
+    for rec in recs.values():
+        api.save_month(rec, root)
+    print(f"months: migrated {len(recs)} legacy months")
+    return len(recs)
+
+
+def refresh(last_month, root=None, fetch=None, extra=()):
+    """מושך חודשים לפי plan_months כל עוד יש זמן. מחזיר (עסקאות לפי חודש מהריצה הזו, שגיאות, חודשים שלא הספיקו)."""
+    root = root or api.MONTHS_DIR
+    have = {m: (api.load_month(m, root) or {}).get("source") for m in api.list_months(root)}
+    deals, errors, todo = {}, [], plan_months(last_month, have, extra)
+    for i, month in enumerate(todo):
+        if api.time_left() < MONTH_RESERVE:
+            left = [m for m in todo[i:] if have.get(m) != "api"]
+            if left:
+                print(f"months: out of time, {len(left)} months still missing: {', '.join(left)}. Run again.")
+            return deals, errors, left
+        try:
+            rec, d = api.refresh_month(month, root, **({"fetch": fetch} if fetch else {}))
+            deals[month] = d
+            print(f"months: {month} ok n={rec['n']}")
+        except SqlError as e:
+            errors.append(f"{month}: {e}")
+            print(f"months: {month} failed ({e}), keeping previous")
+    return deals, errors, []
+
+
+# ---------- בנייה מתוך קבצי החודש ----------
+
+def pack(day_rows, anchor_month):
+    """דחיסה: רשימת ימים, רשימת ערים, ושורות [יום, עיר, חדרים, n, סכום, מינ', מקס']."""
+    out = []
+    for r in day_rows:
+        if not (isinstance(r, list) and len(r) == 7):
+            continue
+        d, city, rooms, n, s, mn, mx = r
+        rooms = num(rooms) or 0
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(d)) or not city or not n or n <= 0:
+            continue
+        out.append([d, str(city)[:40], rooms if 0 <= rooms <= 20 else 0, int(n), round(s), round(mn), round(mx)])
+    day_list = sorted({r[0] for r in out})
+    city_list = sorted({r[1] for r in out})
+    di = {d: i for i, d in enumerate(day_list)}
+    ci = {c: i for i, c in enumerate(city_list)}
+    packed = sorted([di[r[0]], ci[r[1]], r[2], r[3], r[4], r[5], r[6]] for r in out)
+    anchor_days = [d for d in day_list if d.startswith(anchor_month)]
+    return {"days": day_list, "cities": city_list, "rows": packed, "anchor": anchor_days[-1] if anchor_days else None}
+
+
+def build_budget(anchor_month, recs):
+    """12 חודשים עד חודש העוגן: לכל עיר, כמה דירות נמכרו עד התקציב, ובאיזה גודל ומחיר.
+    עסקה עם שטח סביר שמחירה למ"ר נמוך מ-PPM_FLOOR מהממוצע של העיר באותה תקופה לא נספרת."""
+    months = months_window(anchor_month, back=12)
+    missing = [m for m in months if not isinstance((recs.get(m) or {}).get("budget"), dict)]
+    if missing:
+        raise SqlError(f"budget: missing months {', '.join(missing)}")
+    lo, hi = api.AREA_OK
+    cities = {}
+    for m in months:
+        for city, (n_all, s_area, area, deals) in recs[m]["budget"].items():
+            c = cities.setdefault(city, [0, 0, 0, []])
+            c[0] += n_all
+            c[1] += s_area
+            c[2] += area
+            c[3].extend(deals)
     rows = []
-    for r in raw:
-        name = str(r.get("settlement") or "").strip()[:40]
-        vals = [num(r.get(k)) for k in ("n_all", "n_b", "s_b", "na_b", "a_b", "sa_b")]
-        if not name or any(v is None for v in vals) or vals[0] <= 0:
-            continue
-        rows.append([name] + [round(v) for v in vals])
-    rows.sort(key=lambda x: x[0])
+    for city in sorted(cities):
+        n_all, s_area, area, deals = cities[city]
+        ref = s_area / area if area > 0 else None
+        n_b = s_b = na_b = a_b = sa_b = 0
+        for amt, ar in deals:
+            ok_area = lo <= ar <= hi
+            if ref and ok_area and amt < PPM_FLOOR * ref * ar:
+                continue
+            n_b += 1
+            s_b += amt
+            if ok_area:
+                na_b += 1
+                a_b += ar
+                sa_b += amt
+        if n_all > 0:
+            rows.append([city, n_all, n_b, round(s_b), na_b, round(a_b), round(sa_b)])
     return {"from": months[0], "to": months[-1], "limit": BUDGET, "rows": rows,
-            "ppm_filter": ppm_filter, "ppm_floor": PPM_FLOOR}
+            "ppm_filter": True, "ppm_floor": PPM_FLOOR}
 
 
-PAGE_M = 1000
-MAX_PAGES_M = 150
-ROOMS = "CAST(NULLIF(room_num, '') AS DOUBLE PRECISION)"
-RB = (f"CASE WHEN {ROOMS} IS NULL OR {ROOMS} <= 0 THEN 0 WHEN {ROOMS} < 3 THEN 2 "
-      f"WHEN {ROOMS} < 4 THEN 3 WHEN {ROOMS} < 5 THEN 4 ELSE 5 END")
-
-
-def fetch_monthly(anchor_month):
+def build_monthly(anchor_month, recs):
     """48 חודשים עד חודש העוגן: ספירה, סכום, מינ' ומקס' לפי חודש, עיר וקבוצת חדרים (0 = לא ידוע, 2 = עד 2.5, 3, 4, 5+)."""
-    months = months_window(anchor_month, back=48)  # 36 לגרף ועוד 12, כדי שלכל חודש בגרף תהיה שנה קודמת להשוואה
-    years = sorted({m[:4] for m in months})
-    yfilter = " OR ".join(f"deal_date LIKE '%/{y}'" for y in years)
-    ym = "substr(deal_date, 4, 7)"
-    raw, offset = [], 0
-    for _ in range(MAX_PAGES_M):
-        sql = (f"SELECT {ym} AS ym, settlement, {RB} AS rb, COUNT(*) AS n, SUM({AMT}) AS s, MIN({AMT}) AS mn, MAX({AMT}) AS mx FROM {TABLE} "
-               f"WHERE ({yfilter}) AND {BASE_WHERE} GROUP BY {ym}, settlement, {RB} "
-               f"ORDER BY 1, 2, 3 LIMIT {PAGE_M} OFFSET {offset}")
-        page = post_sql(sql)
-        raw.extend(page)
-        if len(page) < PAGE_M:
-            break
-        offset += PAGE_M
-    else:
-        raise SqlError("too many pages (monthly)")
-    mi = {m: i for i, m in enumerate(months)}
+    months = months_window(anchor_month, back=MONTHLY_BACK)
     cities, rows = {}, []
-    for r in raw:
-        mm = re.fullmatch(r"(\d{2})/(\d{4})", str(r.get("ym", "")))
-        if not mm:
-            continue
-        key = f"{mm.group(2)}-{mm.group(1)}"
-        name = str(r.get("settlement") or "").strip()[:40]
-        n, sm, rb = num(r.get("n")), num(r.get("s")), num(r.get("rb"))
-        mn, mx = num(r.get("mn")), num(r.get("mx"))
-        if key not in mi or not name or not n or n <= 0 or sm is None or rb not in (0, 2, 3, 4, 5):
-            continue
-        if mn is None or mx is None or mx < mn:
-            continue
-        ci = cities.setdefault(name, len(cities))
-        rows.append([mi[key], ci, int(rb), int(n), round(sm), round(mn), round(mx)])
+    for mi, m in enumerate(months):
+        for city, rb, n, s, mn, mx in (recs.get(m) or {}).get("monthly") or []:
+            if rb not in (0, 2, 3, 4, 5) or not n or n <= 0 or mx < mn:
+                continue
+            ci = cities.setdefault(city, len(cities))
+            rows.append([mi, ci, int(rb), int(n), round(s), round(mn), round(mx)])
     names = [None] * len(cities)
     for k, v in cities.items():
         names[v] = k
     return {"months": months, "cities": names, "rows": rows}
 
 
-WATCH_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "watch.json")
+WATCH_FILE = os.path.join(ROOT, "watch.json")
 WATCH_MONTHS = 3
 MIN_COMPS = 5                 # לפחות 5 עסקאות להשוואה (כלל "הזדמנות" של הפרויקט)
 COMP_AREA = 0.20              # דומה = אותה קבוצת חדרים ושטח בטווח ±20%
 SQM_PER_ROOM = (12, 45)       # מ"ר לחדר מחוץ לטווח: כנראה שגיאה בשטח או במספר החדרים
-SAFE_NAME = re.compile(r"^[\u0590-\u05FF0-9 \-'\"().]{2,40}$")
+SAFE_NAME = re.compile(r"^[֐-׿0-9 \-'\"().]{2,40}$")
 
 
 def load_watch():
@@ -302,12 +221,6 @@ def _med(vals):
     return vals[m] if len(vals) % 2 else (vals[m - 1] + vals[m]) / 2
 
 
-def rooms_bucket(r):
-    if r is None or r <= 0:
-        return 0
-    return 2 if r < 3 else 3 if r < 4 else 4 if r < 5 else 5
-
-
 def plausible(x):
     """עסקה שאפשר להשוות: מספר חדרים ידוע ושטח סביר למספר החדרים."""
     if not x["rooms"] or not x["rb"]:
@@ -321,46 +234,25 @@ def similar(x, pool):
     return [c for c in pool if c is not x and c["city"] == x["city"] and c["rb"] == x["rb"] and lo <= c["area"] <= hi]
 
 
-def fetch_watch(anchor_month, cfg):
-    """ערי מעקב: עסקאות של 3 החודשים המלאים האחרונים. חציון מחיר למ"ר לפי עיר וקבוצת חדרים,
-    ועסקאות בחודש העוגן שנסגרו לפחות pct% מתחת לחציון של עסקאות דומות (אותה קבוצת חדרים, שטח ±20%,
-    לפחות MIN_COMPS). עסקאות עם שטח לא סביר למספר החדרים לא נכנסות לחציונים ולא מסומנות."""
+def fetch_watch(anchor_month, cfg, deals):
+    """ערי מעקב: עסקאות של 3 החודשים המלאים האחרונים (deals: עסקאות נקיות מ-deals_api.clean_deal).
+    חציון מחיר למ"ר לפי עיר וקבוצת חדרים, ועסקאות בחודש העוגן שנסגרו לפחות pct% מתחת לחציון של עסקאות דומות
+    (אותה קבוצת חדרים, שטח ±20%, לפחות MIN_COMPS). עסקאות עם שטח לא סביר למספר החדרים לא נכנסות לחציונים ולא מסומנות."""
     months = months_window(anchor_month, back=WATCH_MONTHS)
-    like = " OR ".join(f"deal_date LIKE '%/{m[5:7]}/{m[0:4]}'" for m in months)
-    names = ",".join("'" + c.replace("'", "''") + "'" for c in cfg["cities"])
-    raw, offset = [], 0
-    for _ in range(MAX_PAGES_M):
-        sql = (f"SELECT * FROM {TABLE} WHERE ({like}) AND settlement IN ({names}) AND {BASE_WHERE} "
-               f"AND {AREA} BETWEEN 25 AND 400 ORDER BY row_hash LIMIT {PAGE_M} OFFSET {offset}")
-        page = post_sql(sql)
-        raw.extend(page)
-        if len(page) < PAGE_M:
-            break
-        offset += PAGE_M
-    else:
-        raise SqlError("too many pages (watch)")
-    deals, seen = [], set()
-    for r in raw:
-        h = str(r.get("row_hash") or "")
-        if h:
-            if h in seen:
-                continue  # הגנה מכפילויות בין דפים
-            seen.add(h)
-        d = to_iso(r.get("deal_date"))
-        city = str(r.get("settlement") or "").strip()
-        amt, area = num(r.get("deal_amount")), num(r.get("asset_area"))
-        if not d or city not in cfg["cities"] or not amt or not area or area <= 0:
+    lo, hi = api.AREA_OK
+    pool, seen = [], set()
+    for d in deals:
+        key = (d["date"], d["city"], d["gush"], d["helka"], d["sub"], d["amount"], d["area"], d["rooms"])
+        if key in seen or d["date"][:7] not in months or d["city"] not in cfg["cities"] or not (lo <= d["area"] <= hi):
             continue
-        rooms = num(r.get("room_num"))
-        deals.append({"date": d, "city": city, "rooms": rooms if rooms and 0 < rooms <= 20 else None,
-                      "rb": rooms_bucket(rooms), "area": round(area), "amount": round(amt), "ppm": amt / area,
-                      "gush": str(r.get("gush") or "")[:10], "chelka": str(r.get("chelka") or "")[:10],
-                      "sub": str(r.get("sub_chelka") or "")[:10], "year": int(num(r.get("year_built")) or 0)})
-    for x in deals:
+        seen.add(key)
+        x = dict(d, ppm=d["amount"] / d["area"])
         x["plausible"] = plausible(x)
+        pool.append(x)
+    pool.sort(key=lambda x: (x["date"], x["city"], x["gush"], x["helka"], x["sub"], x["amount"], x["area"]))
     out = []
     for city in cfg["cities"]:
-        cd = [x for x in deals if x["city"] == city]
+        cd = [x for x in pool if x["city"] == city]
         ok = [x for x in cd if x["plausible"]]
         med_all = _med([x["ppm"] for x in ok])
         by_rb = {}
@@ -383,61 +275,18 @@ def fetch_watch(anchor_month, cfg):
             if pct < -cfg["cap"] / 100:
                 outliers += 1  # זול מדי: כנראה לא עסקת שוק (משפחה, דייר מוגן, שגיאת שטח)
             elif pct <= -cfg["pct"] / 100:
-                flags.append(dict(x, ppm=round(x["ppm"]), ref=round(ref), n_comps=len(comps), pct=round(pct * 100)))
-        flags.sort(key=lambda f: f["pct"])
+                flags.append({"date": x["date"], "rooms": x["rooms"], "rb": x["rb"], "area": round(x["area"]),
+                              "amount": x["amount"], "ppm": round(x["ppm"]), "gush": x["gush"], "chelka": x["helka"],
+                              "sub": x["sub"], "year": x["year"], "ref": round(ref), "n_comps": len(comps),
+                              "pct": round(pct * 100)})
+        flags.sort(key=lambda f: (f["pct"], f["date"], f["gush"], f["chelka"], f["sub"]))
         out.append({"name": city, "n_ref": len(ok), "median_ppm": round(med_all) if med_all else None,
-                    "median_by_rooms": by_rb,
-                    "flags": [{k: v for k, v in f.items() if k not in ("city", "plausible")} for f in flags[:cfg["max_flags"]]],
+                    "median_by_rooms": by_rb, "flags": flags[:cfg["max_flags"]],
                     "flags_total": len(flags), "outliers": outliers, "implausible": implausible})
     return {"ref_months": months, "anchor_month": anchor_month, "below_pct": cfg["pct"], "cap_pct": cfg["cap"], "cities": out}
 
 
-def freshness():
-    try:
-        r = post_sql(f"SELECT MAX(scraped_at) AS scraped, MAX(first_seen) AS seen FROM {TABLE}")
-        return (r[0] or {}) if r else {}
-    except SqlError:
-        return {}
-
-
-def to_iso(d):
-    m = re.fullmatch(r"(\d{2})/(\d{2})/(\d{4})", str(d or ""))
-    return f"{m.group(3)}-{m.group(2)}-{m.group(1)}" if m else None
-
-
-def num(v):
-    try:
-        f = float(v)
-        return f if f == f else None
-    except (TypeError, ValueError):
-        return None
-
-
-def pack(raw_rows, anchor_month):
-    """דחיסה: רשימת ימים, רשימת ערים, ושורות [יום, עיר, חדרים, n, סכום, מינ', מקס']."""
-    days, cities, out = {}, {}, []
-    for r in raw_rows:
-        d = to_iso(r.get("deal_date"))
-        city = str(r.get("settlement") or "").strip()[:40]
-        n = int(num(r.get("n")) or 0)
-        s, mn, mx = num(r.get("s")), num(r.get("mn")), num(r.get("mx"))
-        rooms = num(r.get("room_num")) or 0
-        if not d or not city or n <= 0 or s is None or mn is None or mx is None:
-            continue
-        if not (0 <= rooms <= 20):
-            rooms = 0
-        days.setdefault(d, None)
-        cities.setdefault(city, None)
-        out.append([d, city, rooms, n, round(s), round(mn), round(mx)])
-    day_list = sorted(days)
-    city_list = sorted(cities)
-    di = {d: i for i, d in enumerate(day_list)}
-    ci = {c: i for i, c in enumerate(city_list)}
-    packed = [[di[r[0]], ci[r[1]], r[2], r[3], r[4], r[5], r[6]] for r in out]
-    anchor_days = [d for d in day_list if d.startswith(anchor_month)]
-    anchor = anchor_days[-1] if anchor_days else None
-    return {"days": day_list, "cities": city_list, "rows": packed, "anchor": anchor}
-
+# ---------- נתונים קודמים ----------
 
 def load_previous(path=OUT):
     try:
@@ -459,35 +308,51 @@ def keep_previous(name, prev):
     return out
 
 
-def build(today=None, prev=None):
+def load_counts(root):
+    recs = {m: api.load_month(m, root) for m in api.list_months(root)}
+    recs = {m: r for m, r in recs.items() if r}
+    return recs, {m: int(r.get("n") or 0) for m, r in recs.items()}
+
+
+def build(today=None, prev=None, root=None, fetch=None):
     prev = prev if prev is not None else {}
-    counts = month_counts()
+    root = root or api.MONTHS_DIR
+    st = api.stats()
+    last = str(st.get("last_deal") or "")[:7]
+    if not re.fullmatch(r"\d{4}-\d{2}", last):
+        raise SqlError("stats: no last_deal")
+    migrate_legacy(prev, root)
+    # עוגן משוער לפני השליפה, כדי למשוך גם את חודשי המעקב: המעקב צריך עסקאות בודדות, והן לא נשמרות בקבצים
+    early = pick_anchor_month(load_counts(root)[1], today)
+    extra = months_window(early, back=WATCH_MONTHS) if early and load_watch() else ()
+    fresh, errors, left = refresh(last, root, fetch, extra)
+
+    recs, counts = load_counts(root)
     anchor_month = pick_anchor_month(counts, today)
     if not anchor_month:
         raise SqlError("no full month")
     later = [m for m in counts if m > anchor_month and counts[m] > 0]
-    months = months_window(anchor_month, extra_after=later)
-    detail = fetch_detail(months)
-    data = pack(detail, anchor_month)
+    detail_months = months_window(anchor_month, extra_after=later)
+    no_days = [m for m in detail_months if not (recs.get(m) or {}).get("days")]
+    if no_days:
+        raise SqlError(f"detail: missing months {', '.join(no_days)}")
+    data = pack([r for m in detail_months for r in recs[m]["days"]], anchor_month)
+
     try:
-        budget = fetch_budget(anchor_month)
+        budget = build_budget(anchor_month, recs)
     except SqlError as e:
-        print(f"budget: failed ({e}), keeping previous")
+        print(f"budget: {e}, keeping previous")
         budget = keep_previous("budget", prev)
-    try:
-        monthly = fetch_monthly(anchor_month)
-    except SqlError as e:
-        print(f"monthly: failed ({e}), keeping previous")
-        monthly = keep_previous("monthly", prev)
+    monthly = build_monthly(anchor_month, recs)
     watch = None
     cfg = load_watch()
     if cfg:
-        try:
-            watch = fetch_watch(anchor_month, cfg)
-        except SqlError as e:
-            print(f"watch: failed ({e}), keeping previous")
+        wm = months_window(anchor_month, back=WATCH_MONTHS)
+        if all(m in fresh for m in wm):
+            watch = fetch_watch(anchor_month, cfg, [d for m in wm for d in fresh[m]])
+        else:
+            print(f"watch: months {', '.join(m for m in wm if m not in fresh)} not fetched in this run, keeping previous")
             watch = keep_previous("watch", prev)
-    fr = freshness()
     return {
         "build_version": BUILD_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -496,8 +361,10 @@ def build(today=None, prev=None):
         "anchor_month": anchor_month,
         "anchor": data["anchor"],
         "months": [{"ym": m, "n": counts[m]} for m in sorted(counts)][-14:],
-        "db_scraped_at": str(fr.get("scraped") or "")[:19] or None,
-        "db_first_seen": str(fr.get("seen") or "")[:19] or None,
+        "db_scraped_at": str(st.get("scraped_at") or "")[:19] or None,
+        "db_last_deal": str(st.get("last_deal") or "")[:10] or None,
+        "fetch_errors": errors,
+        "months_missing": left,
         "days": data["days"],
         "cities": data["cities"],
         "rows": data["rows"],
@@ -508,7 +375,7 @@ def build(today=None, prev=None):
 
 
 def main():
-    start_clock()
+    api.start_clock(BUDGET_SECONDS)
     report = build(prev=load_previous())
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tmp = OUT + ".tmp"
@@ -516,7 +383,7 @@ def main():
         json.dump(report, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp, OUT)
     print(f"dashboard: anchor={report['anchor']} days={len(report['days'])} "
-          f"cities={len(report['cities'])} rows={len(report['rows'])}")
+          f"cities={len(report['cities'])} rows={len(report['rows'])} errors={len(report['fetch_errors'])}")
 
 
 if __name__ == "__main__":

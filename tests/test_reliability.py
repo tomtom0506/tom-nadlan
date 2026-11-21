@@ -1,4 +1,4 @@
-"""בדיקות offline ל-v1.5.4: הקשחת post_sql, שמירת נתונים קודמים, קוד יציאה של ההתראה השבועית.
+"""בדיקות offline: הקשחת get_json (במקום post_sql מ-v1.5.4), שמירת נתונים קודמים, קוד יציאה של ההתראה השבועית.
 הרצה: python3 -m unittest discover -s tests
 """
 import http.client
@@ -13,6 +13,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import build_dashboard as bd  # noqa: E402
+import deals_api as api  # noqa: E402
 import notify_failure as nf  # noqa: E402
 import weekly_watch as ww  # noqa: E402
 
@@ -25,76 +26,73 @@ class FakeResp(io.BytesIO):
         return False
 
 
-def ok(rows, **extra):
-    return FakeResp(json.dumps(dict({"rows": rows}, **extra)).encode())
+def ok(data=None, **extra):
+    return FakeResp(json.dumps(dict({"data": data if data is not None else []}, **extra)).encode())
 
 
-class PostSqlTests(unittest.TestCase):
+class GetJsonTests(unittest.TestCase):
+    """הקשחת ה-HTTP (באגים 2, 5, 6 מ-v1.5.4), עכשיו ב-deals_api.get_json."""
+
     def setUp(self):
-        bd._deadline = None
+        api._deadline = None
         self.sleeps = []
-        p = mock.patch.object(bd.time, "sleep", side_effect=self.sleeps.append)
+        p = mock.patch.object(api.time, "sleep", side_effect=self.sleeps.append)
         p.start()
         self.addCleanup(p.stop)
 
+    def tearDown(self):
+        api._deadline = None
+
     def run_with(self, effects):
-        with mock.patch.object(bd.urllib.request, "urlopen", side_effect=effects) as m:
+        with mock.patch.object(api.urllib.request, "urlopen", side_effect=effects) as m:
             try:
-                return bd.post_sql("SELECT 1"), m.call_count
-            except bd.SqlError as e:
+                return api.get_json("/api/deals/stats"), m.call_count
+            except api.ApiError as e:
                 return e, m.call_count
 
     def test_network_and_parse_errors_are_retried(self):
-        # באג 2: אלה יצאו בעבר כחריגה לא מטופלת והפילו את כל הבנייה
         for err in (http.client.RemoteDisconnected("x"), http.client.IncompleteRead(b""),
                     ConnectionResetError(), urllib.error.URLError("x"), TimeoutError()):
             with self.subTest(err=type(err).__name__):
                 res, calls = self.run_with([err, ok([{"a": 1}])])
-                self.assertEqual(res, [{"a": 1}])
+                self.assertEqual(res["data"], [{"a": 1}])
                 self.assertEqual(calls, 2)
 
     def test_html_instead_of_json_is_retried(self):
         res, _ = self.run_with([FakeResp(b"<html>busy</html>"), ok([])])
-        self.assertEqual(res, [])
+        self.assertEqual(res["data"], [])
 
-    def test_exhausted_raises_sqlerror_with_last_error(self):
-        res, calls = self.run_with([ConnectionResetError()] * bd.ATTEMPTS)
-        self.assertIsInstance(res, bd.SqlError)
+    def test_exhausted_raises_with_last_error(self):
+        res, calls = self.run_with([ConnectionResetError()] * api.ATTEMPTS)
+        self.assertIsInstance(res, api.ApiError)
         self.assertIn("ConnectionResetError", str(res))
-        self.assertEqual(calls, bd.ATTEMPTS)
+        self.assertEqual(calls, api.ATTEMPTS)
 
     def test_no_sleep_after_last_attempt(self):
-        # באג 5: בעבר הייתה השהיה גם אחרי הניסיון האחרון
-        self.run_with([urllib.error.URLError("x")] * bd.ATTEMPTS)
-        self.assertEqual(len(self.sleeps), bd.ATTEMPTS - 1)
+        self.run_with([urllib.error.URLError("x")] * api.ATTEMPTS)
+        self.assertEqual(len(self.sleeps), api.ATTEMPTS - 1)
 
     def test_client_error_not_retried(self):
-        err = urllib.error.HTTPError(bd.SQL_URL, 400, "bad", {}, None)
+        err = urllib.error.HTTPError(api.BASE, 400, "bad", {}, None)
         res, calls = self.run_with([err])
-        self.assertIsInstance(res, bd.SqlError)
+        self.assertIsInstance(res, api.ApiError)
         self.assertEqual(calls, 1)
 
-    def test_truncated_response_raises(self):
-        # באג 6: דף חתוך היה מסיים את ה-pagination בשקט
-        res, _ = self.run_with([ok([{"a": 1}], truncated=True)])
-        self.assertIsInstance(res, bd.SqlError)
-        self.assertIn("Truncated", str(res))
-
     def test_deadline_passed_raises_without_request(self):
-        bd.start_clock(-1)
+        api.start_clock(-1)
         res, calls = self.run_with([ok([])])
-        self.assertIsInstance(res, bd.SqlError)
+        self.assertIsInstance(res, api.ApiError)
         self.assertEqual(calls, 0)
 
     def test_wait_beyond_deadline_raises_instead_of_sleeping(self):
-        bd.start_clock(5)
+        api.start_clock(5)
         res, calls = self.run_with([urllib.error.URLError("x"), ok([])])
-        self.assertIsInstance(res, bd.SqlError)
+        self.assertIsInstance(res, api.ApiError)
         self.assertEqual(calls, 1)
         self.assertEqual(self.sleeps, [])
 
-    def tearDown(self):
-        bd._deadline = None
+    def test_sqlerror_alias(self):
+        self.assertIs(bd.SqlError, api.ApiError)
 
 
 class KeepPreviousTests(unittest.TestCase):
@@ -116,16 +114,23 @@ class KeepPreviousTests(unittest.TestCase):
         self.assertEqual(bd.load_previous("/nonexistent/x.json"), {})
 
     def test_build_keeps_previous_sections_on_failure(self):
-        # באג 4: בעבר כשל של חלק כתב null והלשונית התרוקנה
-        fail = mock.Mock(side_effect=bd.SqlError("x"))
-        with mock.patch.multiple(bd, month_counts=mock.Mock(return_value={"2026-05": 900, "2026-06": 900}),
-                                 fetch_detail=mock.Mock(return_value=[]), fetch_budget=fail, fetch_monthly=fail,
-                                 fetch_watch=fail, load_watch=mock.Mock(return_value={"cities": ["א"]}),
-                                 freshness=mock.Mock(return_value={})):
+        # באג 4: בעבר כשל של חלק כתב null והלשונית התרוקנה. עכשיו: אין שליפה מוצלחת לחודשים -> budget ו-watch נשמרים
+        import tempfile
+        from datetime import date
+        with tempfile.TemporaryDirectory() as root:
+            for m in ("2026-04", "2026-05", "2026-06"):
+                api.save_month({"month": m, "n": 900, "source": "sql-legacy",
+                                "days": [[m + "-10", "א", 3, 900, 9e8, 5e5, 2e6]],
+                                "monthly": [["א", 3, 900, 9e8, 5e5, 2e6]]}, root)
             prev = dict(self.PREV, watch={"cities": []})
-            out = bd.build(today=bd.date(2026, 11, 20), prev=prev)
-        for k in ("budget", "monthly", "watch"):
+            with mock.patch.object(api, "stats", return_value={"last_deal": "2026-06-30", "scraped_at": "x"}), \
+                    mock.patch.object(bd, "load_watch", return_value={"cities": ["א"], "pct": 15, "cap": 45, "max_flags": 3}):
+                out = bd.build(today=date(2026, 11, 20), prev=prev, root=root,
+                               fetch=mock.Mock(side_effect=api.ApiError("x")))
+        for k in ("budget", "watch"):
             self.assertTrue(out[k]["stale"], k)
+        self.assertEqual(out["anchor"], "2026-06-10")
+        self.assertTrue(out["fetch_errors"])
 
 
 class WeeklyWatchTests(unittest.TestCase):
