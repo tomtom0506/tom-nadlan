@@ -21,14 +21,14 @@ from datetime import date, datetime, timezone
 import deals_api as api
 from deals_api import ApiError as SqlError  # השם הישן נשאר, כדי שקוד ובדיקות קיימים ימשיכו לעבוד
 
-BUILD_VERSION = "1.6.0"
+BUILD_VERSION = "1.6.1"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "data", "dashboard.json")
 MONTHS_BACK = 3           # חודש העוגן ועוד שניים לפניו (כ-90 יום)
 FULL_MONTH_RATIO = 0.70   # חודש "מלא" = לפחות 70% מהחציון של 6 החודשים שלפניו
-BUDGET_SECONDS = 15 * 60  # תקציב זמן לכל הבנייה. ה-job מוגבל ל-20 דקות, וצריך זמן גם ל-commit
+BUDGET_SECONDS = 40 * 60  # תקציב זמן לכל הבנייה. ה-job מוגבל ל-45 דקות, וצריך זמן גם ל-commit
 RECENT_MONTHS = 4         # נמשכים מחדש בכל ריצה: עסקאות מגיעות באיחור של כמה חודשים
-KEEP_MONTHS = 15          # חודשים שחייבים להיות בשליפה מלאה מה-API: 12 ללשונית ₪1.5M ועוד פיגור העוגן
+KEEP_MONTHS = 51          # כל החלון של הגרף (48 חודשים) ועוד פיגור העוגן: הכל מה-API, כי ב-SQL הישן היו כפילויות
 MONTH_RESERVE = 150       # שניות: לא מתחילים חודש חדש אם נשאר פחות מזה
 MONTHLY_BACK = 48         # 36 לגרף ועוד 12, כדי שלכל חודש בגרף תהיה שנה קודמת להשוואה
 BUDGET = api.BUDGET

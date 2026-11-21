@@ -39,7 +39,7 @@ MIN_AMT, MAX_AMT = 150_000, 40_000_000
 AREA_OK = (25, 400)
 BUDGET = 1_500_000
 MISSING_TOLERANCE = 0.002  # עד 0.2% חוסר מותר רק אם שתי דרכי השליפה מסכימות (שורות זהות לחלוטין במקור)
-LEGACY_TOLERANCE = 0.03    # בדיקת אמינות: API מול ה-SQL הישן על אותו חודש
+DROP_TOLERANCE = 0.03      # בדיקת אמינות: שליפה חדשה מול שליפה קודמת מה-API של אותו חודש
 
 _deadline = None
 
@@ -307,12 +307,13 @@ def list_months(root=MONTHS_DIR):
 
 
 def check_against_previous(new, old):
-    """בדיקת אמינות: אם קיים סיכום קודם (מה-SQL הישן או משליפה קודמת), ספירת העסקאות לא אמורה לרדת ביותר מ-3%.
-    ירידה חדה מרמזת על שליפה חלקית, ואז לא דורסים את הקובץ הקיים."""
-    if not old:
+    """בדיקת אמינות: מול שליפה קודמת מה-API של אותו חודש, ספירת העסקאות לא אמורה לרדת ביותר מ-3%.
+    ירידה חדה מרמזת על שליפה חלקית, ואז לא דורסים את הקובץ הקיים.
+    לא משווים ל-sql-legacy: ב-SQL הישן חלק מהעסקאות נספרו פעמיים (deals_probe 1.2.0), ולכן הוא גבוה ב-10%-25%."""
+    if not old or old.get("source") != "api":
         return
     prev = old.get("n") or sum(r[2] for r in old.get("monthly") or [])
-    if prev and new["n"] < prev * (1 - LEGACY_TOLERANCE):
+    if prev and new["n"] < prev * (1 - DROP_TOLERANCE):
         raise ApiError(f"check failed {new['month']}: {new['n']} < {prev} ({old.get('source')})")
 
 

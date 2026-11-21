@@ -17,7 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 45 דקות: השלמת ההיסטוריה מה-API (כ-70 שניות לחודש). ריצה יומית רגילה לוקחת כ-7 דקות.
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4

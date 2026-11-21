@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-zLk2B2lkXUma+gQULCBGijmCO851p8Fd0PG97Kj6NOY=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-BcYczR8Jk/bSByUfauE8H9YyKL/RRV/Bh3sYbnpfGF0=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -460,10 +460,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.6.0';
+var APP_VERSION='1.6.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.6.1',date:'2026-11-21',items:[
+    'תיקון ספירה: באיסוף הקודם (SQL) חלק מהעסקאות נספרו פעמיים, בעיקר בערים עם פרויקטים חדשים. למשל, ב-12.07 במגדל העמק נספרו 78 עסקאות ובפועל היו 39. לכן הגיליון הציג 10%–25% עסקאות יותר מדי בחודשים האחרונים.',
+    'כל ההיסטוריה, 4 שנים, נאספת מחדש מה-API הציבורי, שבו כל עסקה מופיעה פעם אחת. עד שהאיסוף יושלם, הגרף של "3 שנים" עשוי לשלב חודשים ישנים וחדשים.'
+  ]},
   {v:'1.6.0',date:'2026-11-21',items:[
     'העדכון היומי חזר לעבוד: מאז 08.11 שאילתות ה-SQL של גרסאות לעם דורשות התחברות, והנתונים נאספים עכשיו מה-API הציבורי שלהם (/api/deals), שפתוח בלי התחברות.',
     'כל חודש נאסף פעם אחת ונשמר כסיכום. בכל עדכון נאספים מחדש רק החודשים האחרונים, שאליהם עוד מתווספות עסקאות. ההיסטוריה של 4 שנים נשמרה מהאיסוף הקודם.',
