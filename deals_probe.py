@@ -19,7 +19,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-PROBE_VERSION = "1.1.0"
+PROBE_VERSION = "1.2.0"
 BASE = "https://www.over.org.il"
 ORIGIN = "https://tomtom0506.github.io"
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,10 @@ DOC_OUT = os.path.join(ROOT, "data", "over_api_doc.txt")
 OPENAPI_OUT = os.path.join(ROOT, "data", "over_openapi.json")
 DAY_OUT = os.path.join(ROOT, "data", "deals_probe_day.json")
 DATASET_ID = "fd06f5ae-8a4f-4120-b275-8a514ad23499"
-DUP_DAYS = ("2026-05-10", "2026-07-12", "2026-02-15")
+CMP_DAYS = ("2026-05-10", "2026-07-12")
+APT_NATURES = ("דירה בבית קומות", "דירת גן", "דירת גג")
+API_FIELDS = ("date", "settlement", "nature", "rooms", "area_sqm", "amount", "portion", "portion_fraction",
+              "gush", "helka", "sub_parcel")
 DAY_FIELDS = ("deal_date", "settlement", "gush", "chelka", "sub_chelka", "deal_amount", "deal_nature", "portion",
               "asset_area", "room_num", "row_hash", "scraped_at", "first_seen", "last_seen")
 UA = "tom-nadlan-probe/1.0 (personal, read-only)"
@@ -157,30 +160,42 @@ def total_of(data):
     return data.get("total")
 
 
-def duplicates():
-    """v1.6.0: ה-API מחזיר 10%-20% פחות עסקאות מה-SQL הישן. השערה: הטבלה היא ארכיון שמצטבר, וה-SQL ספר כמה
-    דגימות של אותה עסקה. לכל יום: ספירה בארכיון (כל הדגימות, latest, current) מול total של /api/deals/search."""
-    out, day_rows = [], None
+def compare_days():
+    """v1.6.0: ה-API נותן כ-10% פחות עסקאות מה-SQL הישן, והארכיון שווה ל-API (deals_probe 1.1.0).
+    לכל יום ומהות: כל השורות מ-/api/deals/search וכל השורות מהארכיון, כדי להשוות שורה-שורה ל-SQL הישן."""
     ds = f"/api/append/{DATASET_ID}/datastore_search"
-    for day in DUP_DAYS:
+    out = []
+    for day in CMP_DAYS:
         y, m, d = day.split("-")
-        filt = json.dumps({"deal_date": f"{d}/{m}/{y}", "deal_nature": APT}, ensure_ascii=False)
-        row = {"day": day}
-        for name, extra in (("archive_all", {"limit": "1000"}), ("archive_latest", {"latest": "true", "limit": "1"}),
-                            ("archive_current", {"current": "true", "limit": "1"})):
-            c, data = check(f"dup_{day}_{name}", f"{day}: {name}", ds, dict(extra, filters=filt, include_total="true"))
-            row[name] = total_of(data) if c["ok"] else f"error {c['status']}: {c.get('error_body')}"
-            if name == "archive_all" and c["ok"] and day_rows is None:
+        for nature in APT_NATURES:
+            row = {"day": day, "nature": nature}
+            api_rows, offset, total = [], 0, None
+            while offset <= 2000:
+                c, data = check(f"cmp_{day}_{len(out)}_api_{offset}", f"{day} {nature}: API offset {offset}", "/api/deals/search",
+                                {"nature": nature, "date_from": day, "date_to": day, "sort": "amount_asc",
+                                 "limit": "200", "offset": str(offset)})
+                if not c["ok"]:
+                    row["api_error"] = f"{c['status']}: {c.get('error_body')}"
+                    break
+                page = data.get("data") or []
+                total = data.get("total")
+                api_rows += [{k: r.get(k) for k in API_FIELDS} for r in page if isinstance(r, dict)]
+                offset += 200
+                if len(page) < 200 or (isinstance(total, int) and offset >= total):
+                    break
+            row.update(api_total=total, api_rows=api_rows)
+            filt = json.dumps({"deal_date": f"{d}/{m}/{y}", "deal_nature": nature}, ensure_ascii=False)
+            c, data = check(f"cmp_{day}_{len(out)}_archive", f"{day} {nature}: archive", ds,
+                            {"filters": filt, "limit": "1000", "include_total": "true"})
+            if c["ok"]:
                 recs = (data.get("result") or {}).get("records") or []
-                day_rows = {"day": day, "count": len(recs),
-                            "records": [{k: r.get(k) for k in DAY_FIELDS} for r in recs if isinstance(r, dict)]}
-        c, data = check(f"dup_{day}_api", f"{day}: /api/deals/search", "/api/deals/search",
-                        {"nature": APT, "date_from": day, "date_to": day, "limit": "1"})
-        row["api_total"] = total_of(data) if c["ok"] else f"error {c['status']}"
-        out.append(row)
-        print(f"[dup] {row}")
-    c, log = check("deals_log", "יומן תיקונים /api/deals/log", "/api/deals/log")
-    return out, day_rows, (log if c["ok"] else None)
+                row.update(archive_total=total_of(data),
+                           archive_rows=[{k: r.get(k) for k in DAY_FIELDS} for r in recs if isinstance(r, dict)])
+            else:
+                row["archive_error"] = f"{c['status']}: {c.get('error_body')}"
+            print(f"[cmp] {day} {nature}: api {row.get('api_total')}/{len(api_rows)} archive {row.get('archive_total')}")
+            out.append(row)
+    return out
 
 
 def probe():
@@ -224,11 +239,10 @@ def probe():
     ]:
         checks.append(check(cid, label, path, params)[0])
 
-    dup, day_rows, log = duplicates()
+    cmp = compare_days()
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    if day_rows is not None or log is not None:
-        with open(DAY_OUT, "w", encoding="utf-8") as f:
-            json.dump({"day": day_rows, "log": log}, f, ensure_ascii=False, indent=1)
+    with open(DAY_OUT, "w", encoding="utf-8") as f:
+        json.dump({"compare": cmp}, f, ensure_ascii=False, separators=(",", ":"))
     if doc_text:
         paths = api_paths(doc_text)
         with open(DOC_OUT, "w", encoding="utf-8") as f:
@@ -239,7 +253,7 @@ def probe():
         with open(OPENAPI_OUT, "w", encoding="utf-8") as f:
             json.dump(openapi, f, ensure_ascii=False, indent=1)
     return {"probe_version": PROBE_VERSION, "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "base": BASE, "doc_saved": bool(doc_text), "openapi_saved": openapi is not None, "duplicates": dup,
+            "base": BASE, "doc_saved": bool(doc_text), "openapi_saved": openapi is not None, "compare": [{k: v for k, v in r.items() if not k.endswith("_rows")} for r in cmp],
             "checks": checks}
 
 

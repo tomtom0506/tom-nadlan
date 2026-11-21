@@ -34,24 +34,22 @@ class DealsProbeTests(unittest.TestCase):
         self.assertEqual(dp.total_of({"total": 5, "data": []}), 5)
         self.assertIsNone(dp.total_of(None))
 
-    def test_duplicates_collects_counts(self):
+    def test_compare_days_pages_and_archive(self):
         from unittest import mock
-        answers = {"archive_all": {"result": {"total": 120, "records": [{"deal_date": "10/05/2026", "row_hash": "a", "x": 1}]}},
-                   "archive_latest": {"result": {"total": 100}}, "archive_current": {"result": {"total": 100}},
-                   "api": {"total": 100, "data": []}, "log": {"items": []}}
+        api_pages = {"0": {"total": 250, "data": [{"date": "2026-05-10", "amount": i, "junk": 1} for i in range(200)]},
+                     "200": {"total": 250, "data": [{"date": "2026-05-10", "amount": i} for i in range(50)]}}
 
         def fake(cid, label, path, params=None):
-            key = "log" if cid == "deals_log" else cid.rsplit("_", 1)[-1]
-            key = {"all": "archive_all", "latest": "archive_latest", "current": "archive_current"}.get(key, key)
-            return {"ok": True, "status": 200}, answers[key]
+            if "datastore_search" in path:
+                return {"ok": True, "status": 200}, {"result": {"total": 2, "records": [{"deal_date": "10/05/2026", "x": 9}]}}
+            return {"ok": True, "status": 200}, api_pages[params["offset"]]
         with mock.patch.object(dp, "check", side_effect=fake):
-            out, day, log = dp.duplicates()
-        self.assertEqual(out[0], {"day": "2026-05-10", "archive_all": 120, "archive_latest": 100,
-                                  "archive_current": 100, "api_total": 100})
-        self.assertEqual(day["records"][0]["row_hash"], "a")
-        self.assertNotIn("x", day["records"][0])
-        self.assertEqual(log, {"items": []})
-
+            out = dp.compare_days()
+        self.assertEqual(len(out), len(dp.CMP_DAYS) * len(dp.APT_NATURES))
+        r = out[0]
+        self.assertEqual((r["api_total"], len(r["api_rows"]), r["archive_total"]), (250, 250, 2))
+        self.assertNotIn("junk", r["api_rows"][0])
+        self.assertNotIn("x", r["archive_rows"][0])
 
 if __name__ == "__main__":
     unittest.main()
