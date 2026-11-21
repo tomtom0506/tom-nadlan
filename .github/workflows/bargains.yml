@@ -1,0 +1,64 @@
+name: מציאות - עדכון יומי
+
+# כל יום ב-07:10 שעון ישראל בחורף (05:10 UTC), אחרי העדכון היומי של הגיליון, וגם הרצה ידנית.
+# אין קלט מהמשתמש. הסקריפט שולח בקשות קריאה בלבד ל-API הציבורי של over.org.il (בלי טוקן).
+# אבטחה: contents: write נדרש רק ל-commit של data/bargains.json ו-data/bargains_state.json.
+# סודות הטלגרם עוברים רק דרך env לשלבי ההתראה ולא מודפסים. המטמון (.cache/govmap) נשמר ב-actions/cache
+# ולא ב-git, ומכיל רק עסקאות ציבוריות (בלי שמות).
+on:
+  schedule:
+    - cron: "10 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-writes
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore GovMap cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/govmap
+          key: govmap-${{ github.run_id }}
+          restore-keys: govmap-
+
+      - name: Build bargains data
+        run: python3 build_bargains.py
+
+      - name: Notify new bargains
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 notify_bargains.py
+
+      - name: Save results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bargains.json
+          [ -f data/bargains_state.json ] && git add data/bargains_state.json
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "bargains: daily update"
+          for i in 1 2 3 4 5; do
+            git pull --rebase --quiet && git push --quiet && exit 0
+            sleep 5
+          done
+          echo "push failed"; exit 1
+
+      - name: Notify failure
+        if: ${{ failure() || cancelled() }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 notify_failure.py "העדכון היומי של לשונית מציאות נכשל"

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-BcYczR8Jk/bSByUfauE8H9YyKL/RRV/Bh3sYbnpfGF0=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-3UdqLBZQy7ygLbCbUBW9TgSHtrovMr/2Y8yDdb/PI6A=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-EuwYnfAVs82EEJ5W8feSXaX09yN0ob0cXFi4ehJ9dkA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -291,6 +291,36 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
   .dim path.draw{stroke-dasharray:640;stroke-dashoffset:640;animation:draw 1.1s ease-out .15s forwards}
   @keyframes draw{to{stroke-dashoffset:0}}
 }
+
+/* ---------- מציאות ---------- */
+.dl-tabs{margin-top:6px}
+.dl-list{display:grid;gap:10px;margin-top:10px}
+.dl-card{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.dl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dl-kind{font-size:.75rem;padding:2px 8px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);white-space:nowrap}
+.dl-kind.self{border-color:var(--good);color:var(--good)}
+.dl-kind.dev{border-color:var(--line);color:var(--muted)}
+.dl-sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+.dl-kv{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;margin-top:8px;font-size:.86rem}
+.dl-kv span{display:block;color:var(--muted);font-size:.74rem}
+.dl-kv b{font-weight:600;unicode-bidi:isolate}
+.dl-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.dl-foot a{color:var(--accent)}
+.dl-due{font-weight:600;color:var(--warn)}
+.dl-pct{font-weight:700;color:var(--good);unicode-bidi:isolate}
+.dl-city{display:grid;gap:6px}
+.dl-city summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dl-city summary::-webkit-details-marker{display:none}
+.dl-city summary::after{content:'▾';color:var(--muted);font-size:.8rem}
+.dl-city[open] summary::after{content:'▴'}
+.dl-st{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;padding:6px 0;border-top:1px dashed var(--line)}
+.dl-st small{display:block;color:var(--muted);font-size:.74rem}
+.dl-verdict{font-size:1.05rem;font-weight:700;margin:0 0 6px}
+.dl-verdict.good{color:var(--good)}.dl-verdict.bad{color:var(--bad)}.dl-verdict.mid{color:var(--warn)}
+.dl-bar{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,var(--good),var(--warn),var(--bad));margin:10px 0 4px;direction:ltr}
+.dl-bar i{position:absolute;top:-4px;width:4px;height:18px;border-radius:2px;background:var(--text);transform:translateX(-2px)}
+.dl-scale{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);direction:ltr}
+.dl-sel{width:100%}
 </style>
 </head>
 <body>
@@ -328,6 +358,7 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
     <button class="tab" role="tab" id="t-check" aria-controls="p-check" data-tab="check" type="button">🔍 בדוק נכס</button>
     <button class="tab" role="tab" id="t-budget" aria-controls="p-budget" data-tab="budget" type="button">🗺️ ₪1.5M</button>
     <button class="tab" role="tab" id="t-track" aria-controls="p-track" data-tab="track" type="button">📈 מעקב</button>
+    <button class="tab" role="tab" id="t-deals" aria-controls="p-deals" data-tab="deals" type="button">💎 מציאות</button>
   </nav>
 
   <!-- גיליון ראשי: שוק -->
@@ -442,6 +473,68 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
       <p class="note"><a href="https://github.com/tomtom0506/tom-nadlan/edit/main/watch.json" target="_blank" rel="noopener noreferrer">עריכת רשימת הערים ב-GitHub</a></p>
     </article>
   </section>
+
+  <!-- מציאות -->
+  <section class="panel" id="p-deals" role="tabpanel" aria-labelledby="t-deals" hidden>
+    <article class="sec">
+      <h2>מציאות</h2>
+      <p class="lead">איפה אפשר לקנות מתחת למחיר השוק: מכרזי קרקע פתוחים של רמ"י, עסקאות שנסגרו הרבה מתחת לעסקאות דומות, ורחובות זולים יחסית בכל עיר.</p>
+      <p class="note fresh" id="dlFresh"></p>
+      <div class="empty" id="dlState">טוען…</div>
+    </article>
+
+    <article class="sec" id="dlCalc" hidden>
+      <h2>האם המחיר הזה מציאה?</h2>
+      <p class="lead">מכניסים פרטים של דירה שמוצעת למכירה. ההשוואה היא למחיר למ"ר של דירות דומות שנמכרו בעיר ב-12 החודשים האחרונים.</p>
+      <div class="grid">
+        <div class="f wide"><label for="dcCity">עיר</label><select id="dcCity" class="dl-sel"></select></div>
+        <div class="f"><label for="dcRooms">חדרים</label><input id="dcRooms" type="text" inputmode="decimal" maxlength="4"></div>
+        <div class="f"><label for="dcSqm">מ"ר</label><input id="dcSqm" type="text" inputmode="numeric" maxlength="4"></div>
+        <div class="f wide"><label for="dcPrice">מחיר מבוקש (₪)</label><input id="dcPrice" type="text" inputmode="numeric" maxlength="12"></div>
+      </div>
+      <div class="actions"><button class="btn primary big" id="dcGo" type="button">בדוק מחיר</button></div>
+      <div class="result" id="dcOut" role="status" aria-live="polite" hidden></div>
+    </article>
+
+    <article class="sec" id="dlTenders" hidden>
+      <div class="h-top"><h2>מכרזי קרקע פתוחים</h2><span class="note" id="dtCount" style="margin:0"></span></div>
+      <p class="lead">מכרזים של רשות מקרקעי ישראל שמועד ההגשה שלהם עוד לא עבר. מגרש לבנייה עצמית והרשמה והגרלה פתוחים לאנשים פרטיים, ולרוב זו הדרך הזולה ביותר לבית צמוד קרקע.</p>
+      <div class="chips dl-tabs" role="group" aria-label="סוג מכרז">
+        <button type="button" data-tk="mine" aria-pressed="true">לאנשים פרטיים</button><button type="button" data-tk="self" aria-pressed="false">🏡 בנייה עצמית</button><button type="button" data-tk="lottery" aria-pressed="false">🎟️ הרשמה והגרלה</button><button type="button" data-tk="target" aria-pressed="false">🏷️ מחיר מטרה</button><button type="button" data-tk="all" aria-pressed="false">הכל</button>
+      </div>
+      <div class="chips dl-tabs" style="margin-top:8px"><button type="button" id="dtCenter" aria-pressed="false">רק מרכז</button></div>
+      <div id="dtList" class="dl-list"></div>
+      <p class="note">השומה היא הערכת רמ"י לשווי הקרקע. "זכיות קודמות" הוא החציון של מחיר קרקע ופיתוח ליחידה במכרזים לבנייה נמוכה שהסתיימו ביישוב ב-3 השנים האחרונות. ההרשמה וההגשה נעשות באתר רמ"י בלבד.</p>
+    </article>
+
+    <article class="sec" id="dlProj" hidden>
+      <div class="h-top"><h2>פרויקטים חדשים במחיר מופחת</h2><span class="note" id="dpCount" style="margin:0"></span></div>
+      <p class="lead">בניינים חדשים שנמכרו בהם הרבה דירות בבת אחת, במחיר למ"ר נמוך לפחות ב-20% מהשוק בעיר. לרוב אלה פרויקטים של "דירה בהנחה" או "מחיר מטרה". אי אפשר לקנות בהם עכשיו, אבל הם מראות באילו ערים יש פרויקטים כאלה. ההרשמה להגרלות היא באתר "דירה בהנחה" של משרד הבינוי והשיכון.</p>
+      <div id="dpList" class="dl-list"></div>
+      <p class="note"><a href="https://www.dira.moch.gov.il/" target="_blank" rel="noopener noreferrer">אתר דירה בהנחה</a></p>
+    </article>
+
+    <article class="sec" id="dlFlags" hidden>
+      <div class="h-top"><h2>נסגרו מתחת לשוק</h2><span class="note" id="dfCount" style="margin:0"></span></div>
+      <p class="lead" id="dfLead"></p>
+      <div class="tools"><select id="dfCity" aria-label="עיר" class="dl-sel"></select></div>
+      <div id="dfList" class="dl-list"></div>
+      <p class="note">אלה עסקאות שכבר נסגרו, ואי אפשר לקנות אותן. הן מראות באילו רחובות ובניינים מוכרים מסכימים למחיר נמוך, ומה מחיר סביר להציע.</p>
+    </article>
+
+    <article class="sec" id="dlCities" hidden>
+      <h2>ערים ורחובות זולים יחסית</h2>
+      <p class="lead">לכל עיר: חציון מחיר למ"ר ב-12 חודשים, מגמה ב-3 החודשים האחרונים, וכמה מהעסקאות היו בתוך התקציב. בלחיצה: רחובות שהמחיר למ"ר בהם נמוך מהחציון של העיר ויש בהם עסקאות בתקציב.</p>
+      <div id="dcList" class="dl-list"></div>
+      <p class="note">כדי לשנות את רשימת הערים, עורכים את bargains.json בריפו:</p>
+      <p class="note"><a href="https://github.com/tomtom0506/tom-nadlan/edit/main/bargains.json" target="_blank" rel="noopener noreferrer">עריכת רשימת הערים ב-GitHub</a></p>
+    </article>
+
+    <article class="sec">
+      <h2>נכסים מכינוס ומפשיטת רגל</h2>
+      <p class="lead" style="margin:0">אין להם כרגע מקור פתוח ומסודר. המאגרים הפתוחים של הכונס הרשמי הם רשימות של אנשים ושל תביעות חוב, לא של נכסים, ולכן הם לא בשימוש כאן. מכירות כאלה מתפרסמות במודעות של כונסי נכסים שמונו על ידי בית משפט, ונמכרות במכרז, לרוב במחיר קרוב לשוק.</p>
+    </article>
+  </section>
 </main>
 
 <footer class="wrap">
@@ -460,10 +553,18 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.6.1';
+var APP_VERSION='1.7.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.7.0',date:'2026-11-21',items:[
+    'לשונית חדשה 💎 מציאות: איפה אפשר לקנות מתחת למחיר השוק.',
+    'מכרזי קרקע פתוחים של רמ"י: מגרשים לבנייה עצמית, הרשמה והגרלה ומחיר מטרה, עם מועד אחרון להגשה, שומה ליחידה ומחיר הזכיות הקודמות באותו יישוב.',
+    'עסקאות מ-GovMap (אתר הנדל"ן הממשלתי), מקור עדכני יותר מרשות המסים: עסקאות שנסגרו 15%–45% מתחת לעסקאות דומות, ורחובות זולים יחסית בכל עיר. 20 ערים, ואפשר להוסיף ב-bargains.json.',
+    'מחשבון "האם המחיר הזה מציאה?": מחיר מבוקש מול רבעונים של עסקאות דומות בעיר, ומחיר יעד להצעה.',
+    'פרויקטים חדשים שנמכרו 20% ומעלה מתחת לשוק בעיר, לרוב דירה בהנחה או מחיר מטרה: מראים איפה כדאי להירשם להגרלות.',
+    'התראה יומית בטלגרם, רק כשיש מכרז חדש או עסקה חדשה מתחת לשוק.'
+  ]},
   {v:'1.6.1',date:'2026-11-21',items:[
     'תיקון ספירה: באיסוף הקודם (SQL) חלק מהעסקאות נספרו פעמיים, בעיקר בערים עם פרויקטים חדשים. למשל, ב-12.07 במגדל העמק נספרו 78 עסקאות ובפועל היו 39. לכן הגיליון הציג 10%–25% עסקאות יותר מדי בחודשים האחרונים.',
     'כל ההיסטוריה, 4 שנים, נאספת מחדש מה-API הציבורי, שבו כל עסקה מופיעה פעם אחת. עד שהאיסוף יושלם, הגרף של "3 שנים" עשוי לשלב חודשים ישנים וחדשים.'
@@ -1449,6 +1550,203 @@ fetch('data/dashboard.json?t='+Date.now(),{cache:'no-store'}).then(function(r){
   $('mkBody').hidden=true;$('mkState').hidden=false;$('mkState').textContent='לא הצלחתי לטעון את נתוני הגיליון. נסה לרענן.';
 });
 window.__mk={validateWatch:validateWatch,cmpMonth:function(){return cmpMonth();},S:S,B:B,isCenter:isCenter,validate:validate,validateMonthly:validateMonthly,validateBudget:validateBudget,records:records,agg:agg,init:init};
+})();
+</script>
+<script>
+(function(){
+'use strict';
+function $(id){return document.getElementById(id);}
+function el(tag,props){
+  var n=document.createElement(tag);props=props||{};
+  Object.keys(props).forEach(function(k){var v=props[k];if(v==null)return;
+    if(k==='class')n.className=v;else if(k==='text')n.textContent=String(v);else n.setAttribute(k,String(v));});
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null||c===false)continue;n.appendChild(typeof c==='object'?c:document.createTextNode(String(c)));}
+  return n;
+}
+function fin(v){return typeof v==='number'&&isFinite(v);}
+function str(v,max){return v==null?'':String(v).slice(0,max||60);}
+function nis(v){return '₪'+Math.round(v).toLocaleString('en-US');}
+function nisK(v){return v>=1e6?'₪'+(v/1e6).toFixed(2).replace(/\.?0+$/,'')+'M':'₪'+Math.round(v/1000)+'K';}
+function fmtD(iso){var p=String(iso||'').split('-');return p.length===3?p[2].slice(0,2)+'.'+p[1]+'.'+p[0].slice(2):'';}
+function daysTo(iso){var t=Date.parse(String(iso).slice(0,10)+'T23:59:59+02:00');return isFinite(t)?Math.ceil((t-Date.now())/864e5):null;}
+function rb(r){return !(r>0)?0:r<3?2:r<4?3:r<5?4:5;}
+var KIND={self:'🏡 בנייה עצמית',lottery:'🎟️ הרשמה והגרלה',target:'🏷️ מחיר מטרה',dev:'🏗️ ליזמים'};
+var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+
+function validate(d){
+  if(!d||typeof d!=='object'||!Array.isArray(d.cities)||!Array.isArray(d.tenders))return null;
+  var bands=Array.isArray(d.area_bands)&&d.area_bands.every(fin)?d.area_bands:[40,55,70,85,100,120,150];
+  var cities=d.cities.filter(function(c){return c&&typeof c.name==='string'&&fin(c.n);}).slice(0,60).map(function(c){
+    var flags=(Array.isArray(c.flags)?c.flags:[]).filter(function(f){return f&&fin(f.amount)&&fin(f.area)&&fin(f.pct)&&fin(f.ppm)&&DATE_RE.test(String(f.date));}).slice(0,30);
+    var streets=(Array.isArray(c.streets)?c.streets:[]).filter(function(s){return s&&typeof s.street==='string'&&fin(s.ppm)&&fin(s.n);}).slice(0,20);
+    var table=c.table&&typeof c.table==='object'?c.table:{};
+    return {name:c.name.slice(0,40),n:c.n,med:fin(c.median_ppm)?c.median_ppm:null,trend:fin(c.trend_pct)?c.trend_pct:null,
+      nb:fin(c.n_budget)?c.n_budget:0,share:fin(c.budget_share)?c.budget_share:0,barea:fin(c.budget_area)?c.budget_area:null,
+      last:DATE_RE.test(String(c.last_deal))?c.last_deal:null,flags:flags,flagsTotal:fin(c.flags_total)?c.flags_total:flags.length,
+      streets:streets,table:table,stale:c.stale===true,
+      projects:(Array.isArray(c.projects)?c.projects:[]).filter(function(p){return p&&fin(p.n)&&fin(p.ppm)&&fin(p.vs_city)&&fin(p.price)&&DATE_RE.test(String(p.first))&&DATE_RE.test(String(p.last));}).slice(0,12)};
+  });
+  var tenders=d.tenders.filter(function(t){return t&&typeof t.city==='string'&&DATE_RE.test(String(t.deadline))&&KIND[t.kind];}).slice(0,400);
+  return {cities:cities,tenders:tenders,bands:bands,budget:fin(d.budget)?d.budget:1500000,recent:fin(d.recent_days)?d.recent_days:60,
+    below:fin(d.below_pct)?d.below_pct:15,cap:fin(d.max_below_pct)?d.max_below_pct:45,minComps:fin(d.min_comps)?d.min_comps:5,
+    generated:str(d.generated_at,30),last:DATE_RE.test(String(d.last_deal))?d.last_deal:null,errors:Array.isArray(d.errors)?d.errors.length:0};
+}
+
+var D=null,T={kind:'mine',center:false},F={city:''};
+function isCenterRegion(t){return /מרכז|תל אביב/.test(str(t.region,30));}
+
+/* ---------- מכרזים ---------- */
+function renderTenders(){
+  var box=$('dtList');box.textContent='';
+  var list=D.tenders.filter(function(t){
+    if(T.kind==='mine'&&!(t.kind==='self'||t.kind==='lottery'))return false;
+    if(T.kind!=='mine'&&T.kind!=='all'&&t.kind!==T.kind)return false;
+    if(T.center&&!isCenterRegion(t))return false;
+    return true;
+  });
+  $('dtCount').textContent=list.length+' מכרזים';
+  if(!list.length){box.appendChild(el('div',{class:'empty',text:'אין מכרזים פתוחים בסינון הזה.'}));return;}
+  list.slice(0,80).forEach(function(t){
+    var left=daysTo(t.deadline);
+    var head=el('div',{class:'dl-head'},
+      el('div',null,el('span',{class:'c-name',text:t.city.slice(0,40)}),el('div',{class:'dl-sub',text:[str(t.neighborhood,60)!==t.city?str(t.neighborhood,60):'',str(t.purpose,60)].filter(Boolean).join(' · ')})),
+      el('span',{class:'dl-kind '+t.kind,text:KIND[t.kind]}));
+    var kv=el('div',{class:'dl-kv'});
+    function add(k,v){if(v!=null&&v!=='')kv.appendChild(el('div',null,el('span',{text:k}),el('b',{text:v})));}
+    add('יחידות דיור',fin(t.units)&&t.units>0?t.units.toLocaleString('en-US')+(fin(t.lots)&&t.lots>1?' ב-'+t.lots+' מתחמים':''):null);
+    add('שומה ליחידה',fin(t.appraisal_per_unit)?nis(t.appraisal_per_unit):null);
+    add('מחיר מינימום ליחידה',fin(t.threshold_per_unit)?nis(t.threshold_per_unit):null);
+    add('הוצאות פיתוח ליחידה',fin(t.dev_per_unit)?nis(t.dev_per_unit):null);
+    var h=t.history&&typeof t.history==='object'?t.history:null;
+    if(h&&fin(h.per_unit))add('זכיות קודמות ביישוב',nis(h.per_unit)+(fin(h.n)?' ('+h.n+' מגרשים'+(fin(h.bids)&&h.bids>0?', '+h.bids+' הצעות בממוצע':'')+')':''));
+    if(t.eligible)add('זכאים',str(t.eligible,120));
+    var link=/^https:\/\/apps\.land\.gov\.il\//.test(String(t.url||''))?el('a',{href:t.url,target:'_blank',rel:'noopener noreferrer',text:'למכרז באתר רמ"י'}):null;
+    var foot=el('div',{class:'dl-foot'},el('span',null,'מכרז '+str(t.number,16)+' · הגשה עד ',el('span',{class:'dl-due',text:fmtD(t.deadline)+(left!=null?' (עוד '+left+' ימים)':'')})),link);
+    box.appendChild(el('div',{class:'dl-card'},head,kv,foot,t.stale?el('p',{class:'note warn',text:'מהעדכון הקודם: האיסוף האחרון של המכרזים נכשל.'}):null));
+  });
+  if(list.length>80)box.appendChild(el('p',{class:'note',text:'מוצגים 80 המכרזים הקרובים ביותר למועד ההגשה.'}));
+}
+[].forEach.call(document.querySelectorAll('[data-tk]'),function(b){b.addEventListener('click',function(){
+  var k=b.dataset.tk;if(['mine','self','lottery','target','all'].indexOf(k)<0)return;T.kind=k;
+  [].forEach.call(document.querySelectorAll('[data-tk]'),function(x){x.setAttribute('aria-pressed',String(x.dataset.tk===k));});
+  if(D)renderTenders();});});
+$('dtCenter').addEventListener('click',function(){T.center=!T.center;this.setAttribute('aria-pressed',String(T.center));if(D)renderTenders();});
+
+/* ---------- עסקאות מתחת לשוק ---------- */
+function renderFlags(){
+  var box=$('dfList');box.textContent='';
+  var all=[];
+  D.cities.forEach(function(c){if(F.city&&c.name!==F.city)return;c.flags.forEach(function(f){all.push({c:c.name,f:f});});});
+  all.sort(function(a,b){return a.f.pct-b.f.pct||(a.f.date<b.f.date?1:-1);});
+  $('dfCount').textContent=all.length+' עסקאות';
+  if(!all.length){box.appendChild(el('div',{class:'empty',text:'אין עסקאות כאלה בתקופה הזו.'}));return;}
+  all.slice(0,60).forEach(function(x){
+    var f=x.f,where=[str(f.street,40),str(f.house,8)].filter(Boolean).join(' ');
+    var parcel=f.gush&&f.helka?'גוש '+str(f.gush,10)+' חלקה '+str(f.helka,10):'';
+    box.appendChild(el('div',{class:'dl-card'},
+      el('div',{class:'dl-head'},el('div',null,el('span',{class:'c-name',text:x.c}),el('div',{class:'dl-sub',text:[where,str(f.floor,16)?'קומה '+str(f.floor,16):''].filter(Boolean).join(' · ')})),
+        el('span',{class:'dl-pct',dir:'ltr',text:f.pct+'%'})),
+      el('div',{class:'dl-kv'},
+        el('div',null,el('span',{text:'מחיר'}),el('b',{text:nis(f.amount)})),
+        el('div',null,el('span',{text:'דירה'}),el('b',{text:(fin(f.rooms)?f.rooms+' חד׳, ':'')+f.area+' מ"ר'})),
+        el('div',null,el('span',{text:'למ"ר'}),el('b',{text:nis(f.ppm)})),
+        el('div',null,el('span',{text:'חציון דומות למ"ר'}),el('b',{text:fin(f.ref)?nis(f.ref)+(fin(f.n_comps)?' ('+f.n_comps+')':''):'–'}))),
+      el('div',{class:'dl-foot'},el('span',{text:'נסגרה ב-'+fmtD(f.date)}),el('span',{text:parcel}))));
+  });
+}
+$('dfCity').addEventListener('change',function(){F.city=String(this.value).slice(0,40);if(D)renderFlags();});
+
+/* ---------- פרויקטים במחיר מופחת ---------- */
+function renderProjects(){
+  var box=$('dpList');box.textContent='';
+  var all=[];
+  D.cities.forEach(function(c){c.projects.forEach(function(p){if(p.discount)all.push({c:c.name,p:p});});});
+  all.sort(function(a,b){return a.p.vs_city-b.p.vs_city;});
+  $('dpCount').textContent=all.length+' פרויקטים';
+  if(!all.length){box.appendChild(el('div',{class:'empty',text:'לא נמצאו פרויקטים כאלה בערים שבמעקב.'}));return;}
+  all.slice(0,40).forEach(function(x){
+    var p=x.p;
+    box.appendChild(el('div',{class:'dl-card'},
+      el('div',{class:'dl-head'},el('div',null,el('span',{class:'c-name',text:x.c}),el('div',{class:'dl-sub',text:'גוש '+str(p.gush,10)+' חלקה '+str(p.helka,10)})),
+        el('span',{class:'dl-pct',dir:'ltr',text:p.vs_city+'%'})),
+      el('div',{class:'dl-kv'},
+        el('div',null,el('span',{text:'דירות שנמכרו'}),el('b',{text:String(p.n)})),
+        el('div',null,el('span',{text:'מחיר טיפוסי'}),el('b',{text:nis(p.price)+(fin(p.area)?' ל-'+p.area+' מ"ר':'')})),
+        el('div',null,el('span',{text:'למ"ר'}),el('b',{text:nis(p.ppm)})),
+        el('div',null,el('span',{text:'תקופת המכירות'}),el('b',{dir:'ltr',text:fmtD(p.first)+' – '+fmtD(p.last)})))));
+  });
+}
+
+/* ---------- ערים ורחובות ---------- */
+function renderCities(){
+  var box=$('dcList');box.textContent='';
+  var list=D.cities.filter(function(c){return c.n>0;}).sort(function(a,b){return (a.med||1e9)-(b.med||1e9);});
+  list.forEach(function(c){
+    var tr=c.trend==null?null:el('span',{class:'tr-pct '+(c.trend<=-1?'down':c.trend>=1?'up':'flat'),dir:'ltr',text:(c.trend>0?'+':'')+c.trend+'%'});
+    var sum=el('summary',null,el('span',{class:'c-name',text:c.name}),tr);
+    var kv=el('div',{class:'dl-kv'},
+      el('div',null,el('span',{text:'חציון למ"ר'}),el('b',{text:c.med?nis(c.med):'–'})),
+      el('div',null,el('span',{text:'עסקאות ב-12 חודשים'}),el('b',{text:c.n.toLocaleString('en-US')})),
+      el('div',null,el('span',{text:'בתוך התקציב'}),el('b',{text:c.nb+' ('+Math.round(c.share*100)+'%)'})),
+      el('div',null,el('span',{text:'גודל בתקציב'}),el('b',{text:c.barea?c.barea+' מ"ר':'–'})));
+    var det=el('details',{class:'dl-card dl-city'},sum,kv);
+    if(c.streets.length){
+      c.streets.forEach(function(s){
+        det.appendChild(el('div',{class:'dl-st'},
+          el('div',null,el('b',{text:s.street.slice(0,40)}),el('small',{text:s.n+' עסקאות, '+(fin(s.n_budget)?s.n_budget:0)+' בתקציב'+(fin(s.budget_area)?' (כ-'+s.budget_area+' מ"ר ב-'+nisK(s.budget_price||0)+')':'')})),
+          el('div',{style:'text-align:left'},el('b',{text:nis(s.ppm)}),el('small',{dir:'ltr',text:(fin(s.vs_city)?s.vs_city:0)+'%'}))));
+      });
+    }else det.appendChild(el('p',{class:'note',text:'אין רחוב עם מספיק עסקאות בתקציב ומחיר נמוך מהחציון.'}));
+    if(c.last)det.appendChild(el('p',{class:'note',text:'עסקה אחרונה במאגר: '+fmtD(c.last)+(c.stale?'. מהעדכון הקודם.':'')}));
+    box.appendChild(det);
+  });
+  if(!list.length)box.appendChild(el('div',{class:'empty',text:'אין עדיין נתונים לערים.'}));
+}
+
+/* ---------- מחשבון ---------- */
+function bandOf(a){for(var i=0;i<D.bands.length;i++){if(a<=D.bands[i])return i;}return D.bands.length;}
+function numIn(id){var v=parseFloat(String($(id).value).replace(/[^\d.]/g,''));return isFinite(v)?v:NaN;}
+function calc(){
+  var out=$('dcOut');out.textContent='';out.hidden=false;out.className='result';
+  var c=D.cities.filter(function(x){return x.name===$('dcCity').value;})[0];
+  var rooms=numIn('dcRooms'),sqm=numIn('dcSqm'),price=numIn('dcPrice');
+  if(!c||!(sqm>=20&&sqm<=400)||!(price>=100000)){out.appendChild(el('p',{class:'dl-verdict',text:'צריך עיר, שטח (20–400 מ"ר) ומחיר.'}));return;}
+  var row=null,band=bandOf(sqm),tb=c.table[String(rb(rooms))]||{};
+  for(var d=0;d<=1&&!row;d++){[band,band-d,band+d].some(function(b){var r=tb[String(b)];if(Array.isArray(r)&&r.length===4&&r.every(fin)&&r[0]>=5){row=r;return true;}return false;});}
+  var p=price/sqm;
+  if(!row){out.appendChild(el('p',{class:'dl-verdict',text:'אין מספיק עסקאות דומות בעיר הזו לגודל הזה.'}));
+    if(c.med)out.appendChild(el('p',{class:'note',text:'לעומת החציון של כל העיר ('+nis(c.med)+' למ"ר): '+Math.round((p/c.med-1)*100)+'%.'}));return;}
+  var n=row[0],p25=row[1],p50=row[2],p75=row[3],pct=Math.round((p/p50-1)*100);
+  var cls=p<=p25?'good':p>=p75?'bad':'mid';
+  var txt=p<=p25*(1-0.15)?'זול מאוד: מתחת לרבע הזול של הדומות. כדאי לבדוק למה (מצב, זכויות, חלק בנכס).':p<=p25?'מציאה: ברבע הזול של העסקאות הדומות.':p<p50?'מעט מתחת לחציון.':p<p75?'מעל החציון.':'יקר: ברבע היקר של העסקאות הדומות.';
+  out.className='result '+(cls==='good'?'good':cls==='bad'?'bad':'');
+  out.appendChild(el('p',{class:'dl-verdict '+cls,text:txt}));
+  out.appendChild(el('p',{style:'margin:0'},'מחיר למ"ר: ',el('b',{text:nis(p)}),' · חציון הדומות: ',el('b',{text:nis(p50)}),' ',el('span',{dir:'ltr',text:'('+(pct>0?'+':'')+pct+'%)'})));
+  var lo=p25*0.8,hi=p75*1.2,pos=Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100));
+  var bar=el('div',{class:'dl-bar','aria-hidden':'true'},el('i'));bar.firstChild.style.left=pos+'%';
+  out.appendChild(bar);
+  out.appendChild(el('div',{class:'dl-scale','aria-hidden':'true'},el('span',{text:nisK(p25*sqm)}),el('span',{text:nisK(p50*sqm)}),el('span',{text:nisK(p75*sqm)})));
+  out.appendChild(el('p',{class:'note',text:'מחיר יעד להצעה (רבע זול של הדומות): '+nis(p25*sqm)+'. מבוסס על '+n+' עסקאות בעיר עם '+(rb(rooms)?'אותה קבוצת חדרים ו':'')+'שטח דומה. לא שמאות.'}));
+}
+$('dcGo').addEventListener('click',function(){if(D)calc();});
+
+function init(raw){
+  D=validate(raw);
+  if(!D||(!D.cities.length&&!D.tenders.length)){$('dlState').hidden=false;$('dlState').textContent='הנתונים ללשונית הזו ייווצרו בעדכון היומי הבא של "מציאות".';return;}
+  $('dlState').hidden=true;
+  var f=$('dlFresh');f.textContent='';
+  f.appendChild(el('span',{text:'עסקאות מ-GovMap (האתר הממשלתי), עסקה אחרונה במאגר: '+(D.last?fmtD(D.last):'–')+'. '}));
+  if(D.generated){var g=Date.parse(D.generated);if(isFinite(g)){var old=Date.now()-g>48*36e5;f.appendChild(el('span',{class:old?'warn':null,text:'עודכן ב-'+fmtD(new Date(g).toISOString().slice(0,10))+(old?'. העדכון היומי לא רץ מאז.':'.')}));}}
+  if(D.errors)f.appendChild(el('span',{class:'warn',text:' בחלק מהערים או המכרזים האיסוף האחרון נכשל, ומוצגים נתונים קודמים.'}));
+  var sel=$('dcCity'),fs=$('dfCity');sel.textContent='';fs.textContent='';fs.appendChild(el('option',{value:'',text:'כל הערים'}));
+  D.cities.filter(function(c){return c.n>0;}).map(function(c){return c.name;}).sort().forEach(function(n){sel.appendChild(el('option',{value:n,text:n}));fs.appendChild(el('option',{value:n,text:n}));});
+  $('dfLead').textContent='עסקאות מ-'+D.recent+' הימים האחרונים במאגר, עד '+nisK(D.budget)+', שנסגרו '+D.below+'%–'+D.cap+'% מתחת לחציון למ"ר של לפחות '+D.minComps+' עסקאות דומות באותה עיר: אותה קבוצת חדרים ושטח ±20%. עסקאות זולות מזה, כאלה שנראות כמו מכירת חלק מדירה, ומכירות בפרויקטים חדשים לא נספרות.';
+  ['dlCalc','dlTenders','dlProj','dlFlags','dlCities'].forEach(function(id){$(id).hidden=false;});
+  renderTenders();renderProjects();renderFlags();renderCities();
+}
+fetch('data/bargains.json?t='+Date.now(),{cache:'no-store'}).then(function(r){if(r.status===404)return null;if(!r.ok)throw new Error('http');return r.json();})
+  .then(init).catch(function(){$('dlState').hidden=false;$('dlState').textContent='לא הצלחתי לטעון את הנתונים. נסה לרענן.';});
+window.__dl={validate:validate,calc:calc,init:init,T:T,F:F,get D(){return D;}};
 })();
 </script>
 </body>
