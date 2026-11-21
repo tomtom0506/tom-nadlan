@@ -132,13 +132,17 @@ def data_key(dash):
     return f"{dash.get('anchor_month')}|{dash.get('db_scraped_at')}"
 
 
-def send_telegram(text):
+def send_telegram(text, html_mode=False):
+    """html_mode=True: הטקסט כבר עבר escape, ומותרים בו רק <b>, <i> ו-<a href>."""
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     chat = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     if not token or not chat or not re.fullmatch(r"-?\d{3,20}", chat):
         print("telegram: skipped (secrets)")
         return False
-    data = urllib.parse.urlencode({"chat_id": chat, "text": text, "disable_web_page_preview": "true"}).encode()
+    fields = {"chat_id": chat, "text": text, "disable_web_page_preview": "true"}
+    if html_mode:
+        fields["parse_mode"] = "HTML"
+    data = urllib.parse.urlencode(fields).encode()
     try:
         req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage", data=data, method="POST")
         with urllib.request.urlopen(req, timeout=20) as r:
