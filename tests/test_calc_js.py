@@ -1,0 +1,89 @@
+"""בדיקות לחישוב במחשבון "האם המחיר הזה מציאה" (v2.0.0): פענוח קומה, פענוח כתובת, בחירת עסקאות דומות והתאמות.
+הקוד הוא JS בתוך index.html; הבדיקה מחלצת את הפונקציות הטהורות (בין סימוני calc-pure) ומריצה אותן ב-node.
+הרצה: python3 -m unittest discover -s tests (מדלגת אם node לא מותקן)
+"""
+import json
+import os
+import re
+import shutil
+import subprocess
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def pure_js():
+    with open(os.path.join(ROOT, "index.html"), encoding="utf-8") as f:
+        s = f.read()
+    parts = [re.search(rf"/\* {m}-start \*/(.*?)/\* {m}-end \*/", s, re.S).group(1)
+             for m in ("calc-pure", "calc-pure4", "calc-pure3", "calc-pure2")]
+    return "function fin(v){return typeof v==='number'&&isFinite(v);}\n" + "\n".join(parts)
+
+
+@unittest.skipUnless(shutil.which("node"), "node לא מותקן")
+class CalcJsTests(unittest.TestCase):
+    def run_js(self, expr):
+        code = pure_js() + f"\nprocess.stdout.write(JSON.stringify({expr}));"
+        out = subprocess.run(["node", "-e", code], capture_output=True, text=True, timeout=30)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_floor_words(self):
+        self.assertEqual(self.run_js("['קרקע','ראשונה','שניה','שנייה','רביעית','עשירית','שתים עשרה','3',null,'גג'].map(floorNum)"),
+                         [0, 1, 2, 2, 4, 10, 12, 3, None, None])
+
+    def test_parse_address(self):
+        names = ["אור יהודה", "יהוד-מונוסון", "תל אביב -יפו", "יהוד"]
+        r = self.run_js(f"[parseAddr('מניה שוחט 6, אור יהודה',{json.dumps(names)}),"
+                        f"parseAddr('יעקב בר סימנטוב 1 יהוד-מונוסון',{json.dumps(names)}),"
+                        f"parseAddr('הרצל 12א תל אביב-יפו',{json.dumps(names)}),"
+                        f"parseAddr('הרצל 5',{json.dumps(names)})]")
+        self.assertEqual(r[0], {"city": "אור יהודה", "street": "מניה שוחט", "house": "6"})
+        self.assertEqual(r[1], {"city": "יהוד-מונוסון", "street": "יעקב בר סימנטוב", "house": "1"})  # השם הארוך גובר על "יהוד"
+        self.assertEqual(r[2]["city"], "תל אביב -יפו")
+        self.assertEqual(r[2]["house"], "12א")
+        self.assertEqual(r[3], {"city": None, "street": "הרצל", "house": "5"})
+
+    def test_comps_filter(self):
+        rows = [
+            {"deal_nature": "דירה בבית קומות", "asset_area": 100, "deal_amount": 3000000, "rooms": 4, "floor": "שלישית"},
+            {"deal_nature": "דירה בבית קומות", "asset_area": 140, "deal_amount": 3000000, "rooms": 4},  # שטח רחוק
+            {"deal_nature": "דירה בבית קומות", "asset_area": 100, "deal_amount": 3000000, "rooms": 7},  # חדרים רחוקים
+            {"deal_nature": "קרקע למגורים", "asset_area": 100, "deal_amount": 3000000, "rooms": 4},     # לא דירה
+            {"deal_nature": "דירה בבית קומות", "asset_area": 100, "deal_amount": 100000, "rooms": 4}]   # מחיר לא סביר
+        r = self.run_js(f"compsOf({json.dumps(rows, ensure_ascii=False)},100,4)")
+        self.assertEqual(r, [{"ppm": 30000, "floor": 3}])
+
+    def adj(self, **o):
+        base = {"scope": "street", "floor": None, "compFloor": None, "lift": "", "mamad": "", "balcony": "",
+                "park": "", "store": "", "cond": "", "year": None}
+        base.update(o)
+        return self.run_js(f"adjustments({json.dumps(base, ensure_ascii=False)})")
+
+    def test_no_adjustments_when_unknown(self):
+        self.assertEqual(self.adj(), {"items": [], "total": 0})
+
+    def test_old_without_lift_and_mamad(self):
+        r = self.adj(floor=4, compFloor=2, lift="no", mamad="no", balcony="no", cond="old")
+        self.assertEqual([x["v"] for x in r["items"]], [-5, -4, -3, -8])
+        self.assertEqual(r["total"], -20)
+
+    def test_building_scope_skips_building_traits(self):
+        # בהשוואה לאותו בניין: ממ"ד וגיל זהים לעסקאות, ולכן לא מותאמים
+        r = self.adj(scope="building", mamad="no", year=1960, floor=3, compFloor=3)
+        self.assertEqual(r["items"], [])
+
+    def test_age_only_at_city_scope(self):
+        self.assertEqual(self.adj(scope="city", year=1970)["total"], -6)
+        self.assertEqual(self.adj(scope="street", year=1970)["total"], 0)
+
+    def test_floor_with_lift_and_ground(self):
+        self.assertEqual(self.adj(floor=6, compFloor=2, lift="yes")["total"], 4)
+        self.assertEqual(self.adj(floor=0, compFloor=2)["total"], -5)  # ‎-2 קומות, ועוד ‎-3 קומת קרקע
+
+    def test_total_capped(self):
+        r = self.adj(scope="city", floor=9, compFloor=2, lift="no", mamad="no", balcony="no", park="no", cond="old", year=1950)
+        self.assertEqual(r["total"], -25)
+
+    def test_quantiles(self):
+        self.assertEqual(self.run_js("[quant([1,2,3,4,5],0.5),quant([1,2,3,4],0.25),quant([],0.5)]"), [3, 1.75, None])
