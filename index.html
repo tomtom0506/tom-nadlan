@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-lDJTvnYDFw13JEtuyXu6RazH3EYe3B8wnNjA8swOzLE=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-BrOB4n5C6ci5lC+CQ2/J7FMrD5lmSV50nyPX4NXn6Io='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-j4oQ7jG8/j5uUNdL0VgxEai0kVoOnQcEGYQFbdu5RYM=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-BrOB4n5C6ci5lC+CQ2/J7FMrD5lmSV50nyPX4NXn6Io='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -567,10 +567,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='2.0.0';
+var APP_VERSION='2.0.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'2.0.1',date:'2026-11-22',items:[
+    'התראות יד2: מייל שלא זוהתה בו אף מודעה לא מסומן כמטופל, ולכן ייקרא שוב אחרי שהחילוץ יתוקן. בריצה הראשונה החיבור למייל עבד, אבל המבנה האמיתי של המייל לא זוהה.',
+    'בהרצה ידנית: "קרא שוב" מעבד מחדש מיילים שכבר טופלו, ו"אבחון" שולח לטלגרם בלבד את שורות הטקסט של המייל האחרון, בלי קישורים.'
+  ]},
   {v:'2.0.0',date:'2026-11-22',items:[
     '"האם המחיר הזה מציאה" לפי כתובת: כותבים רחוב, מספר ועיר. המחשבון מוצא את העסקאות באותו בניין ובאותו רחוב, מזהה את שנת הבנייה ואת הקומה הגבוהה שנמכרה, ומשווה לעסקאות הקרובות ביותר: קודם באותו בניין, אחר כך ברחוב, ורק אז בעיר. מוצגת גם רמת ביטחון.',
     'שדות חדשים: קומה, שנת בנייה, מעלית, ממ"ד, מרפסת, חניה, מחסן ומצב הדירה. על מה שאין עליו נתונים בעסקאות מוחלת התאמה באחוזים לפי כלל אצבע, שמוצגת בנפרד ומסומנת כהערכה. ממ"ד וגיל הבניין לא מותאמים כשההשוואה היא לאותו בניין.',

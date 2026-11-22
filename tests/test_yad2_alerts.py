@@ -162,12 +162,19 @@ class FakeImap:
 
 
 class RunTests(unittest.TestCase):
+    def setUp(self):
+        # בלי רשת: ההערכה מול ה-API לא נבדקת כאן
+        p = mock.patch.object(y, "evaluate", side_effect=lambda ad, *a: ad.update(
+            city=None, pct=None, n_comps=0, scope=None, median_ppm=None, target=None) or ad)
+        p.start()
+        self.addCleanup(p.stop)
+
     def test_labels_only_after_successful_send(self):
         conn = FakeImap({b"1": mail(MAIL_HTML), b"2": mail(MAIL_HTML, "spam@gmail.com")})
         def fake_eval(ad, *a):
             ad.update(city="x", pct=-20, n_comps=6, scope="street", median_ppm=1, target=1)
             return ad
-        with mock.patch.object(y, "evaluate", side_effect=fake_eval):
+        with mock.patch.object(y, "evaluate", side_effect=fake_eval):  # גובר על ה-mock של setUp
             sent = []
             rc = y.run(conn, today=date(2026, 11, 21), send=lambda m, html_mode: sent.append(m) or False)
             self.assertEqual((rc, conn.labels), (1, {}))
@@ -176,6 +183,36 @@ class RunTests(unittest.TestCase):
         self.assertEqual(set(conn.labels), {b"1", b"2"})
         self.assertIn("-label:tom-nadlan-done", conn.query)
         self.assertIn("from:yad2.co.il", conn.query)
+
+    def test_mail_without_ads_not_marked_done(self):
+        # v1.8.1: בריצה הראשונה החילוץ לא זיהה מודעות ו-20 מיילים סומנו כמטופלים ולא נקראו שוב
+        conn = FakeImap({b"1": mail("<html><body><p>מבנה לא מוכר</p></body></html>"), b"2": mail(MAIL_HTML)})
+        rc = y.run(conn, today=date(2026, 11, 21), send=lambda m, html_mode: True)
+        self.assertEqual(rc, 0)
+        self.assertEqual(set(conn.labels), {b"2"})
+
+    def test_reprocess_ignores_label(self):
+        conn = FakeImap({b"1": mail(MAIL_HTML)})
+        y.fetch_new_mails(conn, reprocess=True)
+        self.assertNotIn("-label:", conn.query)
+        y.fetch_new_mails(conn)
+        self.assertIn("-label:tom-nadlan-done", conn.query)
+
+    def test_debug_sends_text_lines_without_urls(self):
+        conn = FakeImap({b"1": mail(MAIL_HTML)})
+        sent = []
+        y.run(conn, today=date(2026, 11, 21), send=lambda m, html_mode: sent.append(m) or True, debug=True)
+        dbg = sent[0]
+        self.assertIn("אבחון מייל יד2", dbg)
+        self.assertIn("מניה שוחט 6", dbg)
+        self.assertIn("לפרטים נוספים", dbg)       # טקסט הקישור
+        self.assertNotIn("https://", dbg)        # בלי הכתובות עצמן
+        self.assertLessEqual(len(dbg), y.MSG_MAX)
+
+    def test_bidi_marks_stripped(self):
+        html_rtl = MAIL_HTML.replace("3,850,000 ₪", "\u200f3,850,000\u00a0\u200f₪")
+        ads = y.parse_ads(*y.mail_body(mail(html_rtl)))
+        self.assertEqual(ads[1]["price"], 3_850_000)
 
     def test_no_secrets_exits_1(self):
         with mock.patch.dict(os.environ, {"YAD2_IMAP_USER": "", "YAD2_IMAP_PASSWORD": ""}):
