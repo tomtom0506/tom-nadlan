@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-gCScww4zwUy3weaVrdFoM+wW89mv1INepM0xjoU0nmc=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-XZqIg29JXebvIOttj3IQ5uSiga8AazFCXjgT94E+aYk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-HTw7ttx66Gtbl+Lhh5ujdqECc43xfMUSb29WdbE7ovk=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-XZqIg29JXebvIOttj3IQ5uSiga8AazFCXjgT94E+aYk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -568,15 +568,17 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='2.1.0';
+var APP_VERSION='2.1.1';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'2.1.1',date:'2026-11-23',items:[
+    '"האם המחיר הזה מציאה": במקום כתובת חופשית יש שדות נפרדים לעיר, לרחוב ולמספר בית. העיר והרחוב נבחרים מרשימת השלמה של השמות הרשמיים, והרחובות מוצגים רק מהעיר שנבחרה, כדי שלא יהיו טעויות כתיב.'
+  ]},
   {v:'2.1.0',date:'2026-11-23',items:[
     '"האם המחיר הזה מציאה" מחזיר תמיד הערכה. ההשוואה היא לשכבה הקרובה ביותר שיש בה מספיק עסקאות: אותו בניין, אותו רחוב, עסקאות דומות בעיר בשנתיים האחרונות, ובסוף כל דירה בגודל דומה בעיר. גם כשיש מעט עסקאות מוצגת הערכה גסה, עם רמת ביטחון "נמוכה מאוד".',
     'זיהוי כתובת משופר: שם העיר והרחוב מתורגמים לשם הרשמי. למשל "צהל" ← "צה\"ל", ו"קרית אונו" ← "קריית אונו". עסקאות של כל הכתיבים של אותה עיר נספרות יחד.',
-    'ההשוואה לעיר עובדת בכל עיר, לא רק ב-20 הערים של לשונית מציאות. אין צורך ללחוץ "חפש כתובת": "בדוק מחיר" מחפש לבד.',
-    'בחירה מרשימה: שדות נפרדים לעיר, לרחוב ולמספר בית. העיר והרחוב נבחרים מרשימת השלמה של השמות הרשמיים, והרחובות מוצגים רק מהעיר שנבחרה, כדי שלא יהיו טעויות כתיב.'
+    'ההשוואה לעיר עובדת בכל עיר, לא רק ב-20 הערים של לשונית מציאות. אין צורך ללחוץ "חפש כתובת": "בדוק מחיר" מחפש לבד.'
   ]},
   {v:'2.0.2',date:'2026-11-22',items:[
     'התראות יד2: החילוץ מותאם למבנה האמיתי של המייל. הכתובת היא השורה שמיד לפני שורת הפרטים, ותגיות כמו "גם בטרייד אין" מדולגות. רחוב שלא נמצא נבדק שוב בלי "שדרות" או "רחוב", כי כך הוא רשום ב-GovMap.'
