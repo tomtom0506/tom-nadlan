@@ -173,6 +173,46 @@ class TenderTests(unittest.TestCase):
         self.assertIsNone(bb.tender_history("עכו", lambda p: hist[:2], TODAY))
 
 
+class EligibilityTests(unittest.TestCase):
+    """v1.9.0: אוכלוסיות לפי מגרש. קודם נשמרה רק האוכלוסייה של המגרש הראשון במכרז."""
+    TODAY = date(2026, 11, 22)
+
+    def mixed(self):
+        lots = [lot("9", "הרשמה והגרלה", units=1, eligible_populations="חיילי מילואים; חסרי דיור") for _ in range(4)]
+        lots += [lot("9", "הרשמה והגרלה", units=1, eligible_populations="כלל הציבור") for _ in range(2)]
+        lots += [lot("9", "הרשמה והגרלה", units=2, eligible_populations="אנשים עם מוגבלות; חסרי דיור; כלל הציבור")]
+        return bb.group_tenders(lots, self.TODAY)[0]
+
+    def test_groups_per_lot(self):
+        t = self.mixed()
+        self.assertEqual(t["lots"], 7)
+        self.assertEqual(t["groups"], [
+            {"pops": ["אנשים עם מוגבלות", "חסרי דיור", "כלל הציבור"], "lots": 1, "units": 2},
+            {"pops": ["חיילי מילואים", "חסרי דיור"], "lots": 4, "units": 4},
+            {"pops": ["כלל הציבור"], "lots": 2, "units": 2}])
+        self.assertEqual(t["eligible"], "אנשים עם מוגבלות; חיילי מילואים; חסרי דיור; כלל הציבור")
+
+    def test_open_to_public_and_groups(self):
+        t = self.mixed()
+        self.assertEqual((t["open_lots"], t["open_units"]), (3, 4))          # רק כלל הציבור
+        self.assertEqual(bb.open_to(t["groups"], ["חיילי מילואים"]), (7, 8))  # חייל מילואים רואה הכל
+
+    def test_restricted_only_tender_closed_to_public(self):
+        t = bb.group_tenders([lot("8", "הרשמה והגרלה", eligible_populations="חיילי מילואים; חסרי דיור")], self.TODAY)[0]
+        self.assertEqual(t["open_lots"], 0)
+
+    def test_no_population_means_open(self):
+        t = bb.group_tenders([lot("7")], self.TODAY)[0]
+        self.assertEqual((t["groups"][0]["pops"], t["open_lots"], t["eligible"]), (["ללא הגבלה"], 1, None))
+
+    def test_notify_skips_closed_tenders(self):
+        closed = {"id": "1", "kind": "lottery", "groups": [{"pops": ["חיילי מילואים"], "lots": 1, "units": 1}], "open_lots": 0}
+        opened = {"id": "2", "kind": "lottery", "groups": [{"pops": ["כלל הציבור"], "lots": 1, "units": 1}], "open_lots": 1}
+        legacy = {"id": "3", "kind": "lottery"}  # נתונים ישנים בלי groups
+        t, _ = nb.collect_new({"tenders": [closed, opened, legacy], "cities": []}, {})
+        self.assertEqual([x["id"] for x in t], ["2", "3"])
+
+
 class BuildTests(unittest.TestCase):
     def test_city_failure_does_not_stop_build(self):
         def fetch(name, *a):

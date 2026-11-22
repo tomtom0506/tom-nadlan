@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-9HRnG7yxKmE+TFBb8ddBZ8hWd0W/veygyTgW5kL7pIU=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-EuwYnfAVs82EEJ5W8feSXaX09yN0ob0cXFi4ehJ9dkA='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-jOwjQTohk7fjlIBk5G2vEFcsvZzeiHvH3ZweLRtqAts=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-dL3BZQ8H1TMYRHbaDnRpl8oeD0j/zUZbdsaqubPabsQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -306,6 +306,7 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 .dl-kv b{font-weight:600;unicode-bidi:isolate}
 .dl-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
 .dl-foot a{color:var(--accent)}
+.linkish{background:none;border:0;padding:0;color:var(--accent);font:inherit;cursor:pointer;text-decoration:underline}
 .dl-due{font-weight:600;color:var(--warn)}
 .dl-pct{font-weight:700;color:var(--good);unicode-bidi:isolate}
 .dl-city{display:grid;gap:6px}
@@ -503,7 +504,10 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
         <button type="button" data-tk="mine" aria-pressed="true">לאנשים פרטיים</button><button type="button" data-tk="self" aria-pressed="false">🏡 בנייה עצמית</button><button type="button" data-tk="lottery" aria-pressed="false">🎟️ הרשמה והגרלה</button><button type="button" data-tk="target" aria-pressed="false">🏷️ מחיר מטרה</button><button type="button" data-tk="all" aria-pressed="false">הכל</button>
       </div>
       <div class="chips dl-tabs" style="margin-top:8px"><button type="button" id="dtCenter" aria-pressed="false">רק מרכז</button></div>
+      <div class="chips dl-tabs" role="group" aria-label="אני משתייך גם ל" style="margin-top:8px"><span class="note" style="margin:0">אני גם:</span><button type="button" data-ep="חסרי דיור" aria-pressed="false">חסר דיור</button><button type="button" data-ep="חיילי מילואים" aria-pressed="false">חייל מילואים</button><button type="button" data-ep="אנשים עם מוגבלות" aria-pressed="false">אדם עם מוגבלות</button></div>
+      <p class="note" style="margin-top:6px">מוצגים רק מכרזים שיש בהם מגרשים פתוחים לכלל הציבור, או לקבוצות שסימנת. הבחירה נשמרת רק במכשיר הזה.</p>
       <div id="dtList" class="dl-list"></div>
+      <p class="note" id="dtHidden" hidden></p>
       <p class="note">השומה היא הערכת רמ"י לשווי הקרקע. "זכיות קודמות" הוא החציון של מחיר קרקע ופיתוח ליחידה במכרזים לבנייה נמוכה שהסתיימו ביישוב ב-3 השנים האחרונות. ההרשמה וההגשה נעשות באתר רמ"י בלבד.</p>
     </article>
 
@@ -553,10 +557,15 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='1.8.0';
+var APP_VERSION='1.9.0';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'1.9.0',date:'2026-11-22',items:[
+    'מציאות: מכרזים שמיועדים רק לחיילי מילואים, לאנשים עם מוגבלות או לחסרי דיור מוסתרים כברירת מחדל. שורת "אני גם" מאפשרת לסמן קבוצות שאתה שייך אליהן, והבחירה נשמרת רק במכשיר.',
+    'בכל מכרז מוצג כמה מגרשים פתוחים לך, למשל "27 מתוך 67". תיקון: עד עכשיו נשמרה רק הזכאות של המגרש הראשון במכרז.',
+    'גם התראת הטלגרם על מכרזים חדשים כוללת רק מכרזים שיש בהם מגרשים פתוחים לכלל הציבור.'
+  ]},
   {v:'1.8.0',date:'2026-11-21',items:[
     'מודעות חדשות בטלגרם: כל שעתיים נקראות התראות החיפוש של יד2 מתיבת מייל ייעודית. כל מודעה מושווית לעסקאות דומות באותו רחוב, ואם אין מספיק, באותה עיר: אותו סוג נכס, חדרים ±1 ושטח ±20% ב-24 החודשים האחרונים. רק דירות שזולות ב-15% או יותר נשלחות, עם מחיר יעד להצעה וקישור למודעה.',
     'אין סריקה של יד2: נקראים רק המיילים שנשלחו אליך. שום מודעה לא נשמרת ב-repo הציבורי, והכל נשלח רק לטלגרם.'
@@ -1596,19 +1605,34 @@ function validate(d){
     generated:str(d.generated_at,30),last:DATE_RE.test(String(d.last_deal))?d.last_deal:null,errors:Array.isArray(d.errors)?d.errors.length:0};
 }
 
-var D=null,T={kind:'mine',center:false},F={city:''};
+var D=null,T={kind:'mine',center:false,mine:[],showAll:false},F={city:''};
+var EP_ALL=['חסרי דיור','חיילי מילואים','אנשים עם מוגבלות'],EP_KEY='tn-elig';
+try{var ep=JSON.parse(localStorage.getItem(EP_KEY)||'[]');if(Array.isArray(ep))T.mine=ep.filter(function(x){return EP_ALL.indexOf(x)>=0;});}catch(e){}
+/* מגרשים ויחידות במכרז שפתוחים לי: כלל הציבור, מגרשים בלי הגבלה, והקבוצות שסימנתי. מכרז בלי groups (נתונים ישנים) נחשב פתוח. */
+function openFor(t){
+  if(!Array.isArray(t.groups))return {lots:t.lots,units:t.units,known:false};
+  var allowed=['כלל הציבור','ללא הגבלה'].concat(T.mine),lots=0,units=0;
+  t.groups.forEach(function(g){if(g&&Array.isArray(g.pops)&&g.pops.some(function(p){return allowed.indexOf(p)>=0;})){lots+=fin(g.lots)?g.lots:0;units+=fin(g.units)?g.units:0;}});
+  return {lots:lots,units:units,known:true};
+}
 function isCenterRegion(t){return /מרכז|תל אביב/.test(str(t.region,30));}
 
 /* ---------- מכרזים ---------- */
 function renderTenders(){
   var box=$('dtList');box.textContent='';
+  var hidden=0;
   var list=D.tenders.filter(function(t){
     if(T.kind==='mine'&&!(t.kind==='self'||t.kind==='lottery'))return false;
     if(T.kind!=='mine'&&T.kind!=='all'&&t.kind!==T.kind)return false;
     if(T.center&&!isCenterRegion(t))return false;
+    if(!T.showAll&&openFor(t).lots===0){hidden++;return false;}
     return true;
   });
   $('dtCount').textContent=list.length+' מכרזים';
+  var hp=$('dtHidden');hp.textContent='';hp.hidden=!(hidden||T.showAll);
+  if(hidden){hp.appendChild(el('span',{text:hidden+(hidden===1?' מכרז הוסתר כי הוא מיועד':' מכרזים הוסתרו כי הם מיועדים')+' רק לקבוצות אחרות. '}));
+    var sa=el('button',{type:'button',class:'linkish',text:'להציג גם אותם'});sa.addEventListener('click',function(){T.showAll=true;renderTenders();});hp.appendChild(sa);}
+  else if(T.showAll){var sb=el('button',{type:'button',class:'linkish',text:'להציג רק מה שפתוח לי'});sb.addEventListener('click',function(){T.showAll=false;renderTenders();});hp.appendChild(sb);}
   if(!list.length){box.appendChild(el('div',{class:'empty',text:'אין מכרזים פתוחים בסינון הזה.'}));return;}
   list.slice(0,80).forEach(function(t){
     var left=daysTo(t.deadline);
@@ -1623,6 +1647,8 @@ function renderTenders(){
     add('הוצאות פיתוח ליחידה',fin(t.dev_per_unit)?nis(t.dev_per_unit):null);
     var h=t.history&&typeof t.history==='object'?t.history:null;
     if(h&&fin(h.per_unit))add('זכיות קודמות ביישוב',nis(h.per_unit)+(fin(h.n)?' ('+h.n+' מגרשים'+(fin(h.bids)&&h.bids>0?', '+h.bids+' הצעות בממוצע':'')+')':''));
+    var op=openFor(t);
+    if(op.known&&op.lots<t.lots)add('פתוח לך',op.lots?op.lots+' מתוך '+t.lots+' מגרשים'+(op.units&&op.units!==op.lots?' ('+op.units.toLocaleString('en-US')+' יח"ד)':''):'לא פתוח לך');
     if(t.eligible)add('זכאים',str(t.eligible,120));
     var link=/^https:\/\/apps\.land\.gov\.il\//.test(String(t.url||''))?el('a',{href:t.url,target:'_blank',rel:'noopener noreferrer',text:'למכרז באתר רמ"י'}):null;
     var foot=el('div',{class:'dl-foot'},el('span',null,'מכרז '+str(t.number,16)+' · הגשה עד ',el('span',{class:'dl-due',text:fmtD(t.deadline)+(left!=null?' (עוד '+left+' ימים)':'')})),link);
@@ -1634,6 +1660,14 @@ function renderTenders(){
   var k=b.dataset.tk;if(['mine','self','lottery','target','all'].indexOf(k)<0)return;T.kind=k;
   [].forEach.call(document.querySelectorAll('[data-tk]'),function(x){x.setAttribute('aria-pressed',String(x.dataset.tk===k));});
   if(D)renderTenders();});});
+[].forEach.call(document.querySelectorAll('[data-ep]'),function(b){
+  b.setAttribute('aria-pressed',String(T.mine.indexOf(b.dataset.ep)>=0));
+  b.addEventListener('click',function(){
+    var p=b.dataset.ep;if(EP_ALL.indexOf(p)<0)return;
+    var i=T.mine.indexOf(p);if(i>=0)T.mine.splice(i,1);else T.mine.push(p);
+    b.setAttribute('aria-pressed',String(i<0));
+    try{localStorage.setItem(EP_KEY,JSON.stringify(T.mine));}catch(e){}
+    if(D)renderTenders();});});
 $('dtCenter').addEventListener('click',function(){T.center=!T.center;this.setAttribute('aria-pressed',String(T.center));if(D)renderTenders();});
 
 /* ---------- עסקאות מתחת לשוק ---------- */

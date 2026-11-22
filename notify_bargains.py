@@ -60,7 +60,9 @@ def flag_line(city, f):
 
 def collect_new(data, state):
     seen_t, seen_f = set(state.get("tenders", [])), set(state.get("flags", []))
-    tenders = [t for t in data.get("tenders") or [] if not t.get("stale") and t.get("kind") != "dev" and t.get("id") not in seen_t]
+    # רק מכרזים שיש בהם מגרש פתוח לכלל הציבור (מכרז בלי פירוט groups, מנתונים ישנים, נשאר)
+    tenders = [t for t in data.get("tenders") or [] if not t.get("stale") and t.get("kind") != "dev" and t.get("id") not in seen_t
+               and ("groups" not in t or (t.get("open_lots") or 0) > 0)]
     flags = []
     for c in data.get("cities") or []:
         if c.get("stale"):
