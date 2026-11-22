@@ -13,6 +13,14 @@ on:
         description: "שלח את כל המודעות שזוהו (לבדיקת החילוץ), לא רק הזדמנויות"
         type: boolean
         default: false
+      reprocess:
+        description: "קרא שוב גם מיילים שכבר סומנו כמטופלים (14 הימים האחרונים)"
+        type: boolean
+        default: false
+      debug:
+        description: "אבחון: שלח לטלגרם את שורות הטקסט של המייל האחרון (בלי קישורים)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -36,6 +44,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SEND_ALL: ${{ inputs.send_all && '1' || '0' }}
+          REPROCESS: ${{ inputs.reprocess && '1' || '0' }}
+          DEBUG_MAIL: ${{ inputs.debug && '1' || '0' }}
         run: python3 yad2_alerts.py
 
       - name: Notify failure

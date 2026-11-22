@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 import deals_api as api
 from weekly_watch import send_telegram
 
-YAD2_VERSION = "1.8.0"
+YAD2_VERSION = "2.0.1"
 IMAP_HOST = "imap.gmail.com"
 DONE_LABEL = "tom-nadlan-done"
 SENDER_DOMAINS = ("yad2.co.il", "madlan.co.il")
@@ -96,10 +96,13 @@ class _Text(HTMLParser):
             self._a[1] += data
 
 
+BIDI = re.compile("[\u200e\u200f\u202a-\u202e\u2066-\u2069\u200b\ufeff]")
+
+
 def html_to_lines(raw):
     p = _Text()
     p.feed(raw)
-    text = "".join(p.parts).replace(" ", " ")
+    text = BIDI.sub("", "".join(p.parts)).replace("\u00a0", " ")
     lines = [re.sub(r"[ \t]+", " ", ln).strip() for ln in text.splitlines()]
     return [ln for ln in lines if ln], p.links
 
@@ -121,6 +124,7 @@ def mail_body(msg):
     if part is html_part:
         return html_to_lines(raw)
     links = [("", u) for u in re.findall(r"https?://\S+", raw)]
+    raw = BIDI.sub("", raw).replace("\u00a0", " ")
     return [ln.strip() for ln in raw.splitlines() if ln.strip()], links
 
 
@@ -346,10 +350,12 @@ def build_messages(ads, send_all):
 
 # ---------- IMAP ----------
 
-def fetch_new_mails(conn, max_mails=MAX_MAILS):
-    """מיילים מיד2/מדלן מ-LOOKBACK_DAYS הימים האחרונים שעוד אין להם התווית DONE_LABEL. מחזיר [(uid, Message)]."""
+def fetch_new_mails(conn, max_mails=MAX_MAILS, reprocess=False):
+    """מיילים מיד2/מדלן מ-LOOKBACK_DAYS הימים האחרונים שעוד אין להם התווית DONE_LABEL
+    (עם reprocess: גם כאלה שיש להם). מחזיר [(uid, Message)], מהישן לחדש."""
     conn.select("INBOX")
-    q = f'newer_than:{LOOKBACK_DAYS}d -label:{DONE_LABEL} ({" OR ".join("from:" + d for d in SENDER_DOMAINS)})'
+    done = "" if reprocess else f" -label:{DONE_LABEL}"
+    q = f'newer_than:{LOOKBACK_DAYS}d{done} ({" OR ".join("from:" + d for d in SENDER_DOMAINS)})'
     typ, data = conn.uid("SEARCH", "X-GM-RAW", f'"{q}"')
     if typ != "OK":
         raise RuntimeError("imap search failed")
@@ -369,18 +375,38 @@ def mark_done(conn, uid):
     conn.uid("STORE", uid, "+X-GM-LABELS", f"({DONE_LABEL})")
 
 
-def run(conn, today=None, send_all=False, send=send_telegram):
+DEBUG_LINES = 60
+
+
+def debug_message(msg):
+    """אבחון לטלגרם בלבד (לא ללוג הציבורי): שורות הטקסט הראשונות של מייל, בלי קישורים, כדי להתאים את החילוץ למבנה האמיתי."""
+    lines, links = mail_body(msg)
+    body = "\n".join(f"{i:02d}| {esc(ln[:120])}" for i, ln in enumerate(lines[:DEBUG_LINES]))
+    anchors = ", ".join(sorted({esc(t[:30]) for t, _ in links if t})[:15])
+    return (f"<b>🔧 אבחון מייל יד2</b> ({len(lines)} שורות, {len(links)} קישורים)\n"
+            f"טקסט הקישורים: {anchors or '—'}\n\n{body}")[:MSG_MAX]
+
+
+def run(conn, today=None, send_all=False, send=send_telegram, reprocess=False, debug=False):
     today = today or date.today()
-    mails = fetch_new_mails(conn)
-    ads, done, skipped = [], [], 0
+    mails = fetch_new_mails(conn, reprocess=reprocess)
+    ads, done, skipped, empty = [], [], 0, 0
     for uid, msg in mails:
         if not sender_ok(msg):
             skipped += 1
             done.append(uid)
             continue
         lines, links = mail_body(msg)
-        ads += parse_ads(lines, links)
-        done.append(uid)
+        found = parse_ads(lines, links)
+        ads += found
+        if found:
+            done.append(uid)
+        else:
+            empty += 1  # לא מסמנים: אם החילוץ נכשל, המייל ייקרא שוב אחרי התיקון
+    if debug:
+        mine = [m for _, m in mails if sender_ok(m)]
+        if mine:
+            send(debug_message(mine[-1]), html_mode=True)
     seen, uniq = set(), []
     for ad in ads:
         k = (ad["street"], ad["house"], ad["price"], ad["sqm"])
@@ -398,7 +424,7 @@ def run(conn, today=None, send_all=False, send=send_telegram):
     if ok:  # רק אחרי שליחה מוצלחת, כדי שמייל לא ילך לאיבוד
         for uid in done:
             mark_done(conn, uid)
-    print(f"yad2: mails={len(mails)} skipped={skipped} ads={len(uniq)} evaluated={sum(a['pct'] is not None for a in uniq)} "
+    print(f"yad2: mails={len(mails)} skipped={skipped} no_ads={empty} ads={len(uniq)} evaluated={sum(a['pct'] is not None for a in uniq)} "
           f"bargains={sum(is_bargain(a) for a in uniq)} messages={len(msgs)} api_errors={errors} sent={'yes' if ok else 'no'}")
     return 0 if ok else 1
 
@@ -417,7 +443,8 @@ def main():
         except imaplib.IMAP4.error:
             print("yad2: login failed")  # בלי פרטים: לא מדפיסים משתמש או סיסמה
             return 1
-        return run(conn, send_all=os.environ.get("SEND_ALL") == "1")
+        return run(conn, send_all=os.environ.get("SEND_ALL") == "1", reprocess=os.environ.get("REPROCESS") == "1",
+                   debug=os.environ.get("DEBUG_MAIL") == "1")
     finally:
         try:
             conn.logout()
