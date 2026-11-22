@@ -10,7 +10,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import yad2_alerts as y  # noqa: E402
 
-MAIL_HTML = """<html><body><div>היי תומר,</div><div>מצאנו 2 מודעות חדשות שמתאימות לחיפוש שלך:</div>
+MAIL_HTML = """<html><body><div>היי,</div><div>מצאנו 2 מודעות חדשות שמתאימות לחיפוש שלך:</div>
 <div><b>דירות למכירה בבקעת אונו</b></div><div>מחוז: מרכז והשרון | מחיר מינימלי: 900000 | מחיר מקסימלי: 5000000</div>
 <table><tr><td><img src="x"></td></tr><tr><td><b>₪ 3,140,000</b></td></tr><tr><td>יעקב בר סימנטוב 1</td></tr>
 <tr><td>גבעת אוויה | בית פרטי/ קוטג' | 3 חדרים | 260 מ״ר</td></tr>
