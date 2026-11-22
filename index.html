@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-HTw7ttx66Gtbl+Lhh5ujdqECc43xfMUSb29WdbE7ovk=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-XZqIg29JXebvIOttj3IQ5uSiga8AazFCXjgT94E+aYk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-FB0kfVS0WCJEPm6KAmEcR0CkycJrjkHqYL+hhHNR83I=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-EHpSwP+CDo0WWTxyCA6C4C74TMNtLl4Ma32+mdcJqOg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -161,6 +161,13 @@ textarea{resize:vertical;min-height:96px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .f{display:grid;gap:4px}.f label{font-size:.82rem;color:var(--muted)}
 .f.wide{grid-column:1/-1}
+/* רשימת השלמה (v2.1.2): במקום datalist, שנתקע בטלפונים עם 1,167 ערים */
+.ac{position:relative}
+.sugg{position:absolute;top:100%;left:0;right:0;z-index:30;margin:2px 0 0;padding:4px;list-style:none;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 8px 20px rgba(0,0,0,.28);
+  max-height:50vh;overflow-y:auto}
+.sugg li{padding:10px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--text)}
+.sugg li[aria-selected=true],.sugg li:hover{background:var(--surface-2);color:var(--accent)}
 input.filled{border-color:var(--good)}
 input.miss{border-color:var(--warn);box-shadow:0 0 0 1px var(--warn)}
 .btn.big{width:100%;justify-content:center;padding:13px;font-size:1rem}
@@ -488,8 +495,8 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
       <h2>האם המחיר הזה מציאה?</h2>
       <p class="lead">מכניסים כתובת ופרטים של דירה שמוצעת למכירה. ההשוואה היא לעסקאות דומות שנמכרו באותו בניין, אם יש מספיק; אחרת באותו רחוב, ואחרת בעיר. מאפיינים שאין עליהם נתונים (מעלית, ממ"ד, מרפסת, חניה, מצב) מתורגמים להתאמה באחוזים לפי כלל אצבע, ומסומנים כהערכה.</p>
       <div class="grid">
-        <div class="f wide"><label for="dcCity">עיר</label><input id="dcCity" type="text" list="dcCityList" maxlength="40" autocomplete="off" placeholder="מקלידים ובוחרים מהרשימה"><datalist id="dcCityList"></datalist></div>
-        <div class="f"><label for="dcStreet">רחוב</label><input id="dcStreet" type="text" list="dcStreetList" maxlength="60" autocomplete="off" placeholder="אחרי בחירת עיר"><datalist id="dcStreetList"></datalist></div>
+        <div class="f wide ac"><label for="dcCity">עיר</label><input id="dcCity" type="text" maxlength="40" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dcCitySug" placeholder="מקלידים ובוחרים מהרשימה"><ul class="sugg" id="dcCitySug" role="listbox" aria-label="ערים" hidden></ul></div>
+        <div class="f ac"><label for="dcStreet">רחוב</label><input id="dcStreet" type="text" maxlength="60" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dcStreetSug" placeholder="אחרי בחירת עיר"><ul class="sugg" id="dcStreetSug" role="listbox" aria-label="רחובות" hidden></ul></div>
         <div class="f"><label for="dcHouse">מספר בית</label><input id="dcHouse" type="text" inputmode="numeric" maxlength="5"></div>
         <div class="f wide"><button class="btn" id="dcFind" type="button">חפש כתובת</button><p class="note" id="dcAddrInfo" role="status" aria-live="polite" style="margin:4px 0 0"></p></div>
         <div class="f"><label for="dcRooms">חדרים</label><input id="dcRooms" type="text" inputmode="decimal" maxlength="4"></div>
@@ -568,10 +575,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='2.1.1';
+var APP_VERSION='2.1.2';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'2.1.2',date:'2026-11-23',items:[
+    '"האם המחיר הזה מציאה": האפליקציה נתקעה בטלפון בזמן הקלדת העיר. רשימת ההשלמה של הדפדפן הוחלפה ברשימה קלה שמציגה עד 8 הצעות מתחת לשדה: קודם שמות שמתחילים במה שהוקלד, ואחר כך שמות שמכילים אותו. כך זה עובד אותו דבר בכל מכשיר.',
+    'רשימת הרחובות לא מתחלפת בתשובה ישנה מהשרת כשממשיכים להקליד.'
+  ]},
   {v:'2.1.1',date:'2026-11-23',items:[
     '"האם המחיר הזה מציאה": במקום כתובת חופשית יש שדות נפרדים לעיר, לרחוב ולמספר בית. העיר והרחוב נבחרים מרשימת השלמה של השמות הרשמיים, והרחובות מוצגים רק מהעיר שנבחרה, כדי שלא יהיו טעויות כתיב.'
   ]},
@@ -1833,6 +1844,13 @@ function wideComps(rows,sqm){
     return a>=20&&a<=400&&amt>=150000&&Math.abs(a-sqm)<=sqm*0.4;
   }).map(function(r){return {ppm:r.deal_amount/r.asset_area,floor:floorNum(r.floor)};});
 }
+/* הצעות להשלמה: קודם שמות שמתחילים במה שהוקלד, אחר כך שמות שמכילים אותו. בלי כפילויות כתיב, עד max */
+function suggest(names,typed,max){
+  var k=cityKey(typed),a=[],b=[],seen={};if(!k)return [];
+  for(var i=0;i<(names||[]).length;i++){var n=names[i],x=cityKey(n),p;if(seen[x])continue;
+    p=x.indexOf(k);if(p===0){seen[x]=1;a.push(n);}else if(p>0){seen[x]=1;b.push(n);}}
+  return a.concat(b).slice(0,max||8);
+}
 function quant(sorted,q){if(!sorted.length)return null;var i=(sorted.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo);}
 /* calc-pure3-end */
 /* חיפוש הכתובת: שם רשמי ליישוב ולרחוב (over.org.il), כל הכתיבים של היישוב ב-GovMap, עסקאות ברחוב ובבניין,
@@ -1856,22 +1874,56 @@ function resolveCity(){
     $('dcStreet').placeholder=CITY.code?'מקלידים ובוחרים מהרשימה':'רחוב';
     return CITY;});
 }
-function fillList(id,names){var dl=$(id);dl.textContent='';names.forEach(function(n){dl.appendChild(el('option',{value:n}));});}
-var CITY_LIST_LOADED=false;
+/* רשימת השלמה קלה: עד 8 שורות מתחת לשדה, נבנית רק כשהשדה בפוקוס. מקלדת: חיצים, Enter, Escape */
+function Sugg(input,box,onPick){
+  var items=[],act=-1;
+  function close(){box.hidden=true;box.textContent='';items=[];act=-1;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');}
+  function pick(v){input.value=v;close();if(onPick)onPick(v);}
+  function mark(){for(var i=0;i<box.children.length;i++)box.children[i].setAttribute('aria-selected',i===act?'true':'false');
+    if(act>=0)input.setAttribute('aria-activedescendant',box.children[act].id);}
+  function show(list){
+    if(document.activeElement!==input){close();return;}
+    items=(list||[]).slice(0,8);act=-1;box.textContent='';
+    if(!items.length){close();return;}
+    items.forEach(function(n,i){
+      var li=el('li',{role:'option',id:box.id+'-'+i,'aria-selected':'false',text:n});
+      li.addEventListener('mousedown',function(e){e.preventDefault();});
+      li.addEventListener('click',function(){pick(n);});
+      box.appendChild(li);});
+    box.hidden=false;input.setAttribute('aria-expanded','true');
+  }
+  input.addEventListener('keydown',function(e){
+    if(box.hidden)return;
+    if(e.key==='ArrowDown'){act=Math.min(items.length-1,act+1);mark();e.preventDefault();}
+    else if(e.key==='ArrowUp'){act=Math.max(0,act-1);mark();e.preventDefault();}
+    else if(e.key==='Enter'&&act>=0){pick(items[act]);e.preventDefault();}
+    else if(e.key==='Escape')close();
+  });
+  input.addEventListener('blur',function(){setTimeout(close,200);});
+  return {show:show,close:close};
+}
+var CITY_NAMES=[],CITY_LIST_LOADED=false,cityTimer=null;
+var citySug=Sugg($('dcCity'),$('dcCitySug'),function(){A=null;CITY=null;resolveCity();});
+var streetSug=Sugg($('dcStreet'),$('dcStreetSug'),function(){A=null;clearTimeout(stTimer);});
+function showCities(){citySug.show(suggest(CITY_NAMES,$('dcCity').value,8));}
 function loadCityList(){
   if(CITY_LIST_LOADED)return;CITY_LIST_LOADED=true;
   settlements().then(function(names){
     var by={};names.concat(D?D.cities.map(function(c){return c.name;}):[]).forEach(function(n){var k=cityKey(n);if(!by[k]||/קריית/.test(n))by[k]=n;});
-    fillList('dcCityList',Object.keys(by).map(function(k){return by[k];}).sort());
+    CITY_NAMES=Object.keys(by).map(function(k){return by[k];}).sort();
+    if($('dcCity').value.trim())showCities();
   }).catch(function(){CITY_LIST_LOADED=false;});
 }
-var STREETS=[],stTimer=null;
+var STREETS=[],stTimer=null,stSeq=0;
+/* מספר בקשה: תשובה ישנה מהשרת לא דורסת הקלדה חדשה יותר */
 function loadStreets(){
   var q=$('dcStreet').value.trim().slice(0,40);
   if(!CITY||!CITY.code||!q)return Promise.resolve(STREETS);
+  var my=++stSeq;
   return overJSON('/api/nadlan/streets',{q:q,settlement:CITY.code,limit:20}).then(function(d){
-    STREETS=rowsOf(d).map(function(r){return r&&typeof r.name==='string'?r.name.slice(0,60):'';}).filter(Boolean);
-    fillList('dcStreetList',STREETS);return STREETS;}).catch(function(){return STREETS;});
+    var list=rowsOf(d).map(function(r){return r&&typeof r.name==='string'?r.name.slice(0,60):'';}).filter(Boolean);
+    if(my!==stSeq)return list;
+    STREETS=list;streetSug.show(STREETS);return STREETS;}).catch(function(){return STREETS;});
 }
 function findAddress(){
   var info=$('dcAddrInfo');A=null;
@@ -2005,10 +2057,10 @@ function calc(){
 }
 $('dcFind').addEventListener('click',function(){findAddress();});
 $('dcCity').addEventListener('focus',loadCityList);
-$('dcCity').addEventListener('input',function(){A=null;CITY=null;STREETS=[];fillList('dcStreetList',[]);$('dcAddrInfo').textContent='';});
+$('dcCity').addEventListener('input',function(){A=null;CITY=null;STREETS=[];streetSug.close();$('dcAddrInfo').textContent='';clearTimeout(cityTimer);cityTimer=setTimeout(showCities,120);});
 $('dcCity').addEventListener('change',function(){resolveCity();});
 $('dcStreet').addEventListener('focus',function(){resolveCity();});
-$('dcStreet').addEventListener('input',function(){A=null;$('dcAddrInfo').textContent='';clearTimeout(stTimer);stTimer=setTimeout(function(){resolveCity().then(loadStreets);},250);});
+$('dcStreet').addEventListener('input',function(){A=null;$('dcAddrInfo').textContent='';clearTimeout(stTimer);if(!$('dcStreet').value.trim())streetSug.close();stTimer=setTimeout(function(){resolveCity().then(loadStreets);},250);});
 $('dcHouse').addEventListener('input',function(){A=null;});
 $('dcHouse').addEventListener('keydown',function(e){if(e.key==='Enter')findAddress();});
 $('dcGo').addEventListener('click',function(){if(D)calc();});
@@ -2024,7 +2076,7 @@ function init(raw){
   var fs=$('dfCity');fs.textContent='';fs.appendChild(el('option',{value:'',text:'כל הערים'}));
   var cn=D.cities.filter(function(c){return c.n>0;}).map(function(c){return c.name;}).sort();
   cn.forEach(function(n){fs.appendChild(el('option',{value:n,text:n}));});
-  fillList('dcCityList',cn);
+  if(!CITY_NAMES.length)CITY_NAMES=cn;
   $('dfLead').textContent='עסקאות מ-'+D.recent+' הימים האחרונים במאגר, עד '+nisK(D.budget)+', שנסגרו '+D.below+'%–'+D.cap+'% מתחת לחציון למ"ר של לפחות '+D.minComps+' עסקאות דומות באותה עיר: אותה קבוצת חדרים ושטח ±20%. עסקאות זולות מזה, כאלה שנראות כמו מכירת חלק מדירה, ומכירות בפרויקטים חדשים לא נספרות.';
   ['dlCalc','dlTenders','dlProj','dlFlags','dlCities'].forEach(function(id){$(id).hidden=false;});
   renderTenders();renderProjects();renderFlags();renderCities();
