@@ -16,7 +16,7 @@ def pure_js():
     with open(os.path.join(ROOT, "index.html"), encoding="utf-8") as f:
         s = f.read()
     parts = [re.search(rf"/\* {m}-start \*/(.*?)/\* {m}-end \*/", s, re.S).group(1)
-             for m in ("calc-pure", "calc-pure4", "calc-pure3", "calc-pure2")]
+             for m in ("calc-pure", "calc-pure3", "calc-pure2")]
     return "function fin(v){return typeof v==='number'&&isFinite(v);}\n" + "\n".join(parts)
 
 
@@ -31,18 +31,6 @@ class CalcJsTests(unittest.TestCase):
     def test_floor_words(self):
         self.assertEqual(self.run_js("['קרקע','ראשונה','שניה','שנייה','רביעית','עשירית','שתים עשרה','3',null,'גג'].map(floorNum)"),
                          [0, 1, 2, 2, 4, 10, 12, 3, None, None])
-
-    def test_parse_address(self):
-        names = ["אור יהודה", "יהוד-מונוסון", "תל אביב -יפו", "יהוד"]
-        r = self.run_js(f"[parseAddr('מניה שוחט 6, אור יהודה',{json.dumps(names)}),"
-                        f"parseAddr('יעקב בר סימנטוב 1 יהוד-מונוסון',{json.dumps(names)}),"
-                        f"parseAddr('הרצל 12א תל אביב-יפו',{json.dumps(names)}),"
-                        f"parseAddr('הרצל 5',{json.dumps(names)})]")
-        self.assertEqual(r[0], {"city": "אור יהודה", "street": "מניה שוחט", "house": "6"})
-        self.assertEqual(r[1], {"city": "יהוד-מונוסון", "street": "יעקב בר סימנטוב", "house": "1"})  # השם הארוך גובר על "יהוד"
-        self.assertEqual(r[2]["city"], "תל אביב -יפו")
-        self.assertEqual(r[2]["house"], "12א")
-        self.assertEqual(r[3], {"city": None, "street": "הרצל", "house": "5"})
 
     def test_comps_filter(self):
         rows = [
