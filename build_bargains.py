@@ -24,7 +24,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import deals_api as api
 
-BARGAINS_VERSION = "1.7.0"
+BARGAINS_VERSION = "1.9.0"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CFG_PATH = os.path.join(ROOT, "bargains.json")
 OUT = os.path.join(ROOT, "data", "bargains.json")
@@ -374,6 +374,27 @@ def fetch_lots(params):
             return out
 
 
+PUBLIC = "כלל הציבור"
+NO_LIMIT = "ללא הגבלה"   # מגרש בלי אוכלוסייה מוגדרת (למשל מכרז פומבי רגיל): פתוח לכולם
+
+
+def lot_pops(l):
+    """האוכלוסיות שהמגרש מיועד להן, ממוינות. בלי הגדרה: NO_LIMIT."""
+    pops = sorted({p.strip()[:40] for p in str(l.get("eligible_populations") or "").split(";") if p.strip()})
+    return pops or [NO_LIMIT]
+
+
+def open_to(groups, mine=()):
+    """כמה מגרשים ויחידות במכרז פתוחים למי שמשתייך לאוכלוסיות mine (כלל הציבור ומגרשים בלי הגבלה תמיד כלולים)."""
+    allowed = {PUBLIC, NO_LIMIT} | set(mine)
+    lots = units = 0
+    for g in groups or []:
+        if allowed & set(g.get("pops") or []):
+            lots += g.get("lots") or 0
+            units += g.get("units") or 0
+    return lots, units
+
+
 def group_tenders(lots, today):
     """מכרזים פתוחים למגורים, אחד לכל מכרז. בלי שמות זוכים ומציעים."""
     now = today.isoformat()
@@ -391,12 +412,14 @@ def group_tenders(lots, today):
                                 "region": str(l.get("region") or "")[:30], "neighborhood": str(l.get("neighborhood") or "")[:60],
                                 "published": str(l.get("published") or "")[:10], "deadline": dl,
                                 "lottery_date": str(l.get("lottery_date") or "")[:10] or None,
-                                "eligible": str(l.get("eligible_populations") or "")[:120] or None,
                                 "url": l.get("tender_url") if str(l.get("tender_url") or "").startswith("https://apps.land.gov.il/") else None,
-                                "lots": 0, "units": 0, "_appr": [], "_dev": [], "_thr": []})
+                                "lots": 0, "units": 0, "_appr": [], "_dev": [], "_thr": [], "_groups": {}})
         t["lots"] += 1
         units = num(l.get("units")) or 0
         t["units"] += int(units)
+        g = t["_groups"].setdefault(tuple(lot_pops(l)), [0, 0])
+        g[0] += 1
+        g[1] += int(units)
         if units > 0:
             for key, field in (("_appr", "appraisal_price"), ("_dev", "dev_costs"), ("_thr", "threshold_price")):
                 v = num(l.get(field))
@@ -409,6 +432,11 @@ def group_tenders(lots, today):
         for key, name in (("_appr", "appraisal_per_unit"), ("_dev", "dev_per_unit"), ("_thr", "threshold_per_unit")):
             vals = t.pop(key)
             t[name] = round(min(vals)) if vals else None
+        # אוכלוסיות לפי מגרש: מכרז אחד יכול לכלול מגרשים לכלל הציבור ומגרשים לחיילי מילואים או לאנשים עם מוגבלות
+        t["groups"] = [{"pops": list(p), "lots": v[0], "units": v[1]} for p, v in sorted(t.pop("_groups").items())]
+        pops = sorted({p for g in t["groups"] for p in g["pops"]} - {NO_LIMIT})
+        t["eligible"] = "; ".join(pops)[:120] or None
+        t["open_lots"], t["open_units"] = open_to(t["groups"])
         out.append(t)
     out.sort(key=lambda t: (t["deadline"], t["city"]))
     return out
