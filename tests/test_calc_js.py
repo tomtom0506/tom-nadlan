@@ -85,5 +85,23 @@ class CalcJsTests(unittest.TestCase):
         r = self.adj(scope="city", floor=9, compFloor=2, lift="no", mamad="no", balcony="no", park="no", cond="old", year=1950)
         self.assertEqual(r["total"], -25)
 
+    def test_city_key_merges_spellings(self):
+        # v2.1.0: "קרית אונו" (4 עסקאות ב-GovMap) ו"קריית אונו" (2,208) הם אותה עיר
+        r = self.run_js("[cityKey('קרית אונו')===cityKey('קריית אונו'), cityKey('תל אביב-יפו')===cityKey('תל אביב -יפו'),"
+                        " cityKey('יהוד')===cityKey('יהוד-מונוסון')]")
+        self.assertEqual(r, [True, True, False])
+
+    def test_pick_street(self):
+        names = ["צה\"ל", "צהלה", "שדרות שמעון פרס"]
+        r = self.run_js(f"[pickStreet({json.dumps(names, ensure_ascii=False)},'צהל'),"
+                        f"pickStreet({json.dumps(names, ensure_ascii=False)},'שמעון פרס'),"
+                        f"pickStreet({json.dumps(names, ensure_ascii=False)},'הרצל'),pickStreet([],'צהל')]")
+        self.assertEqual(r, ['צה"ל', "שדרות שמעון פרס", None, None])  # "צהל" מתאים בדיוק ל"צה"ל" ולא ל"צהלה"
+
+    def test_wide_comps_ignore_rooms(self):
+        rows = [{"deal_nature": "דירה בבית קומות", "asset_area": 130, "deal_amount": 2600000, "rooms": 6},
+                {"deal_nature": "דירה בבית קומות", "asset_area": 150, "deal_amount": 3000000, "rooms": 4}]
+        self.assertEqual([x["ppm"] for x in self.run_js(f"wideComps({json.dumps(rows, ensure_ascii=False)},100)")], [20000])
+
     def test_quantiles(self):
         self.assertEqual(self.run_js("[quant([1,2,3,4,5],0.5),quant([1,2,3,4],0.25),quant([],0.5)]"), [3, 1.75, None])
