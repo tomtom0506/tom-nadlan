@@ -93,3 +93,14 @@ class CalcJsTests(unittest.TestCase):
 
     def test_quantiles(self):
         self.assertEqual(self.run_js("[quant([1,2,3,4,5],0.5),quant([1,2,3,4],0.25),quant([],0.5)]"), [3, 1.75, None])
+
+    def test_suggest_prefix_first_limited_no_dup_spellings(self):
+        # v2.1.2: במקום datalist עם 1,167 ערים, שנתקע בטלפון - עד 8 הצעות, קודם התחלה ואחר כך הכלה
+        names = ["אונו", "קרית אונו", "קריית אונו", "קריית אתא", "גני תקווה", "אור יהודה"]
+        self.assertEqual(self.run_js(f"suggest({json.dumps(names, ensure_ascii=False)},'קרית א')"),
+                         ["קרית אונו", "קריית אתא"])
+        self.assertEqual(self.run_js(f"suggest({json.dumps(names, ensure_ascii=False)},'אונו')"),
+                         ["אונו", "קרית אונו"])
+        many = [f"עיר {i}" for i in range(1200)]
+        self.assertEqual(len(self.run_js(f"suggest({json.dumps(many, ensure_ascii=False)},'עיר')")), 8)
+        self.assertEqual(self.run_js("suggest(['א'],'  ')"), [])
