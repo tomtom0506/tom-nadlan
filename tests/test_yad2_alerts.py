@@ -10,7 +10,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import yad2_alerts as y  # noqa: E402
 
-MAIL_HTML = """<html><body><div>היי תומר,</div><div>מצאנו 2 מודעות חדשות שמתאימות לחיפוש שלך:</div>
+MAIL_HTML = """<html><body><div>היי,</div><div>מצאנו 2 מודעות חדשות שמתאימות לחיפוש שלך:</div>
 <div><b>דירות למכירה בבקעת אונו</b></div><div>מחוז: מרכז והשרון | מחיר מינימלי: 900000 | מחיר מקסימלי: 5000000</div>
 <table><tr><td><img src="x"></td></tr><tr><td><b>₪ 3,140,000</b></td></tr><tr><td>יעקב בר סימנטוב 1</td></tr>
 <tr><td>גבעת אוויה | בית פרטי/ קוטג' | 3 חדרים | 260 מ״ר</td></tr>
@@ -26,6 +26,49 @@ def mail(html_body, sender="Yad2 <alerts@mail.yad2.co.il>"):
     m["From"] = sender
     m["Subject"] = "מודעות חדשות"
     return email.message_from_bytes(m.as_bytes())
+
+
+# המבנה האמיתי של מייל יד2 (מהאבחון ב-22.11.2026): תגית "גם בטרייד אין" בין המחיר לכתובת, ו"ירד ב-" לפני כל מודעה.
+REAL_LINES = ["y2-mail-restore", "מודעות חדשות שעלו עבור", "\u200c", "מצאנו 13 מודעות חדשות שמתאימות לחיפוש שלך:",
+              "דירות למכירה בבקעת אונו", "מחוז:", "מרכז והשרון", "|", "מחיר מינימלי:", "900000", "|", "מחיר מקסימלי:", "5000000",
+              "|", "ירד ב-", "2,350,000 ₪", "גם בטרייד אין", "שדרות צפריר 13", "נווה רבין | דירה | 3 חדרים | 109 מ”ר",
+              "לפרטים נוספים", "ירד ב-", "2,770,000 ₪", "גם בטרייד אין", "סביון 10", "קרית גיורא | דירה | 4 חדרים | 106 מ”ר",
+              "לפרטים נוספים", "ירד ב-", "2,890,000 ₪", "גם בטרייד אין", "כנען 4", "בית בפארק | דירה | 4 חדרים | 127 מ”ר",
+              "לפרטים נוספים", "לכל המודעות", "לא רוצה לקבל התראות על חיפוש זה?", "להסרה"]
+
+
+class RealMailTests(unittest.TestCase):
+    """v2.0.2: הכתובת היא השורה שלפני שורת הפרטים, לא השורה שאחרי המחיר."""
+
+    def test_real_structure(self):
+        links = [("לפרטים נוספים", f"https://www.yad2.co.il/item/{i}") for i in range(3)]
+        ads = y.parse_ads(REAL_LINES, links)
+        self.assertEqual([(a["price"], a["street"], a["house"], a["rooms"], a["sqm"], a["neighborhood"], a["kind"]) for a in ads], [
+            (2_350_000, "שדרות צפריר", "13", 3, 109, "נווה רבין", "דירה"),
+            (2_770_000, "סביון", "10", 4, 106, "קרית גיורא", "דירה"),
+            (2_890_000, "כנען", "4", 4, 127, "בית בפארק", "דירה")])
+        self.assertEqual(ads[0]["area"], "בקעת אונו")
+        self.assertEqual(ads[2]["link"], "https://www.yad2.co.il/item/2")
+
+    def test_street_prefix_variants(self):
+        self.assertEqual(y.street_variants("שדרות צפריר"), ["שדרות צפריר", "צפריר"])
+        self.assertEqual(y.street_variants("רח' הרצל"), ["רח' הרצל", "הרצל"])
+        self.assertEqual(y.street_variants("דרך השלום"), ["דרך השלום"])
+
+    def test_find_city_tries_bare_street(self):
+        calls = []
+
+        def fake(params):
+            calls.append(params["street"])
+            ok = params["street"] == "צפריר" and params["settlement"] == "אור יהודה"
+            return ([{}], 1) if ok else ([], 0)
+        with mock.patch.object(y, "govmap", side_effect=fake):
+            self.assertEqual(y.find_city("שדרות צפריר", "בקעת אונו", {}), ("אור יהודה", "צפריר"))
+        self.assertEqual(calls[0], "שדרות צפריר")
+
+    def test_header_numbers_are_not_ads(self):
+        ads = y.parse_ads(REAL_LINES[:15])
+        self.assertEqual(ads, [])
 
 
 class ParseTests(unittest.TestCase):
