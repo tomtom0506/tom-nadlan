@@ -26,7 +26,7 @@ from urllib.parse import urlparse
 import deals_api as api
 from weekly_watch import send_telegram
 
-YAD2_VERSION = "2.0.1"
+YAD2_VERSION = "2.0.2"
 IMAP_HOST = "imap.gmail.com"
 DONE_LABEL = "tom-nadlan-done"
 SENDER_DOMAINS = ("yad2.co.il", "madlan.co.il")
@@ -138,7 +138,8 @@ def sender_ok(msg):
 
 PRICE = re.compile(r"(?:₪\s*([\d,]{5,12})|([\d,]{5,12})\s*₪)")
 ROOMS = re.compile(r"([\d.]+)\s*חד")
-SQM = re.compile(r"([\d,.]+)\s*מ[\"״'’]{1,2}ר")
+SQM = re.compile(r"([\d,.]+)\s*מ[\"״'’”″]{1,2}ר")
+DROP = re.compile(r"ירד ב")  # רכיב בתבנית של יד2 שמופיע לפני כל מודעה (גם בלי ירידת מחיר): משמש רק כמפריד
 STREET = re.compile(r"^(.*?\D)\s*(\d+[א-ת]?)?$")
 
 
@@ -165,15 +166,21 @@ def parse_ads(lines, links=()):
             i += 1
             continue
         price = _n(m.group(1) or m.group(2))
-        addr, details, j = None, None, i + 1
-        while j < min(len(lines), i + 6):
+        addr, details, j, prev = None, None, i + 1, None
+        while j < min(len(lines), i + 7):
             ln = lines[j]
             if PRICE.search(ln):
                 break
             if "|" in ln or ROOMS.search(ln) or SQM.search(ln):
+                if details is None:
+                    addr = prev  # הכתובת היא השורה שמיד לפני שורת הפרטים; תגיות כמו "גם בטרייד אין" באות לפניה
                 details = (details + " | " + ln) if details else ln
-            elif addr is None and not re.search(r"לפרטים|לצפייה", ln):
-                addr = ln
+            elif re.search(r"לפרטים|לצפייה", ln) or DROP.search(ln):
+                if details:
+                    j += 1
+                    break
+            else:
+                prev = ln
             j += 1
         if price and details:
             parts = [p.strip() for p in details.split("|") if p.strip()]
@@ -219,19 +226,34 @@ def govmap(params):
     return rows, data.get("total") if isinstance(data.get("total"), int) else None
 
 
+STREET_PREFIX = re.compile(r"^(?:שדרות|שד['׳.]?|רחוב|רח['׳.]|סמטת|סמ['׳.])\s+")
+
+
+def street_variants(street):
+    """הכתיב במודעה ובעסקאות לא תמיד זהה: "שדרות צפריר" במודעה הוא "צפריר" ב-GovMap."""
+    out = [street]
+    bare = STREET_PREFIX.sub("", street).strip()
+    if bare and bare != street:
+        out.append(bare)
+    return out
+
+
 def find_city(street, area, cache):
-    """העיר שבה יש עסקאות ברחוב הזה. קודם ערי אזור החיפוש, אחר כך רשימה רחבה."""
+    """(עיר, כתיב הרחוב שנמצא) לפי עסקאות ברחוב. קודם ערי אזור החיפוש, אחר כך רשימה רחבה. לא נמצא: (None, None)."""
     if not street:
-        return None
+        return None, None
     key = (street, area)
     if key in cache:
         return cache[key]
     cands = AREA_CITIES.get(area or "", []) + [c for c in FALLBACK_CITIES if c not in AREA_CITIES.get(area or "", [])]
-    found = None
-    for c in cands:
-        _, total = govmap({"settlement": c, "street": street, "limit": 1})
-        if total:
-            found = c
+    found = (None, None)
+    for st in street_variants(street):
+        for c in cands:
+            _, total = govmap({"settlement": c, "street": st, "limit": 1})
+            if total:
+                found = (c, st)
+                break
+        if found[0]:
             break
     cache[key] = found
     return found
@@ -257,7 +279,7 @@ def comparable(ad, d, since):
 
 def comps_for(ad, city, today):
     since = (today - timedelta(days=int(COMPS_MONTHS * 30.5))).isoformat()
-    rows, _ = govmap({"settlement": city, "street": ad["street"], "date_from": since, "limit": api.PAGE})
+    rows, _ = govmap({"settlement": city, "street": ad.get("street_q") or ad["street"], "date_from": since, "limit": api.PAGE})
     vals = [v for v in (comparable(ad, d, since) for d in rows) if v]
     if len(vals) >= MIN_COMPS:
         return vals, "street"
@@ -279,7 +301,7 @@ def evaluate(ad, today, city_cache):
     if not ad["sqm"] or ad["sqm"] <= 0:
         return ad
     ad["ppm"] = ad["price"] / ad["sqm"]
-    ad["city"] = find_city(ad["street"], ad["area"], city_cache)
+    ad["city"], ad["street_q"] = find_city(ad["street"], ad["area"], city_cache)
     if not ad["city"]:
         return ad
     vals, scope = comps_for(ad, ad["city"], today)
