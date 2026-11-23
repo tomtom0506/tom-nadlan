@@ -104,3 +104,39 @@ class CalcJsTests(unittest.TestCase):
         many = [f"עיר {i}" for i in range(1200)]
         self.assertEqual(len(self.run_js(f"suggest({json.dumps(many, ensure_ascii=False)},'עיר')")), 8)
         self.assertEqual(self.run_js("suggest(['א'],'  ')"), [])
+
+    def test_est_sqm(self):
+        # v2.1.3: בלי שטח משערים לפי עסקאות עם אותו מספר חדרים
+        rows = [{"deal_nature": "דירה בבית קומות", "asset_area": a, "rooms": r}
+                for a, r in ((70, 3), (75, 3), (80, 3), (110, 4), (120, 5))]
+        js = json.dumps(rows, ensure_ascii=False)
+        self.assertEqual(self.run_js(f"[estSqm({js},3),estSqm({js},0),estSqm([],4),estSqm([],0)]"),
+                         [{"v": 75, "src": "rows"}, {"v": 80, "src": "rows"}, {"v": 105, "src": "rooms"}, None])
+
+    def test_tax_comps_houses_no_land_no_partial(self):
+        rows = [{"nature": "קוטג' חד משפחתי", "area_sqm": 100, "amount": 2000000, "portion_fraction": 1.0},
+                {"nature": "מגורים", "area_sqm": 100, "amount": 2000000, "portion_fraction": 1.0},       # קרקע
+                {"nature": "דירה בבית קומות", "area_sqm": 100, "amount": 2000000, "portion_fraction": 0.5},  # חלק
+                {"nature": "בית בודד", "area_sqm": 300, "amount": 2000000, "portion_fraction": None},      # שטח רחוק
+                {"nature": "בית בודד", "area_sqm": 130, "amount": 200000, "portion_fraction": 1.0}]        # העברה בקיבוץ: 1,538 ₪ למ"ר
+        self.assertEqual(self.run_js(f"taxComps({json.dumps(rows, ensure_ascii=False)},100)"), [{"ppm": 20000, "floor": None}])
+
+    def test_near_towns_subdistrict_then_district(self):
+        lst = [{"name": "א", "subdistrict": "גולן", "district": "צפון", "population": 5},
+               {"name": "ב", "subdistrict": "גולן", "district": "צפון", "population": 9},
+               {"name": "ג", "subdistrict": "כנרת", "district": "צפון", "population": 50},
+               {"name": "עין זיוון", "subdistrict": "גולן", "district": "צפון", "population": 500}]
+        js = json.dumps(lst, ensure_ascii=False)
+        self.assertEqual(self.run_js(f"nearTowns({js},{{name:'עין זיוון',subdistrict:'גולן',district:'צפון'}},3)"), ["ב", "א"])
+        self.assertEqual(self.run_js(f"nearTowns({js},{{name:'ד',subdistrict:'עמק',district:'צפון'}},2)"), ["עין זיוון", "ג"])
+
+    def test_accuracy_bounds_and_order(self):
+        tight = {"n": 20, "p25": 29000, "p50": 30000, "p75": 31000}
+        r = self.run_js(f"[accuracy({json.dumps(tight)},'building',false,0,false),"
+                        f"accuracy({json.dumps(tight)},'city',false,0,false),"
+                        f"accuracy({json.dumps(tight)},'region',true,-20,'rows'),"
+                        f"accuracy({{n:1,p25:9000,p50:30000,p75:60000}},'region',true,0,true)]")
+        self.assertEqual(r[0], 5)                # מינימום
+        self.assertLess(r[0], r[1])
+        self.assertLess(r[1], r[2])
+        self.assertEqual(r[3], 40)               # מקסימום
