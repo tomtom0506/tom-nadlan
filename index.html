@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-FB0kfVS0WCJEPm6KAmEcR0CkycJrjkHqYL+hhHNR83I=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-EHpSwP+CDo0WWTxyCA6C4C74TMNtLl4Ma32+mdcJqOg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-PanjSuNwgLmoHhmXVP9CAADARMS5OYWaXFd7RwyCDEw=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-mb3hj/x2vhrGro3tOgyncRtnCGlNMhAccsQ3AXfN5jI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -161,6 +161,8 @@ textarea{resize:vertical;min-height:96px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .f{display:grid;gap:4px}.f label{font-size:.82rem;color:var(--muted)}
 .f.wide{grid-column:1/-1}
+.dl-acc{margin:8px 0 0;font-size:.92rem}.dl-acc.warn b{color:var(--warn)}
+.dl-rec{margin:10px 0 0;padding:8px 10px;border-inline-start:3px solid var(--accent);background:var(--surface-2);border-radius:var(--r-sm);font-size:.92rem}
 /* רשימת השלמה (v2.1.2): במקום datalist, שנתקע בטלפונים עם 1,167 ערים */
 .ac{position:relative}
 .sugg{position:absolute;top:100%;left:0;right:0;z-index:30;margin:2px 0 0;padding:4px;list-style:none;
@@ -575,10 +577,14 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='2.1.2';
+var APP_VERSION='2.1.3';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'2.1.3',date:'2026-11-23',items:[
+    '"האם המחיר הזה מציאה" נותן תמיד הערכה: גם בלי מחיר מבוקש (מוצג שווי והמלצה), גם בלי שטח (משוער לפי עסקאות עם אותו מספר חדרים), וגם ביישוב קטן בלי עסקאות דירות: 5 שנים אחורה, עסקאות רשות המסים כולל בתים פרטיים, ובסוף יישובים סמוכים באותה נפה.',
+    'בכל תוצאה מוצג "דיוק משוער" באחוזים, לפי פיזור העסקאות, מספרן ורמת ההשוואה, ושורת המלצה למשא ומתן.'
+  ]},
   {v:'2.1.2',date:'2026-11-23',items:[
     '"האם המחיר הזה מציאה": האפליקציה נתקעה בטלפון בזמן הקלדת העיר. רשימת ההשלמה של הדפדפן הוחלפה ברשימה קלה שמציגה עד 8 הצעות מתחת לשדה: קודם שמות שמתחילים במה שהוקלד, ואחר כך שמות שמכילים אותו. כך זה עובד אותו דבר בכל מכשיר.',
     'רשימת הרחובות לא מתחלפת בתשובה ישנה מהשרת כשממשיכים להקליד.'
@@ -1816,12 +1822,14 @@ function settlements(){
     SETTLE=(Array.isArray(d&&d.data)?d.data:[]).map(function(r){return r&&typeof r.settlement==='string'?r.settlement.slice(0,40):null;}).filter(Boolean);return SETTLE;});
 }
 /* calc-pure3-start */
+/* מתחת ל-4,000 ₪ למ"ר זו לא עסקת שוק: העברת זכויות בקיבוץ, בין קרובים, או סכום סמלי */
+var MIN_PPM=4000;
 function isoMonthsAgo(n){var d=new Date();d.setMonth(d.getMonth()-n);return d.toISOString().slice(0,10);}
 function compsOf(rows,sqm,rooms){
   return rows.filter(function(r){
     if(!r||APT_N.indexOf(r.deal_nature)<0&&r.property_type!=='דירה')return false;
     var a=+r.asset_area,amt=+r.deal_amount,rm=+r.rooms;
-    if(!(a>=20&&a<=400)||!(amt>=150000))return false;
+    if(!(a>=20&&a<=400)||!(amt>=150000)||amt/a<MIN_PPM)return false;
     if(Math.abs(a-sqm)>sqm*0.25)return false;
     if(rooms>0&&rm>0&&Math.abs(rm-rooms)>1)return false;
     return true;
@@ -1841,7 +1849,7 @@ function wideComps(rows,sqm){
   return rows.filter(function(r){
     if(!r||APT_N.indexOf(r.deal_nature)<0&&r.property_type!=='דירה')return false;
     var a=+r.asset_area,amt=+r.deal_amount;
-    return a>=20&&a<=400&&amt>=150000&&Math.abs(a-sqm)<=sqm*0.4;
+    return a>=20&&a<=400&&amt>=150000&&amt/a>=MIN_PPM&&Math.abs(a-sqm)<=sqm*0.4;
   }).map(function(r){return {ppm:r.deal_amount/r.asset_area,floor:floorNum(r.floor)};});
 }
 /* הצעות להשלמה: קודם שמות שמתחילים במה שהוקלד, אחר כך שמות שמכילים אותו. בלי כפילויות כתיב, עד max */
@@ -1850,6 +1858,37 @@ function suggest(names,typed,max){
   for(var i=0;i<(names||[]).length;i++){var n=names[i],x=cityKey(n),p;if(seen[x])continue;
     p=x.indexOf(k);if(p===0){seen[x]=1;a.push(n);}else if(p>0){seen[x]=1;b.push(n);}}
   return a.concat(b).slice(0,max||8);
+}
+/* שטח משוער כשלא הוזן: חציון שטח הדירות עם אותו מספר חדרים (±0.5), אחרת של כל הדירות, אחרת לפי חדרים */
+function estSqm(rows,rooms){
+  var a=(rows||[]).filter(function(r){return r&&(APT_N.indexOf(r.deal_nature)>=0||r.property_type==='דירה')&&+r.asset_area>=20&&+r.asset_area<=400;});
+  var m=rooms>0?a.filter(function(r){return Math.abs(+r.rooms-rooms)<=0.5;}):[];
+  var use=m.length>=3?m:a;
+  if(!use.length)return rooms>0?{v:Math.round(rooms*25+5),src:'rooms'}:null;
+  return {v:Math.round(quant(use.map(function(r){return +r.asset_area;}).sort(function(x,y){return x-y;}),0.5)),src:'rows'};
+}
+/* עסקאות רשות המסים (deals/search): כל סוגי המגורים, כולל בתים פרטיים. בלי חלקי נכס ובלי קרקע */
+function taxComps(rows,sqm){
+  return (rows||[]).filter(function(r){
+    if(!r||!/דיר|קוטג|בית|משפחתי|טורי/.test(String(r.nature||'')))return false;
+    var a=+r.area_sqm,amt=+r.amount,f=r.portion_fraction;
+    return a>=20&&a<=400&&amt>=150000&&amt/a>=MIN_PPM&&(f==null||+f>=0.99)&&Math.abs(a-sqm)<=sqm*0.5;
+  }).map(function(r){return {ppm:r.amount/r.area_sqm,floor:null};});
+}
+/* יישובים סמוכים: הגדולים באותה נפה, ואם אין אז באותו מחוז. list מ-/api/settlements */
+function nearTowns(list,me,max){
+  var k=cityKey(me&&me.name),ok=function(s){return s&&typeof s.name==='string'&&cityKey(s.name)!==k;};
+  var sub=me&&me.subdistrict?(list||[]).filter(function(s){return ok(s)&&s.subdistrict===me.subdistrict;}):[];
+  if(!sub.length&&me&&me.district)sub=(list||[]).filter(function(s){return ok(s)&&s.district===me.district;});
+  return sub.sort(function(a,b){return (+b.population||0)-(+a.population||0);}).slice(0,max||3).map(function(s){return s.name.slice(0,40);});
+}
+/* דיוק משוער באחוזים (±): פיזור העסקאות (חצי הטווח הבין-רבעוני ביחס לחציון), רמת ההשוואה,
+   מעט עסקאות, התאמות כלל אצבע ושטח משוער. בין 5 ל-40 */
+var ACC_BASE={building:0,street:2,city:4,wide:7,tax:10,region:15};
+function accuracy(st,kind,few,adjTotal,sqmEst){
+  var spread=st&&st.p50>0?(st.p75-st.p25)/2/st.p50*100:20,n=st&&st.n||0;
+  var v=spread+(ACC_BASE[kind]!=null?ACC_BASE[kind]:8)+(n<3?15:n<5?10:n<10?4:0)+Math.abs(adjTotal||0)*0.3+(few?5:0)+(sqmEst?8:0);
+  return Math.max(5,Math.min(40,Math.round(v)));
 }
 function quant(sorted,q){if(!sorted.length)return null;var i=(sorted.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);return sorted[lo]+(sorted[hi]-sorted[lo])*(i-lo);}
 /* calc-pure3-end */
@@ -1869,7 +1908,8 @@ function resolveCity(){
   if(CITY&&(CITY.typed===v||CITY.name===v))return Promise.resolve(CITY);
   return overJSON('/api/settlements/resolve',{q:v}).catch(function(){return null;}).then(function(res){
     var m=res&&res.match;
-    CITY={typed:v,name:m&&typeof m.name==='string'?m.name.slice(0,40):v,code:m&&fin(+m.code)?+m.code:null};
+    CITY={typed:v,name:m&&typeof m.name==='string'?m.name.slice(0,40):v,code:m&&fin(+m.code)?+m.code:null,
+      district:m&&typeof m.district==='string'?m.district.slice(0,40):null,subdistrict:m&&typeof m.subdistrict==='string'?m.subdistrict.slice(0,40):null};
     if(CITY.name!==v)$('dcCity').value=CITY.name;
     $('dcStreet').placeholder=CITY.code?'מקלידים ובוחרים מהרשימה':'רחוב';
     return CITY;});
@@ -2001,58 +2041,100 @@ function cityComps(c,sqm,rooms){
 }
 function statsOf(list){var v=list.map(function(x){return x.ppm;}).sort(function(a,b){return a-b;}),f=list.map(function(x){return x.floor;}).filter(fin).sort(function(a,b){return a-b;});
   return {n:v.length,p25:quant(v,0.25),p50:quant(v,0.5),p75:quant(v,0.75),floor:f.length?Math.round(quant(f,0.5)):null};}
+/* עסקאות רשות המסים ביישוב, 5 שנים (כולל בתים פרטיים) */
+function taxRows(city){
+  var q=CITY&&CITY.code&&cityKey(CITY.name)===cityKey(city)?{settlement_code:CITY.code}:{settlement:city};
+  q.date_from=isoMonthsAgo(60);q.limit=200;
+  return overJSON('/api/deals/search',q).then(rowsOf).catch(function(){return [];});
+}
+/* דירות ביישובים הגדולים הסמוכים (אותה נפה, אחרת אותו מחוז), שנתיים */
+var BIG=null;
+function regionRows(city){
+  var me=CITY&&cityKey(CITY.name)===cityKey(city)?CITY:{name:city};
+  var big=BIG?Promise.resolve(BIG):overJSON('/api/settlements',{limit:200}).then(function(d){BIG=Array.isArray(d&&d.settlements)?d.settlements:[];return BIG;});
+  return big.then(function(list){
+    var towns=nearTowns(list,me,3);
+    return Promise.all(towns.map(function(t){return govmapAll([t],{date_from:isoMonthsAgo(24),limit:200,sort:'date_desc'});}))
+      .then(function(rs){return {towns:towns,rows:merged(rs)};});
+  }).catch(function(){return {towns:[],rows:[]};});
+}
 function calc(){
   var out=$('dcOut');out.textContent='';out.hidden=false;out.className='result';
-  var rooms=numIn('dcRooms'),sqm=numIn('dcSqm'),price=numIn('dcPrice'),city='';
-  if(!(sqm>=20&&sqm<=400)||!(price>=100000)){out.appendChild(el('p',{class:'dl-verdict',text:'צריך שטח (20–400 מ"ר) ומחיר.'}));return Promise.resolve();}
+  var rooms=numIn('dcRooms'),sqm=numIn('dcSqm'),price=numIn('dcPrice'),city='',sqmEst=false;
+  var hasPrice=price>=100000;
+  if(!$('dcCity').value.trim()){out.appendChild(el('p',{class:'dl-verdict',text:'בחר עיר מהרשימה.'}));return Promise.resolve();}
+  if(!(sqm>=20&&sqm<=400))sqm=NaN;
   out.appendChild(el('p',{class:'note',text:'מחשב…'}));
-  var pre=($('dcStreet').value.trim()&&!A)?findAddress():$('dcCity').value.trim()?resolveCity():Promise.resolve(null);
+  var pre=($('dcStreet').value.trim()&&!A)?findAddress():resolveCity();
+  var levels=[];
+  function pick(){for(var i=0;i<levels.length;i++){if(levels[i].st&&levels[i].st.n>=levels[i].min)return levels[i];}return null;}
+  function anyOf(){var x=levels.filter(function(l){return l.st&&l.st.n>0;})[0];return x?Object.assign({},x,{conf:'נמוכה מאוד',few:true}):null;}
   return pre.then(function(){
     city=CITY?CITY.name:$('dcCity').value.trim();
-    /* מהקרוב לרחוק: בניין, רחוב, עיר (API), עיר בהרחבה, טבלת "מציאות", ומה שיש */
-    var levels=[];
-    if(A&&cityKey(A.city)===cityKey(city)){
-      levels.push({st:statsOf(compsOf(A.bld,sqm,rooms)),min:3,scope:'building',conf:'גבוהה',where:function(n){return n+' עסקאות דומות באותו בניין';}});
-      levels.push({st:statsOf(compsOf(A.rows,sqm,rooms)),min:5,scope:'street',conf:'בינונית',where:function(n){return n+' עסקאות דומות ברחוב '+A.street;}});
-    }
-    if(!city)return finish(null);
-    var pick=function(){for(var i=0;i<levels.length;i++){if(levels[i].st&&levels[i].st.n>=levels[i].min)return levels[i];}return null;};
-    var got=pick();if(got)return finish(got);
-    return cityRows(city,24).then(function(rows){
-      levels.push({st:statsOf(compsOf(rows,sqm,rooms)),min:5,scope:'city',conf:'בינונית-נמוכה',where:function(n){return n+' עסקאות דומות ב'+city+' בשנתיים האחרונות';}});
-      levels.push({st:statsOf(wideComps(rows,sqm)),min:5,scope:'city',conf:'נמוכה',where:function(n){return n+' דירות בגודל ±40% ב'+city+' (בלי התאמת חדרים)';}});
-      var c=D.cities.filter(function(x){return cityKey(x.name)===cityKey(city);})[0],t=cityComps(c,sqm,rooms);
-      if(t)levels.push({st:t,min:5,scope:'city',conf:'נמוכה',where:function(n){return n+' עסקאות דומות בעיר (טבלת מציאות)';}});
-      got=pick();if(got)return finish(got);
-      /* פחות מהמינימום: לוקחים את הרמה הקרובה ביותר שיש בה לפחות עסקה אחת */
-      var any=levels.filter(function(l){return l.st&&l.st.n>0;})[0];
-      if(any)any=Object.assign({},any,{conf:'נמוכה מאוד',few:true});
-      return finish(any);
-    }).catch(function(){var any=levels.filter(function(l){return l.st&&l.st.n>0;})[0];return finish(any?Object.assign({},any,{conf:'נמוכה מאוד',few:true}):null);});
-  });
+    var hasA=A&&cityKey(A.city)===cityKey(city);
+    /* בלי שטח: משערים מעסקאות של אותו מספר חדרים (בניין, רחוב ואז עיר) */
+    var need=isFinite(sqm)?Promise.resolve(null):cityRows(city,24).catch(function(){return [];});
+    return need.then(function(cr){
+      if(!isFinite(sqm)){var e=estSqm((hasA?A.bld.concat(A.rows):[]).concat(cr||[]),rooms);sqmEst=e?e.src:'default';sqm=e?e.v:80;}
+      /* מהקרוב לרחוק: בניין, רחוב, עיר, עיר בהרחבה, טבלת "מציאות", 5 שנים, רשות המסים, יישובים סמוכים */
+      if(hasA){
+        levels.push({st:statsOf(compsOf(A.bld,sqm,rooms)),min:3,scope:'building',kind:'building',conf:'גבוהה',where:function(n){return n+' עסקאות דומות באותו בניין';}});
+        levels.push({st:statsOf(compsOf(A.rows,sqm,rooms)),min:5,scope:'street',kind:'street',conf:'בינונית',where:function(n){return n+' עסקאות דומות ברחוב '+A.street;}});
+      }
+      var got=pick();if(got)return finish(got);
+      return cityRows(city,24).then(function(rows){
+        levels.push({st:statsOf(compsOf(rows,sqm,rooms)),min:5,scope:'city',kind:'city',conf:'בינונית-נמוכה',where:function(n){return n+' עסקאות דומות ב'+city+' בשנתיים האחרונות';}});
+        levels.push({st:statsOf(wideComps(rows,sqm)),min:5,scope:'city',kind:'wide',conf:'נמוכה',where:function(n){return n+' דירות בגודל ±40% ב'+city+' (בלי התאמת חדרים)';}});
+        var c=D?D.cities.filter(function(x){return cityKey(x.name)===cityKey(city);})[0]:null,t=cityComps(c,sqm,rooms);
+        if(t)levels.push({st:t,min:5,scope:'city',kind:'wide',conf:'נמוכה',where:function(n){return n+' עסקאות דומות בעיר (טבלת מציאות)';}});
+        got=pick();if(got)return finish(got);
+        return cityRows(city,60).then(function(r60){
+          levels.push({st:statsOf(wideComps(r60,sqm)),min:3,scope:'city',kind:'wide',conf:'נמוכה',where:function(n){return n+' דירות בגודל דומה ב'+city+' ב-5 השנים האחרונות';}});
+          got=pick();if(got)return finish(got);
+          return taxRows(city).then(function(tr){
+            levels.push({st:statsOf(taxComps(tr,sqm)),min:3,scope:'city',kind:'tax',conf:'נמוכה מאוד',where:function(n){return n+' עסקאות מגורים ב'+city+' ב-5 השנים האחרונות (רשות המסים, כולל בתים פרטיים)';}});
+            got=pick();if(got)return finish(got);
+            return regionRows(city).then(function(rr){
+              if(rr.towns.length)levels.push({st:statsOf(wideComps(rr.rows,sqm)),min:5,scope:'city',kind:'region',conf:'נמוכה מאוד',where:function(n){return n+' דירות בגודל דומה ביישובים סמוכים ('+rr.towns.join(', ')+')';}});
+              return finish(pick()||anyOf());
+            });
+          });
+        });
+      });
+    });
+  }).catch(function(){return finish(pick()||anyOf());});
   function finish(L){
     out.textContent='';
-    if(!L){out.appendChild(el('p',{class:'dl-verdict',text:city?'לא נמצאו עסקאות דירות ב'+city+' ב-3 השנים האחרונות.':'בחר עיר מהרשימה או כתוב כתובת עם עיר.'}));return;}
+    if(!L){out.appendChild(el('p',{class:'dl-verdict',text:'לא נמצאו עסקאות ב'+city+' ולא ביישובים הסמוכים, או שהחיבור לשרת נכשל. נסה שוב.'}));return;}
     var st=L.st,floor=numIn('dcFloor'),year=numIn('dcYear');
     var adj=adjustments({scope:L.scope,floor:isFinite(floor)?Math.round(floor):null,compFloor:st.floor,lift:sel('dcLift'),mamad:sel('dcMamad'),
       balcony:sel('dcBalcony'),park:sel('dcPark'),store:sel('dcStore'),cond:sel('dcCond'),year:isFinite(year)&&year>1900?year:null});
-    var k=1+adj.total/100,fair=st.p50*sqm*k,low=st.p25*sqm*k,high=st.p75*sqm*k,pct=Math.round((price/fair-1)*100);
-    var cls=price<=low?'good':price>=high?'bad':'mid';
-    var txt=price<=low*0.85?'זול מאוד ביחס לדומות. כדאי לבדוק למה: מצב, זכויות, חלק בנכס.':price<=low?'מציאה: ברבע הזול של העסקאות הדומות, אחרי ההתאמות.':price<fair?'מעט מתחת לשווי המשוער.':price<high?'מעל השווי המשוער.':'יקר: ברבע היקר של העסקאות הדומות.';
-    out.className='result '+(cls==='good'?'good':cls==='bad'?'bad':'');
-    out.appendChild(el('p',{class:'dl-verdict '+cls,text:txt}));
-    out.appendChild(el('p',{style:'margin:0'},'שווי משוער: ',el('b',{text:nis(fair)}),' · מבוקש: ',el('b',{text:nis(price)}),' ',el('span',{dir:'ltr',text:'('+(pct>0?'+':'')+pct+'%)'})));
-    var lo=low*0.8,hi=high*1.2,pos=hi>lo?Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100)):50;
-    var bar=el('div',{class:'dl-bar','aria-hidden':'true'},el('i'));bar.firstChild.style.left=pos+'%';out.appendChild(bar);
+    var k=1+adj.total/100,fair=st.p50*sqm*k,low=st.p25*sqm*k,high=st.p75*sqm*k;
+    var acc=accuracy(st,L.kind,L.few,adj.total,sqmEst),weak=/נמוכה/.test(L.conf);
+    if(hasPrice){
+      var pct=Math.round((price/fair-1)*100),cls=price<=low?'good':price>=high?'bad':'mid';
+      var txt=price<=low*0.85?'זול מאוד ביחס לדומות. כדאי לבדוק למה: מצב, זכויות, חלק בנכס.':price<=low?'מציאה: ברבע הזול של העסקאות הדומות, אחרי ההתאמות.':price<fair?'מעט מתחת לשווי המשוער.':price<high?'מעל השווי המשוער.':'יקר: ברבע היקר של העסקאות הדומות.';
+      if(acc>=25&&cls!=='mid')txt+=' הדיוק נמוך, ולכן זו אינדיקציה בלבד.';
+      out.className='result '+(cls==='good'?'good':cls==='bad'?'bad':'');
+      out.appendChild(el('p',{class:'dl-verdict '+cls,text:txt}));
+      out.appendChild(el('p',{style:'margin:0'},'שווי משוער: ',el('b',{text:nis(fair)}),' · מבוקש: ',el('b',{text:nis(price)}),' ',el('span',{dir:'ltr',text:'('+(pct>0?'+':'')+pct+'%)'})));
+      var lo=low*0.8,hi=high*1.2,pos=hi>lo?Math.max(0,Math.min(100,(price-lo)/(hi-lo)*100)):50;
+      var bar=el('div',{class:'dl-bar','aria-hidden':'true'},el('i'));bar.firstChild.style.left=pos+'%';out.appendChild(bar);
+    }else{
+      out.appendChild(el('p',{class:'dl-verdict',text:'שווי משוער (בלי מחיר מבוקש אין השוואה): '+nis(fair)}));
+    }
     out.appendChild(el('div',{class:'dl-scale','aria-hidden':'true'},el('span',{text:nisK(low)}),el('span',{text:nisK(fair)}),el('span',{text:nisK(high)})));
-    out.appendChild(el('p',{class:'note',text:'מבוסס על '+L.where(st.n)+': חציון '+nis(st.p50)+' למ"ר'+(st.floor!=null?', קומה טיפוסית '+st.floor:'')+'. רמת ביטחון: '+L.conf+'.'}));
+    out.appendChild(el('p',{class:'dl-acc'+(weak?' warn':'')},'דיוק משוער: ',el('b',{dir:'ltr',text:'±'+acc+'%'}),
+      ' · השווי כנראה בין '+nisK(fair*(1-acc/100))+' ל-'+nisK(fair*(1+acc/100))+'. רמת ביטחון: '+L.conf+'.'));
+    out.appendChild(el('p',{class:'note',text:'מבוסס על '+L.where(st.n)+': חציון '+nis(st.p50)+' למ"ר'+(st.floor!=null?', קומה טיפוסית '+st.floor:'')+'.'}));
+    if(sqmEst)out.appendChild(el('p',{class:'note warn',text:'השטח לא הוזן. הנחתי '+sqm+' מ"ר'+(sqmEst==='rows'?' לפי עסקאות '+(rooms>0?'של '+rooms+' חדרים ':'')+'באזור':sqmEst==='rooms'?' לפי '+rooms+' חדרים (אין עסקאות דירות באזור)':' (הנחה כללית)')+'. הכנסת שטח תשפר את הדיוק.'}));
     if(L.few)out.appendChild(el('p',{class:'note warn',text:'יש מעט מדי עסקאות דומות, ולכן זו הערכה גסה בלבד.'}));
     if(adj.items.length){
       var ul=el('ul',{class:'note',style:'margin:6px 0 0;padding-inline-start:18px'});
       adj.items.forEach(function(x){ul.appendChild(el('li',null,x.t+': ',el('span',{dir:'ltr',text:(x.v>0?'+':'')+x.v+'%'}),' (הערכה)'));});
       out.appendChild(el('p',{class:'note',style:'margin:8px 0 0',text:'התאמות לפי כלל אצבע, סה"כ '+(adj.total>0?'+':'')+Math.round(adj.total*10)/10+'%:'}));out.appendChild(ul);
     }
-    out.appendChild(el('p',{class:'note',text:'מחיר יעד להצעה (רבע זול של הדומות, אחרי התאמות): '+nis(low)+'. לא שמאות.'}));
+    out.appendChild(el('p',{class:'dl-rec'},el('b',{text:'המלצה: '}),'הצעה פותחת סביב '+nis(low)+' (הרבע הזול של הדומות, אחרי התאמות). מעל '+nis(fair)+' כדאי לשלם רק אם יש סיבה ברורה: מצב, נוף, זכויות בנייה. לא שמאות.'));
   }
 }
 $('dcFind').addEventListener('click',function(){findAddress();});
@@ -2063,7 +2145,7 @@ $('dcStreet').addEventListener('focus',function(){resolveCity();});
 $('dcStreet').addEventListener('input',function(){A=null;$('dcAddrInfo').textContent='';clearTimeout(stTimer);if(!$('dcStreet').value.trim())streetSug.close();stTimer=setTimeout(function(){resolveCity().then(loadStreets);},250);});
 $('dcHouse').addEventListener('input',function(){A=null;});
 $('dcHouse').addEventListener('keydown',function(e){if(e.key==='Enter')findAddress();});
-$('dcGo').addEventListener('click',function(){if(D)calc();});
+$('dcGo').addEventListener('click',function(){calc();});
 
 function init(raw){
   D=validate(raw);
