@@ -122,12 +122,13 @@ class KeepPreviousTests(unittest.TestCase):
                 api.save_month({"month": m, "n": 900, "source": "sql-legacy",
                                 "days": [[m + "-10", "א", 3, 900, 9e8, 5e5, 2e6]],
                                 "monthly": [["א", 3, 900, 9e8, 5e5, 2e6]]}, root)
-            prev = dict(self.PREV, watch={"cities": []})
+            prev = dict(self.PREV, watch={"cities": []}, cbs={"months": ["2026-08"], "values": [588.2]})
             with mock.patch.object(api, "stats", return_value={"last_deal": "2026-06-30", "scraped_at": "x"}), \
+                    mock.patch.object(bd, "fetch_cbs", side_effect=api.ApiError("cbs: down")), \
                     mock.patch.object(bd, "load_watch", return_value={"cities": ["א"], "pct": 15, "cap": 45, "max_flags": 3}):
                 out = bd.build(today=date(2026, 11, 20), prev=prev, root=root,
                                fetch=mock.Mock(side_effect=api.ApiError("x")))
-        for k in ("budget", "watch"):
+        for k in ("budget", "watch", "cbs"):
             self.assertTrue(out[k]["stale"], k)
         self.assertEqual(out["anchor"], "2026-06-10")
         self.assertTrue(out["fetch_errors"])

@@ -21,6 +21,25 @@ def raw(day, amount=1_000_000, area=80, rooms=3, city="חיפה", helka="1", sub
             "year_built": 2000}
 
 
+CBS = {"id": 40010, "name": "מדד מחירי דירות", "months": ["2026-08"], "values": [588.2]}
+
+
+class CbsTests(unittest.TestCase):
+    def test_parse_and_validate(self):
+        pts = [{"year": 2022 + (i + 8) // 12, "month": (i + 8) % 12 + 1, "currBase": {"value": 500 + i}} for i in range(30)]
+        pts.append({"year": 2026, "month": 9, "currBase": {"value": "bad"}})
+        out = bd.fetch_cbs(get=lambda p: {"month": [{"code": 40010, "date": pts}]})
+        self.assertEqual((out["months"][0], out["months"][-1], len(out["values"])), ("2022-09", "2025-02", 30))
+
+    def test_too_few_points_raises(self):
+        with self.assertRaises(api.ApiError):
+            bd.fetch_cbs(get=lambda p: {"month": []})
+
+    def test_failure_keeps_previous(self):
+        prev = {"generated_at": "g", "cbs": CBS}
+        self.assertEqual(bd.keep_previous("cbs", prev)["values"], [588.2])
+
+
 class CleanDealTests(unittest.TestCase):
     def test_same_rules_as_sql(self):
         self.assertIsNotNone(api.clean_deal(raw("2026-05-01")))
@@ -95,6 +114,22 @@ class FetchTests(unittest.TestCase):
 
 
 class SummarizeTests(unittest.TestCase):
+    def test_ppm_second_hand_only(self):
+        # v1.7.0: מחיר למ"ר רק לדירות יד שנייה (נבנו לפחות שנתיים לפני המכירה, או שנה לא ידועה)
+        rows = [raw("2026-05-01", 2_000_000, 100, 3, helka="1"),                     # 2000: יד שנייה
+                raw("2026-05-02", 3_000_000, 100, 3, helka="2"),                     # חדשה מקבלן
+                raw("2026-05-03", 1_000_000, 50, 3, helka="3"),                      # שנה לא ידועה
+                raw("2026-05-04", 300_000, 100, 3, helka="4"),                       # 3,000 ₪ למ"ר: לא עסקת שוק
+                raw("2026-05-05", 1_000_000, 0, 3, helka="5")]                       # בלי שטח
+        rows[1]["year_built"] = 2025
+        rows[2]["year_built"] = None
+        deals = [api.clean_deal(d) for d in rows]
+        rec = api.summarize("2026-05", deals)
+        self.assertEqual(rec["ppm"], [["חיפה", 3, 2, 3_000_000, 150.0]])
+        self.assertEqual(rec["fmt"], api.FORMAT)
+        self.assertEqual(rec["n"], 5)  # הספירה הרגילה לא השתנתה
+
+
     def test_days_monthly_budget(self):
         deals = [api.clean_deal(d) for d in (
             raw("2026-05-01", 1_000_000, 80, 3), raw("2026-05-01", 2_000_000, 100, 3, helka="2"),
@@ -152,8 +187,21 @@ class PlanTests(unittest.TestCase):
     def test_recent_and_watch_first_then_missing(self):
         have = {m: "api" for m in bd.months_window("2026-09", bd.KEEP_MONTHS)}
         have["2025-11"] = "sql-legacy"
-        plan = bd.plan_months("2026-09", have, extra=("2026-04", "2026-05", "2026-06"))
+        fmt = {m: api.FORMAT for m in have}
+        plan = bd.plan_months("2026-09", have, extra=("2026-04", "2026-05", "2026-06"), fmt=fmt)
         self.assertEqual(plan, ["2026-09", "2026-08", "2026-07", "2026-06", "2026-05", "2026-04", "2025-11"])
+
+    def test_old_format_in_trend_window_is_refetched_newest_first(self):
+        # v1.7.0: קבצים בפורמט 1 (בלי ppm) בחלון המגמה נשלפים מחדש, מהחדש לישן, לפני חודשים ישנים יותר שחסרים
+        window = bd.months_window("2026-09", bd.KEEP_MONTHS)
+        have = {m: "api" for m in window}
+        have["2022-08"] = "sql-legacy"
+        fmt = {m: api.FORMAT for m in window}
+        fmt["2025-01"] = 1
+        fmt["2024-02"] = None
+        fmt["2022-09"] = 1  # מחוץ לחלון המגמה: לא נשלף שוב
+        plan = bd.plan_months("2026-09", have, fmt=fmt)
+        self.assertEqual(plan[4:], ["2025-01", "2024-02", "2022-08"])
 
     def test_out_of_time_stops_and_reports(self):
         with tempfile.TemporaryDirectory() as root:
@@ -179,7 +227,8 @@ class BuildTests(unittest.TestCase):
             cfg = {"cities": ["רמת גן"], "pct": 15, "cap": 45, "max_flags": 3}
             with mock.patch.object(api, "stats", return_value={"last_deal": "2026-09-05",
                                                                "scraped_at": "2026-09-19 11:07:39.0+00"}), \
-                    mock.patch.object(bd, "load_watch", return_value=cfg):
+                    mock.patch.object(bd, "load_watch", return_value=cfg), \
+                    mock.patch.object(bd, "fetch_cbs", return_value=CBS):
                 out = bd.build(today=date(2026, 11, 20), prev={}, root=root, fetch=self.fake_month)
             self.assertEqual(out["anchor_month"], "2026-08")
             self.assertEqual(out["anchor"], "2026-08-28")
@@ -195,6 +244,11 @@ class BuildTests(unittest.TestCase):
             self.assertEqual(len(out["monthly"]["months"]), 48)
             self.assertEqual(sum(r[3] for r in out["monthly"]["rows"]), 48 * 30)
             self.assertEqual(sum(r[3] for r in out["rows"]), 30 * 3 + 3)  # 3 חודשי העוגן ועוד ספטמבר
+            self.assertEqual(out["cbs"]["values"][-1], 588.2)
+            ppm_ok = out["monthly"]["ppm_ok"]
+            self.assertEqual((len(ppm_ok), sum(ppm_ok)), (48, bd.PPM_BACK))  # רק 36 החודשים האחרונים
+            self.assertEqual({r[0] for r in out["monthly"]["ppm"]}, set(range(12, 48)))
+            self.assertEqual(sum(r[3] for r in out["monthly"]["ppm"]), 36 * 30)
 
 
 if __name__ == "__main__":

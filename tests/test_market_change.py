@@ -1,4 +1,4 @@
-"""בדיקות ל-v2.1.4: אחוז שינוי במחיר הממוצע לכל עיר (% שנה, % שנתיים), מתוקן תמהיל חדרים.
+"""בדיקות ל-v2.1.4 ו-v2.2.0: שינוי מחיר לכל עיר (% שנה, % שנתיים), גרף מחיר למ"ר, מגמה ומדד הלמ"ס.
 הקוד הוא JS בתוך index.html, בין סימוני mkchg; הבדיקה מריצה אותו ב-node.
 """
 import json
@@ -49,18 +49,65 @@ class MarketChangeTests(unittest.TestCase):
         cur = {"0": {"n": 19, "s": 19 * 4_500_000}, "3": {"n": 100, "s": 100 * 3_000_000}}
         self.assertAlmostEqual(self.run_js(f"mixChange({json.dumps(cur)},{json.dumps(base)},20)"), 0.0)
 
+    def ppm_mo(self, price_of, ok_from=12, city="חיפה"):
+        """48 חודשים; לכל חודש 3 חדרים: 30 עסקאות של 80 מ"ר במחיר price_of(i) למ"ר, ו-4 חדרים: 30 עסקאות במחיר קבוע."""
+        months = [f"{2022 + (i + 6) // 12}-{(i + 6) % 12 + 1:02d}" for i in range(48)]
+        ppm = []
+        for i in range(ok_from, 48):
+            ppm.append([i, 0, 3, 30, 30 * 80 * price_of(i), 30 * 80])
+            ppm.append([i, 0, 4, 30, 30 * 100 * 20_000, 30 * 100])
+        return {"months": months, "cities": [city], "rows": [], "ppm": ppm,
+                "ppmOk": [1 if i >= ok_from else 0 for i in range(48)]}
+
     def test_city_windows_and_rooms_filter(self):
-        months = [f"20{2 + (i + 6) // 12 + 21}-{(i + 6) % 12 + 1:02d}" for i in range(48)]
-        rows = []
-        for i in range(12, 48):  # 36 החודשים האחרונים: לפני שנתיים 1.0M, שנה שעברה 1.1M, השנה 1.21M
-            price = 1_000_000 if i < 24 else 1_100_000 if i < 36 else 1_210_000
-            rows.append([i, 0, 3, 3, 3 * price, price, price])
-            rows.append([i, 0, 4, 3, 3 * 5_000_000, 5_000_000, 5_000_000])  # 4 חדרים: ללא שינוי
-        mo = {"months": months, "cities": ["חיפה"], "rows": rows}
-        r = self.run_js(f"[cityChanges({json.dumps(mo)},3,20),cityChanges({json.dumps(mo)},null,20)]")
-        self.assertAlmostEqual(r[0]["חיפה"]["y1"], 0.1)
-        self.assertAlmostEqual(r[0]["חיפה"]["y2"], 0.21)
-        self.assertAlmostEqual(r[1]["חיפה"]["y1"], 0.05)  # חצי מהעסקאות +10%, חצי 0%
+        # v2.2.0: 3 החודשים האחרונים מול אותם חודשים לפני שנה ושנתיים, מחיר למ"ר
+        price = lambda i: 30_000 if i >= 45 else 33_000 if 33 <= i < 36 else 25_000 if 21 <= i < 24 else 28_000
+        mo = self.ppm_mo(price)
+        r = self.run_js(f"[cityChanges({json.dumps(mo)},3,50),cityChanges({json.dumps(mo)},null,50)]")
+        self.assertAlmostEqual(r[0]["חיפה"]["y1"], 30 / 33 - 1)
+        self.assertAlmostEqual(r[0]["חיפה"]["y2"], 30 / 25 - 1)
+        self.assertAlmostEqual(r[1]["חיפה"]["y1"], (30 / 33 - 1) / 2)  # חצי מהעסקאות בלי שינוי
+
+    def test_pending_until_months_are_collected(self):
+        mo = self.ppm_mo(lambda i: 30_000, ok_from=30)  # רק 18 חודשים בפורמט החדש
+        r = self.run_js(f"cityChanges({json.dumps(mo)},null,50)")["חיפה"]
+        self.assertEqual((r["y1"], r["pending"], r["pending2"]), (0, False, True))
+        mo = self.ppm_mo(lambda i: 30_000, ok_from=40)
+        self.assertTrue(self.run_js(f"cityChanges({json.dumps(mo)},null,50)")["חיפה"]["pending"])
+
+    def test_series_moving_average_and_trend_from_peak(self):
+        # עלייה עד חודש 35 (שיא), ואז ירידה
+        price = lambda i: 20_000 + 400 * i if i <= 35 else 34_000 - 1500 * (i - 35)
+        mo = self.ppm_mo(price)
+        pts = self.run_js(f"ppmSeries({json.dumps(mo)},null,3,5)")
+        self.assertEqual(len(pts), 36)
+        self.assertIsNone(pts[1]["ma"])
+        self.assertAlmostEqual(pts[2]["ma"], (price(14) + price(13) + price(12)) / 3)
+        t = self.run_js(f"ppmTrend({json.dumps(mo)},'חיפה',3,50)")
+        self.assertEqual(t["peak"]["k"], mo["months"][35])
+        cur = sum(price(i) for i in (45, 46, 47)) / 3
+        peak = sum(price(i) for i in (33, 34, 35)) / 3
+        self.assertAlmostEqual(t["peak"]["chg"], cur / peak - 1)
+        self.assertLess(t["peak"]["chg"], 0)
+        self.assertAlmostEqual(t["now"], cur)
+
+    def test_unknown_city_has_no_data(self):
+        mo = self.ppm_mo(lambda i: 30_000)
+        t = self.run_js(f"ppmTrend({json.dumps(mo)},'עפולה',null,50)")
+        self.assertIsNone(t["now"])
+        self.assertIsNone(t["y1"])
+
+    def test_cbs_trend(self):
+        # מדד עולה ל-610 בחודש 30 ויורד ל-590
+        vals = [550 + 2 * i for i in range(31)] + [610 - 5 * (i + 1) for i in range(17)]
+        months = [f"{2022 + (i + 8) // 12}-{(i + 8) % 12 + 1:02d}" for i in range(48)]
+        c = self.run_js(f"cbsTrend({json.dumps({'months': months, 'values': vals})})")
+        now = sum(vals[-3:]) / 3
+        self.assertAlmostEqual(c["y1"], now / (sum(vals[-15:-12]) / 3) - 1)
+        self.assertAlmostEqual(c["y2"], now / (sum(vals[-27:-24]) / 3) - 1)
+        self.assertEqual(c["peak"]["k"], months[30])
+        self.assertLess(c["peak"]["chg"], 0)
+        self.assertIsNone(self.run_js("cbsTrend({months:['2026-01'],values:[1]})"))
 
 
 if __name__ == "__main__":

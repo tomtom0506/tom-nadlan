@@ -40,6 +40,8 @@ AREA_OK = (25, 400)
 BUDGET = 1_500_000
 MISSING_TOLERANCE = 0.002  # עד 0.2% חוסר מותר רק אם שתי דרכי השליפה מסכימות (שורות זהות לחלוטין במקור)
 DROP_TOLERANCE = 0.03      # בדיקת אמינות: שליפה חדשה מול שליפה קודמת מה-API של אותו חודש
+FORMAT = 2                 # 2: נוסף "ppm" (מחיר ושטח של דירות יד שנייה). קובץ בפורמט ישן נשלף מחדש בחלון המגמה
+PPM_OK = (4_000, 150_000)  # מחיר למ"ר מחוץ לטווח: לא עסקת שוק או שגיאת שטח
 
 _deadline = None
 
@@ -243,9 +245,16 @@ def _agg(groups, key, amt):
         g[3] = max(g[3], amt)
 
 
+def second_hand(x):
+    """יד שנייה: נבנתה לפחות שנתיים לפני שנת המכירה (כמו מדד הלמ"ס, בלי דירות חדשות מקבלן).
+    שנת בנייה חסרה נחשבת יד שנייה."""
+    y = x.get("year") or 0
+    return not y or y < int(x["date"][:4]) - 1
+
+
 def summarize(month, deals):
     """סיכום חודש מתוך עסקאות נקיות (clean_deal)."""
-    days, monthly, budget = {}, {}, {}
+    days, monthly, budget, ppm = {}, {}, {}, {}
     n = 0
     for x in deals:
         if not x["date"].startswith(month):
@@ -262,6 +271,11 @@ def summarize(month, deals):
             b[2] += x["area"]
         if a <= BUDGET:
             b[3].append([a, round(x["area"], 1) if x["area"] else 0])
+        if ok_area and second_hand(x) and PPM_OK[0] <= a / x["area"] <= PPM_OK[1]:
+            g = ppm.setdefault((x["city"], x["rb"]), [0, 0, 0.0])
+            g[0] += 1
+            g[1] += a
+            g[2] += x["area"]
     for b in budget.values():
         b[2] = round(b[2], 1)
         b[3].sort()
@@ -271,6 +285,8 @@ def summarize(month, deals):
         "days": sorted([d, c, r, g[0], g[1], g[2], g[3]] for (d, c, r), g in days.items()),
         "monthly": sorted([c, rb, g[0], g[1], g[2], g[3]] for (c, rb), g in monthly.items()),
         "budget": {c: budget[c] for c in sorted(budget)},
+        "ppm": sorted([c, rb, g[0], g[1], round(g[2], 1)] for (c, rb), g in ppm.items()),
+        "fmt": FORMAT,
     }
 
 
