@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-PanjSuNwgLmoHhmXVP9CAADARMS5OYWaXFd7RwyCDEw=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-Z45OPbCnvCehCxSlyy9iV8gnCvHyBNnM+om0XQU9h/o=' 'sha256-mb3hj/x2vhrGro3tOgyncRtnCGlNMhAccsQ3AXfN5jI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v0Iaf61hpxencM8OYOd9oizwNMSX/ui4aNF8WoE83L0=' 'sha256-p7mZlifdX8PUa2bVlT6VoRrDi3wD9dySJ29yBHsXFjY=' 'sha256-aQhuoOI+tLDEpR4bpxwNbvUNTLp9ddEfmI2supzg8ys=' 'sha256-728hTbqIGLZZWMzfxw76Nc2UlXBsL1D/qr6DcCR+4js=' 'sha256-mb3hj/x2vhrGro3tOgyncRtnCGlNMhAccsQ3AXfN5jI='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://www.over.org.il https://api.github.com; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#0D1B26">
 <title>הנדלן של תומר</title>
@@ -223,6 +223,9 @@ tr.city{cursor:pointer}tr.city.on td{background:var(--surface-2)}
 .c-name{font-weight:600}
 .checks th{font-size:.78rem;color:var(--muted);font-weight:500;text-align:start;padding:6px 4px}.checks th.n{text-align:left}
 .checks.cities small{color:var(--muted);font-size:.78rem}
+.checks th.chg,.checks td.chg{text-align:center;white-space:nowrap;width:1%;padding-inline:6px}
+.checks td.chg span{font-weight:700;font-size:.82rem;unicode-bidi:isolate}
+.checks td.chg .up{color:var(--good)}.checks td.chg .down{color:var(--bad)}.checks td.chg .flat{color:var(--muted);font-weight:500}
 .fresh{border-inline-start:3px solid var(--warn);padding-inline-start:10px;margin-top:0}
 #mkSumCard{scroll-margin-top:calc(150px + env(safe-area-inset-top,0px))}
 #mkBody{padding-bottom:0}
@@ -401,7 +404,7 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
         <div class="h-top"><h2>לפי עיר</h2><span class="note" id="mkCount" style="margin:0"></span></div>
         <div class="tools">
           <input id="mkSearch" type="text" maxlength="40" placeholder="חיפוש עיר" autocomplete="off" aria-label="חיפוש עיר">
-          <select id="mkSort" aria-label="מיון"><option value="n">הכי הרבה עסקאות</option><option value="avg">ממוצע זול קודם</option><option value="mn">הכי זול קודם</option></select>
+          <select id="mkSort" aria-label="מיון"><option value="n">הכי הרבה עסקאות</option><option value="avg">ממוצע זול קודם</option><option value="mn">הכי זול קודם</option><option value="up">עלייה הכי גדולה בשנה</option></select>
         </div>
         <div id="mkTable"></div>
         <p class="note">לחיצה על עיר מציגה את הנתונים שלה בלבד, וגם את העסקאות שלה לפי יום.</p>
@@ -577,10 +580,13 @@ dialog::backdrop{background:rgba(5,12,18,.55)}
 <script>
 (function(){
 'use strict';
-var APP_VERSION='2.1.3';
+var APP_VERSION='2.1.4';
 var OVER='https://www.over.org.il';
 var REPO='https://github.com/tomtom0506/tom-nadlan';
 var CHANGELOG=[
+  {v:'2.1.4',date:'2026-11-27',items:[
+    '📊 שוק, טבלת "לפי עיר": עמודות "% שנה" ו"% שנתיים" עם חץ ירוק או אדום. ההשוואה היא של 12 החודשים האחרונים במאגר מול 12 החודשים שלפניהם ומול לפני שנתיים, מתוקנת לתמהיל החדרים. מיון חדש: "עלייה הכי גדולה בשנה".'
+  ]},
   {v:'2.1.3',date:'2026-11-23',items:[
     '"האם המחיר הזה מציאה" נותן תמיד הערכה: גם בלי מחיר מבוקש (מוצג שווי והמלצה), גם בלי שטח (משוער לפי עסקאות עם אותו מספר חדרים), וגם ביישוב קטן בלי עסקאות דירות: 5 שנים אחורה, עסקאות רשות המסים כולל בתים פרטיים, ובסוף יישובים סמוכים באותה נפה.',
     'בכל תוצאה מוצג "דיוק משוער" באחוזים, לפי פיזור העסקאות, מספרן ורמת ההשוואה, ושורת המלצה למשא ומתן.'
@@ -1301,6 +1307,34 @@ function validateMonthly(m){
   return {months:months,cities:cities,rows:rows,hasMM:hasMM};
 }
 
+/* mkchg-start */
+function isNum(v){return typeof v==='number'&&isFinite(v);}
+/* שינוי מחיר ממוצע מתוקן תמהיל: לכל קבוצת חדרים יחס הממוצעים, משוקלל לפי מספר העסקאות בתקופה הנוכחית.
+   cur/base: {חדרים: {n, s}}. קבוצה נכללת רק עם 5 עסקאות לפחות בשתי התקופות (עסקה בודדת לא מזיזה את העיר).
+   null כשיש פחות מ-minN עסקאות באחת התקופות, או כשפחות מחצי מהעסקאות ניתנות להשוואה */
+function mixChange(cur,base,minN){
+  var tc=0,tb=0,w=0,acc=0;
+  Object.keys(cur).forEach(function(k){tc+=cur[k].n;});
+  Object.keys(base).forEach(function(k){tb+=base[k].n;});
+  if(tc<minN||tb<minN)return null;
+  Object.keys(cur).forEach(function(k){var c=cur[k],b=base[k];
+    if(!b||b.n<5||c.n<5||!(b.s>0))return;acc+=c.n*((c.s/c.n)/(b.s/b.n));w+=c.n;});
+  if(!w||w<tc*0.5)return null;
+  return acc/w-1;
+}
+/* לכל עיר: 12 החודשים האחרונים מול 12 שלפניהם (y1) ומול 12 של לפני שנתיים (y2). want: קבוצת חדרים או null */
+function cityChanges(mo,want,minN){
+  var L=mo.months.length,win=function(i){return i>=L-12?0:i>=L-24?1:i>=L-36?2:-1;},by={},out={};
+  mo.rows.forEach(function(r){
+    if(want!=null&&r[2]!==want)return;var w=win(r[0]);if(w<0)return;
+    var c=by[r[1]]||(by[r[1]]=[{},{},{}]),g=c[w][r[2]]||(c[w][r[2]]={n:0,s:0});g.n+=r[3];g.s+=r[4];
+  });
+  Object.keys(by).forEach(function(ci){var c=by[ci];
+    out[mo.cities[ci]]={y1:L>=24?mixChange(c[0],c[1],minN):null,y2:L>=36?mixChange(c[0],c[2],minN):null};});
+  return out;
+}
+/* mkchg-end */
+
 /* רשומות אחידות לתקופה הנוכחית: {k: יום או חודש, c: שם עיר, n, s, mn, mx} */
 function records(opts){
   var out=[];
@@ -1411,13 +1445,20 @@ function renderChart(){
   box.appendChild(el('p',{class:'note',text:info}));
 }
 
+function chgCell(v){
+  if(!isNum(v))return el('td',{class:'chg'},el('span',{class:'flat',text:'–'}));
+  var p=Math.round(v*100),cls=p>0?'up':p<0?'down':'flat';
+  return el('td',{class:'chg'},el('span',{class:cls,dir:'ltr','aria-label':(p>0?'עלייה של ':p<0?'ירידה של ':'ללא שינוי ')+Math.abs(p)+'%',text:(p>0?'▲ ':p<0?'▼ ':'')+Math.abs(p)+'%'}));
+}
 function renderTable(){
   var box=$('mkTable');box.textContent='';
   var m=agg(records({ignoreCity:true}),function(r){return r.c;});
   var q=S.q.trim();
-  var list=Object.keys(m).map(function(k){var a=m[k];return {name:k,n:a.n,avg:a.s/a.n,mn:a.mn,mx:a.mx};})
+  var chg=MO?cityChanges(MO,S.rooms==='all'?null:+S.rooms,20):{};
+  var list=Object.keys(m).map(function(k){var a=m[k],g=chg[k]||{};return {name:k,n:a.n,avg:a.s/a.n,mn:a.mn,mx:a.mx,y1:g.y1,y2:g.y2};})
     .filter(function(x){return !q||x.name.indexOf(q)>=0;});
-  var key={n:function(a,b){return b.n-a.n;},avg:function(a,b){return a.avg-b.avg;},mn:function(a,b){return a.mn-b.mn;}}[S.sort];
+  var byUp=function(a,b){var x=isNum(a.y1),y=isNum(b.y1);return x&&y?b.y1-a.y1:x?-1:y?1:b.n-a.n;};
+  var key={n:function(a,b){return b.n-a.n;},avg:function(a,b){return a.avg-b.avg;},mn:function(a,b){return a.mn-b.mn;},up:byUp}[S.sort];
   list.sort(key);
   $('mkCount').textContent=list.length+' ערים';
   if(!list.length){box.appendChild(el('div',{class:'empty',text:'לא נמצאו ערים.'}));return;}
@@ -1425,14 +1466,16 @@ function renderTable(){
   list.slice(0,150).forEach(function(x){
     var tr=el('tr',{class:'city'+(S.city===x.name?' on':''),tabindex:'0'},
       el('td',null,el('div',{class:'c-name',text:x.name}),el('small',{text:x.n.toLocaleString('en-US')+' עסקאות'})),
-      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(x.avg)}),el('small',{text:isFinite(x.mn)?nisK(x.mn)+' – '+nisK(x.mx):'זול ויקר: אחרי העדכון הבא'}))
+      el('td',{class:'n',dir:'ltr'},el('div',{text:nis(x.avg)}),el('small',{text:isFinite(x.mn)?nisK(x.mn)+' – '+nisK(x.mx):'זול ויקר: אחרי העדכון הבא'})),
+      chgCell(x.y1),chgCell(x.y2)
     );
     function pick(){S.city=(S.city===x.name?null:x.name);renderAll();if(S.city!=null)$('mkSumCard').scrollIntoView({behavior:'smooth',block:'start'});}
     tr.addEventListener('click',pick);tr.addEventListener('keydown',function(e){if(e.key==='Enter')pick();});
     tb.appendChild(tr);
   });
   box.appendChild(el('table',{class:'checks cities'},
-    el('thead',null,el('tr',null,el('th',{text:'עיר'}),el('th',{class:'n',text:'ממוצע (זול – יקר)'}))),tb));
+    el('thead',null,el('tr',null,el('th',{text:'עיר'}),el('th',{class:'n',text:'ממוצע (זול – יקר)'}),el('th',{class:'chg',text:'% שנה'}),el('th',{class:'chg',text:'% שנתיים'}))),tb));
+  box.appendChild(el('p',{class:'note',text:'% שנה: 12 החודשים האחרונים במאגר מול 12 החודשים שלפניהם. % שנתיים: מול 12 החודשים של לפני שנתיים. השינוי מחושב לכל קבוצת חדרים בנפרד, כך ששינוי בתמהיל הדירות שנמכרו לא מטה אותו. "–": פחות מ-20 עסקאות. לא תלוי בכפתור התקופה.'}));
   if(list.length>150)box.appendChild(el('p',{class:'note',text:'מוצגות 150 הערים הראשונות. אפשר לחפש עיר בשדה החיפוש.'}));
 }
 
@@ -1491,7 +1534,7 @@ function init(d){
   var p=+b.dataset.period;if(!(p in {7:1,30:1,90:1,365:1,1095:1}))return;S.period=p;S.sel=null;renderAll();});});
 [].forEach.call(document.querySelectorAll('[data-rooms]'),function(b){b.addEventListener('click',function(){S.rooms=b.dataset.rooms;renderAll();});});
 $('mkSearch').addEventListener('input',function(){S.q=String(this.value).slice(0,40);renderTable();});
-$('mkSort').addEventListener('change',function(){var v=this.value;S.sort=(v==='avg'||v==='mn')?v:'n';renderTable();});
+$('mkSort').addEventListener('change',function(){var v=this.value;S.sort=(v==='avg'||v==='mn'||v==='up')?v:'n';renderTable();});
 $('mkClear').addEventListener('click',function(){S.city=null;S.sel=null;renderAll();});
 /* ---------- ₪1.5M: איפה התקציב קונה הכי הרבה ---------- */
 var CENTER_LIST=['תל אביב יפו','רמת גן','גבעתיים','בני ברק','בת ים','חולון','הרצליה','רמת השרון','אור יהודה','קרית אונו','יהוד מונוסון','אזור','גבעת שמואל','כפר שמריהו','סביון',
