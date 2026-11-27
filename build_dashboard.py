@@ -16,12 +16,14 @@ import json
 import os
 import re
 import statistics
+import urllib.parse
+import urllib.request
 from datetime import date, datetime, timezone
 
 import deals_api as api
 from deals_api import ApiError as SqlError  # השם הישן נשאר, כדי שקוד ובדיקות קיימים ימשיכו לעבוד
 
-BUILD_VERSION = "1.6.1"
+BUILD_VERSION = "1.7.0"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(ROOT, "data", "dashboard.json")
 MONTHS_BACK = 3           # חודש העוגן ועוד שניים לפניו (כ-90 יום)
@@ -31,6 +33,10 @@ RECENT_MONTHS = 4         # נמשכים מחדש בכל ריצה: עסקאות 
 KEEP_MONTHS = 51          # כל החלון של הגרף (48 חודשים) ועוד פיגור העוגן: הכל מה-API, כי ב-SQL הישן היו כפילויות
 MONTH_RESERVE = 150       # שניות: לא מתחילים חודש חדש אם נשאר פחות מזה
 MONTHLY_BACK = 48         # 36 לגרף ועוד 12, כדי שלכל חודש בגרף תהיה שנה קודמת להשוואה
+PPM_BACK = 36             # גרף המחיר למ"ר והשוואת "לפני שנתיים": 36 חודשים עד העוגן, בפורמט 2
+PPM_KEEP = 40             # מהחודש האחרון במאגר: 36 ועוד פיגור העוגן
+CBS_URL = "https://api.cbs.gov.il/index/data/price"
+CBS_ID = 40010            # מדד מחירי דירות (הלמ"ס)
 BUDGET = api.BUDGET
 PPM_FLOOR = 0.35          # עסקה שמחירה למ"ר נמוך מ-35% מהממוצע של העיר: כנראה לא עסקת שוק או שגיאת שטח
 APT_NATURES = api.APT_NATURES
@@ -73,12 +79,17 @@ def num(v):
 
 # ---------- שליפה ----------
 
-def plan_months(last_month, have, extra=()):
+def plan_months(last_month, have, extra=(), fmt=None):
     """איזה חודשים למשוך, לפי סדר: קודם החודשים האחרונים וחודשי המעקב (extra), מהחדש לישן,
-    ואחר כך חודשים חסרים בחלון של KEEP_MONTHS. have: חודש -> מקור הקובץ הקיים ("api" או "sql-legacy")."""
+    אחר כך חודשים בחלון המגמה (PPM_KEEP) שעוד בפורמט ישן, מהחדש לישן,
+    ובסוף חודשים חסרים בחלון של KEEP_MONTHS. have: חודש -> מקור ("api" או "sql-legacy"). fmt: חודש -> פורמט."""
+    fmt = fmt or {}
     recent = sorted(set(months_window(last_month, RECENT_MONTHS)) | set(extra), reverse=True)
-    missing = [m for m in reversed(months_window(last_month, KEEP_MONTHS)) if m not in recent and have.get(m) != "api"]
-    return recent + missing
+    upgrade = [m for m in reversed(months_window(last_month, PPM_KEEP))
+               if m not in recent and (have.get(m) != "api" or (fmt.get(m) or 1) < api.FORMAT)]
+    missing = [m for m in reversed(months_window(last_month, KEEP_MONTHS))
+               if m not in recent and m not in upgrade and have.get(m) != "api"]
+    return recent + upgrade + missing
 
 
 def migrate_legacy(prev, root=None):
@@ -96,11 +107,13 @@ def migrate_legacy(prev, root=None):
 def refresh(last_month, root=None, fetch=None, extra=()):
     """מושך חודשים לפי plan_months כל עוד יש זמן. מחזיר (עסקאות לפי חודש מהריצה הזו, שגיאות, חודשים שלא הספיקו)."""
     root = root or api.MONTHS_DIR
-    have = {m: (api.load_month(m, root) or {}).get("source") for m in api.list_months(root)}
-    deals, errors, todo = {}, [], plan_months(last_month, have, extra)
+    loaded = {m: api.load_month(m, root) or {} for m in api.list_months(root)}
+    have = {m: r.get("source") for m, r in loaded.items()}
+    fmt = {m: r.get("fmt") for m, r in loaded.items()}
+    deals, errors, todo = {}, [], plan_months(last_month, have, extra, fmt)
     for i, month in enumerate(todo):
         if api.time_left() < MONTH_RESERVE:
-            left = [m for m in todo[i:] if have.get(m) != "api"]
+            left = [m for m in todo[i:] if have.get(m) != "api" or (fmt.get(m) or 1) < api.FORMAT]
             if left:
                 print(f"months: out of time, {len(left)} months still missing: {', '.join(left)}. Run again.")
             return deals, errors, left
@@ -183,10 +196,51 @@ def build_monthly(anchor_month, recs):
                 continue
             ci = cities.setdefault(city, len(cities))
             rows.append([mi, ci, int(rb), int(n), round(s), round(mn), round(mx)])
+    # מחיר למ"ר של דירות יד שנייה: [חודש, עיר, חדרים, n, סכום מחירים, סכום שטח], רק ב-PPM_BACK החודשים האחרונים
+    ppm, ppm_ok = [], []
+    for mi, m in enumerate(months):
+        rec = recs.get(m) or {}
+        ok = mi >= len(months) - PPM_BACK and (rec.get("fmt") or 1) >= api.FORMAT
+        ppm_ok.append(1 if ok else 0)
+        if not ok:
+            continue
+        for city, rb, n, s, a in rec.get("ppm") or []:
+            if rb not in (0, 2, 3, 4, 5) or not n or n <= 0 or not a or a <= 0:
+                continue
+            ci = cities.setdefault(city, len(cities))
+            ppm.append([mi, ci, int(rb), int(n), round(s), round(a)])
     names = [None] * len(cities)
     for k, v in cities.items():
         names[v] = k
-    return {"months": months, "cities": names, "rows": rows}
+    return {"months": months, "cities": names, "rows": rows, "ppm": ppm, "ppm_ok": ppm_ok}
+
+
+def fetch_cbs(get=None):
+    """מדד מחירי הדירות של הלמ"ס (API רשמי ופתוח): 48 החודשים האחרונים, {"months": [...], "values": [...]}."""
+    get = get or _cbs_get
+    d = get({"id": CBS_ID, "format": "json", "download": "false", "last": 48})
+    pts = {}
+    for blk in (d or {}).get("month") or []:
+        for x in blk.get("date") or []:
+            try:
+                ym, v = f"{int(x['year']):04d}-{int(x['month']):02d}", float(x["currBase"]["value"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if 0 < v < 100_000:
+                pts[ym] = round(v, 2)
+    if len(pts) < 24:
+        raise SqlError(f"cbs: only {len(pts)} points")
+    ms = sorted(pts)
+    return {"id": CBS_ID, "name": "מדד מחירי דירות", "months": ms, "values": [pts[m] for m in ms]}
+
+
+def _cbs_get(params):
+    req = urllib.request.Request(CBS_URL + "?" + urllib.parse.urlencode(params), headers={"User-Agent": api.UA})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return json.load(r)
+    except Exception as e:  # noqa: BLE001 - כל כשל: שומרים את הגרסה הקודמת
+        raise SqlError(f"cbs: {type(e).__name__} {api.error_detail(e)}".strip())
 
 
 WATCH_FILE = os.path.join(ROOT, "watch.json")
@@ -344,6 +398,11 @@ def build(today=None, prev=None, root=None, fetch=None):
         print(f"budget: {e}, keeping previous")
         budget = keep_previous("budget", prev)
     monthly = build_monthly(anchor_month, recs)
+    try:
+        cbs = fetch_cbs()
+    except SqlError as e:
+        print(f"{e}, keeping previous")
+        cbs = keep_previous("cbs", prev)
     watch = None
     cfg = load_watch()
     if cfg:
@@ -370,6 +429,7 @@ def build(today=None, prev=None, root=None, fetch=None):
         "rows": data["rows"],
         "budget": budget,
         "monthly": monthly,
+        "cbs": cbs,
         "watch": watch,
     }
 
